@@ -1,14 +1,286 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  email          String          @unique
+  password       String
+  college        College?        @relation(fields: [collegeId], references: [id])
+  collegeId      String?         @db.Uuid // Ensure type matches College.id
+  roles          UserRole[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  mfaSecret      String?
+  lastLogin      DateTime?
+  students       Student[]
+  faculty        Faculty[]
+  threadLikes    ThreadLike[]
+  threadComments ThreadComment[]
+  messages       Messages[]
+
+  @@index([email])
+  @@index([collegeId])
+}
+
+model UserRole {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @db.Uuid
+  role         Role
+  college      College?    @relation(fields: [collegeId], references: [id], name: "UserRoleToCollege")
+  collegeId    String?     @db.Uuid
+  department   Department? @relation(fields: [departmentId], references: [id])
+  departmentId String?     @db.Uuid
+  section      Section?    @relation(fields: [sectionId], references: [id])
+  sectionId    String?     @db.Uuid
+  user         User        @relation(fields: [userId], references: [id])
+
+  @@unique([userId, role, departmentId, sectionId])
+  @@index([role])
+}
+
+enum Role {
+  PRINCIPAL
+  HOD
+  FACULTY
+  STUDENT
+  CLASS_REPRESENTATIVE
+}
+
+model College {
+  id          String       @id @default(uuid()) @db.Uuid // Ensure id is UUID
+  name        String       @unique
+  departments Department[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  userRoles   UserRole[]   @relation(name: "UserRoleToCollege")
+}
+
+model Department {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  college   College    @relation(fields: [collegeId], references: [id])
+  collegeId String     @db.Uuid
+  years     Year[]
+  faculties Faculty[]
+  createdAt DateTime   @default(now())
+  UserRole  UserRole[]
+
+  @@index([collegeId])
+}
+
+model Year {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String     @db.Uuid
+  sections     Section[]
+  createdAt    DateTime   @default(now())
+
+  @@index([departmentId])
+}
+
+model Section {
+  id         String             @id @default(uuid()) @db.Uuid
+  name       String
+  year       Year               @relation(fields: [yearId], references: [id])
+  yearId     String             @db.Uuid
+  students   Student[]
+  classrooms VirtualClassroom[]
+  createdAt  DateTime           @default(now())
+  UserRole   UserRole[]
+
+  @@index([yearId])
+}
+
+model Student {
+  id                       String                    @id @default(uuid()) @db.Uuid
+  user                     User                      @relation(fields: [userId], references: [id])
+  userId                   String                    @db.Uuid
+  section                  Section                   @relation(fields: [sectionId], references: [id])
+  sectionId                String                    @db.Uuid
+  enrollmentNo             String                    @unique
+  createdAt                DateTime                  @default(now())
+  archivedAt               DateTime?
+  submissions              AssignmentSubmission[]
+  virtualClassroomStudents VirtualClassroomStudent[]
+  classAttendances         ClassAttendance[]
+
+  @@index([sectionId])
+}
+
+model Faculty {
+  id             String             @id @default(uuid()) @db.Uuid
+  user           User               @relation(fields: [userId], references: [id])
+  userId         String             @db.Uuid
+  department     Department         @relation(fields: [departmentId], references: [id])
+  departmentId   String             @db.Uuid
+  specialization String
+  classrooms     VirtualClassroom[]
+  createdAt      DateTime           @default(now())
+
+  @@index([departmentId])
+}
+
+model VirtualClassroom {
+  id                       String                    @id @default(uuid()) @db.Uuid
+  name                     String
+  section                  Section                   @relation(fields: [sectionId], references: [id])
+  sectionId                String                    @db.Uuid
+  faculty                  Faculty                   @relation(fields: [facultyId], references: [id])
+  facultyId                String                    @db.Uuid
+  units                    Unit[]
+  assignments              Assignment[]
+  syllabusUrl              String
+  classAttendances         ClassAttendance[]
+  virtualClassroomStudents VirtualClassroomStudent[]
+  createdAt                DateTime                  @default(now())
+  threads                  Thread[]
+
+  @@index([sectionId])
+  @@index([facultyId])
+}
+
+model VirtualClassroomStudent {
+  id          String           @id @default(uuid()) @db.Uuid
+  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroomId String           @db.Uuid
+  student     Student          @relation(fields: [studentId], references: [id])
+  studentId   String           @db.Uuid
+  enrolledAt  DateTime         @default(now())
+
+  @@unique([classroomId, studentId])
+}
+
+model Unit {
+  id                  String               @id @default(uuid()) @db.Uuid
+  name                String
+  classroom           VirtualClassroom     @relation(fields: [classroomId], references: [id])
+  classroomId         String               @db.Uuid
+  educationalContents EducationalContent[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  threads             Thread[]
+
+  @@index([classroomId])
+}
+
+model EducationalContent {
+  id        String      @id @default(uuid()) @db.Uuid
+  unit      Unit        @relation(fields: [unitId], references: [id])
+  unitId    String      @db.Uuid
+  type      ContentType
+  content   String
+  version   Int         @default(1)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([unitId])
+}
+
+enum ContentType {
+  NOTE
+  LINK
+  VIDEO
+  DOCUMENT
+}
+
+model ClassAttendance {
+  id          String           @id @default(uuid()) @db.Uuid
+  student     Student          @relation(fields: [studentId], references: [id])
+  studentId   String           @db.Uuid
+  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroomId String           @db.Uuid
+  date        DateTime
+  present     Boolean
+
+  @@index([studentId, classroomId])
+}
+
+model Assignment {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  title                 String
+  content               String
+  deadline              DateTime
+  classroom             VirtualClassroom       @relation(fields: [classroomId], references: [id])
+  classroomId           String                 @db.Uuid
+  assignmentSubmissions AssignmentSubmission[]
+  createdAt             DateTime               @default(now())
+
+  @@index([classroomId])
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(uuid()) @db.Uuid
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  assignmentId String     @db.Uuid
+  student      Student    @relation(fields: [studentId], references: [id])
+  studentId    String     @db.Uuid
+  content      String
+  submittedAt  DateTime   @default(now())
+
+  @@index([assignmentId])
+}
+
+model Thread {
+  id             String           @id @default(uuid()) @db.Uuid
+  title          String
+  content        String
+  unit           Unit?            @relation(fields: [unitId], references: [id])
+  unitId         String?          @db.Uuid
+  classroom      VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroomId    String           @db.Uuid
+  parent         Thread?          @relation("ThreadReplies", fields: [parentId], references: [id])
+  parentId       String?          @db.Uuid
+  threadLikes    ThreadLike[]
+  threadComments ThreadComment[]
+  messages       Messages[]
+  createdAt      DateTime         @default(now())
+  replies        Thread[]         @relation("ThreadReplies")
+
+  @@index([classroomId])
+  @@index([createdAt])
+}
+
+model ThreadLike {
+  id        String   @id @default(uuid()) @db.Uuid
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  threadId  String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  @@unique([threadId, userId])
+}
+
+model ThreadComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  threadId  String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([threadId])
+}
+
+model Messages {
+  id        String   @id @default(uuid()) @db.Uuid
+  content   String
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  threadId  String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([threadId])
+  @@index([userId])
 }
