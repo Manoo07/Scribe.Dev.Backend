@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
-import { AuthService } from "../services/authService";
+import { Request, Response } from 'express';
+import AuthService from '../services/authService';
+import { promises } from 'dns';
 
 class AuthController {
   private authService: AuthService;
@@ -8,30 +9,35 @@ class AuthController {
     this.authService = new AuthService();
   }
 
-  signup = async (req: Request, res: Response) => {
-    const { name, email, password, collegeId } = req.body;
+  signup = async (req: Request, res: Response): Promise<any> => {
+    const { name, email, password, collegeId, role, departmentId, sectionId, specialization } = req.body;
+
     try {
-      const user = await this.authService.signup(
+      // Call the signup service with all required parameters
+      const result = await this.authService.signup({
         name,
         email,
         password,
-        collegeId
-      );
-      res.status(201).json(user);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error instanceof Error) {
-          if (error instanceof Error) {
-            res.status(400).json({ error: error.message });
-          } else {
-            res.status(400).json({ error: "An unknown error occurred" });
-          }
-        } else {
-          res.status(400).json({ error: "An unknown error occurred" });
-        }
-      } else {
-        res.status(400).json({ error: "An unknown error occurred" });
+        collegeId,
+        role,
+        departmentId,
+        sectionId,
+        specialization,
+      });
+
+      if (result.error) {
+        return res.status(result.status || 400).json({ error: result.error, message: result.message });
       }
+
+      return res.status(201).json(result);
+    } catch (error: any) {
+      console.error('Signup Error:', error);
+
+      if (error.message.includes('Invalid collegeId')) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      return res.status(500).json({ error: 'An unknown error occurred' });
     }
   };
 
@@ -42,7 +48,7 @@ class AuthController {
       if (token) {
         res.status(200).json({ token });
       } else {
-        res.status(401).json({ error: "Invalid credentials" });
+        res.status(401).json({ error: 'Invalid credentials' });
       }
     } catch (error: any) {
       res.status(400).json({ error: error.message });
