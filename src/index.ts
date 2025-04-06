@@ -16,11 +16,11 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.use(`${BASE_URL}/auth`, authRoutes);
-app.use(`${BASE_URL}/college`, collegeRoutes);
-app.use(`${BASE_URL}/department`, departmentRoutes);
-app.use(`${BASE_URL}/section`, sectionRoutes);
-app.use(`${BASE_URL}/year`, yearRoutes);
+app.use(`${BASE_URL}/auth`, authRoutes);  //Authentication Routes
+app.use(`${BASE_URL}/college`, collegeRoutes); // College-related routes
+app.use(`${BASE_URL}/department`, departmentRoutes); // Dept-related routes
+app.use(`${BASE_URL}/section`, sectionRoutes); //Section-related routes
+app.use(`${BASE_URL}/year`, yearRoutes); //year-related routes
 
 
 app.listen(port, () => {
