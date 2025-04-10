@@ -1,0 +1,298 @@
+openapi: 3.0.1
+info:
+  title: Scribe.dev
+  version: 1.0.0
+  description: API for managing authentication, colleges, departments, sections, and academic years.
+servers:
+  - url: localhost:3000/api/v1
+
+paths:
+  /auth/signup:
+    post:
+      summary: Sign up a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - collegeId
+                - role
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                collegeId:
+                  type: string
+                role:
+                  type: string
+                departmentId:
+                  type: string
+                sectionId:
+                  type: string
+                specialization:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Bad request or validation error
+        '500':
+          description: Internal server error
+
+  /auth/signin:
+    post:
+      summary: Sign in a user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Sign-in successful, returns JWT token
+        '400':
+          description: Invalid request
+        '401':
+          description: Invalid credentials
+
+  /college:
+    post:
+      summary: Create a new college
+      tags: [College]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: College created successfully
+        '400':
+          description: Validation error
+        '500':
+          description: Internal server error
+    get:
+      summary: Get all colleges
+      tags: [College]
+      responses:
+        '200':
+          description: List of colleges
+        '500':
+          description: Internal server error
+
+  /department:
+    post:
+      summary: Create a new department
+      tags: [Department]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - collegeId
+              properties:
+                name:
+                  type: string
+                collegeId:
+                  type: string
+      responses:
+        '201':
+          description: Department created successfully
+        '400':
+          description: Invalid college ID
+        '500':
+          description: Internal server error
+    get:
+      summary: Get all departments
+      tags: [Department]
+      responses:
+        '200':
+          description: List of departments
+        '500':
+          description: Internal server error
+
+  /department/{id}:
+    get:
+      summary: Get department by ID
+      tags: [Department]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Department details
+        '404':
+          description: Department not found
+        '500':
+          description: Internal server error
+    put:
+      summary: Update department by ID
+      tags: [Department]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                collegeId:
+                  type: string
+      responses:
+        '200':
+          description: Department updated
+        '404':
+          description: Department not found
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete department by ID
+      tags: [Department]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Department deleted
+        '404':
+          description: Department not found
+        '500':
+          description: Internal server error
+
+  /section:
+    post:
+      summary: Create a new section
+      tags: [Section]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - yearId
+              properties:
+                name:
+                  type: string
+                yearId:
+                  type: string
+      responses:
+        '201':
+          description: Section created successfully
+        '400':
+          description: Invalid year ID
+        '500':
+          description: Internal server error
+    get:
+      summary: Get all sections
+      tags: [Section]
+      responses:
+        '200':
+          description: List of sections
+        '500':
+          description: Internal server error
+
+  /section/{id}:
+    get:
+      summary: Get section by ID
+      tags: [Section]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Section details
+        '404':
+          description: Section not found
+        '500':
+          description: Internal server error
+    put:
+      summary: Update section by ID
+      tags: [Section]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                yearId:
+                  type: string
+      responses:
+        '200':
+          description: Section updated
+        '404':
+          description: Section not found
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete section by ID
+      tags: [Section]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Section deleted
+        '404':
+          description: Section not found
+        '500':
+          description: Internal server error
