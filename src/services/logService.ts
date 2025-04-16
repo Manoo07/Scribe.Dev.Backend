@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-import { LOG_LEVEL } from '../constants';
+import { LOG_FORMAT, LOG_LEVEL } from '../constants';
 
 const { splat, combine, timestamp, printf } = winston.format;
 
@@ -11,7 +11,7 @@ export const logger = winston.createLogger({
   handleExceptions: true,
   level: LOG_LEVEL,
   format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSSZZ' }),
+    timestamp({ format: LOG_FORMAT }),
     splat(),
     customFormat
   ),
