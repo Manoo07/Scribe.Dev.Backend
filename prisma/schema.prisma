@@ -23,6 +23,9 @@ model User {
   faculty        Faculty[]
   threadLikes    ThreadLike[]
   threadComments ThreadComment[]
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+
 
   @@index([email])
   @@index([collegeId])

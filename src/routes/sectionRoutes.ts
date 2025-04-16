@@ -80,6 +80,7 @@ router.put('/:id', async (req: Request, res: Response): Promise<any> => {
     const sectionExists = await prisma.section.findUnique({
       where: { id },
     });
+    
 
     if (!sectionExists) {
       return res.status(404).json({ error: 'Section not found' });
