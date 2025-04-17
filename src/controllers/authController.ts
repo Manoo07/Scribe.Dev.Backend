@@ -63,7 +63,18 @@ class AuthController {
     try {
       const token = await this.authService.signin(email, password);
       if (token) {
-        res.status(200).json({ token });
+        const user=await prisma.user.findUnique({where:{email}});
+        if(user)
+        {
+          await prisma.user.update(
+            {
+              where: {id: user.id},
+          data: { lastLogin: new Date() },
+            }
+          )
+        }
+        res.status(200).json({ token});
+       
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }
