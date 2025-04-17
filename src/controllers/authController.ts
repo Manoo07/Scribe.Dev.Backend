@@ -4,8 +4,8 @@ import { Request, Response } from 'express';
 import AuthService from '../services/authService';
 import { sendResetEmail } from '../utils/sendEmail';
 import { generateResetToken } from '../utils/authUtil';
-import crypto from "crypto";
-import { RESET_TOKEN_EXPIRY_TIME } from '../constants';
+import crypto from 'crypto';
+import { HTTP_STATUS_OK, RESET_TOKEN_EXPIRY_TIME } from '../constants';
 
 const prisma = new PrismaClient();
 
@@ -17,16 +17,7 @@ class AuthController {
   }
 
   signup = async (req: Request, res: Response): Promise<any> => {
-    const {
-      name,
-      email,
-      password,
-      collegeId,
-      role,
-      departmentId,
-      sectionId,
-      specialization,
-    } = req.body;
+    const { name, email, password, collegeId, role, departmentId, sectionId, specialization } = req.body;
 
     try {
       const result = await this.authService.signup({
@@ -41,9 +32,7 @@ class AuthController {
       });
 
       if (result.error) {
-        return res
-          .status(result.status || 400)
-          .json({ error: result.error, message: result.message });
+        return res.status(result.status || 400).json({ error: result.error, message: result.message });
       }
 
       return res.status(201).json(result);
@@ -63,7 +52,16 @@ class AuthController {
     try {
       const token = await this.authService.signin(email, password);
       if (token) {
+
         res.status(200).json({ token });
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (user) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
+          });
+        }
+        res.status(HTTP_STATUS_OK).json({ token });
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -78,7 +76,7 @@ class AuthController {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS_OK).json({
         message: 'Reset Password link has been sent.',
       });
     }
@@ -90,14 +88,14 @@ class AuthController {
         where: { email },
         data: {
           resetToken: hashed,
-          resetTokenExpiry: new Date(RESET_TOKEN_EXPIRY_TIME), 
+          resetTokenExpiry: new Date(Date.now()+RESET_TOKEN_EXPIRY_TIME),
         },
       });
 
       await sendResetEmail(email, token);
 
-      res.status(200).json({
-        message: 'If that email exists, a password reset link has been sent.',
+      res.status(HTTP_STATUS_OK).json({
+        message: 'A password reset link has been sent.',
       });
     } catch (error) {
       console.error('Error sending reset email:', error);
@@ -108,7 +106,7 @@ class AuthController {
   resetPassword = async (req: Request, res: Response): Promise<any> => {
     const { token, newPassword } = req.body;
 
-    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+    const hashed = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await prisma.user.findFirst({
       where: {
@@ -120,7 +118,7 @@ class AuthController {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(400).json({ message: 'Invalid or expired token' });
     }
 
     const hashedPassword = await hashPassword(newPassword);
@@ -134,7 +132,7 @@ class AuthController {
       },
     });
 
-    res.json({ message: "Password has been reset successfully." });
+    res.json({ message: 'Password has been reset successfully.' });
   };
 }
 
