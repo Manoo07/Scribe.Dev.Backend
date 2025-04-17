@@ -154,6 +154,7 @@ class AuthService {
         collegeId,
         departmentId,
         sectionId,
+
       },
     });
   }
