@@ -5,6 +5,7 @@ import AuthService from '../services/authService';
 import { sendResetEmail } from '../utils/sendEmail';
 import { generateResetToken } from '../utils/authUtil';
 import crypto from "crypto";
+import { RESET_TOKEN_EXPIRY_TIME } from '../constants';
 
 const prisma = new PrismaClient();
 
@@ -71,14 +72,14 @@ class AuthController {
     }
   };
 
-  forgetPassword = async (req: Request, res: Response): Promise<any> => {
+  forgotPassword = async (req: Request, res: Response): Promise<any> => {
     const { email } = req.body;
 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       return res.status(200).json({
-        message: 'If that email exists, a password reset link has been sent.',
+        message: 'Reset Password link has been sent.',
       });
     }
 
@@ -89,7 +90,7 @@ class AuthController {
         where: { email },
         data: {
           resetToken: hashed,
-          resetTokenExpiry: new Date(Date.now() + 15 * 60 * 1000), 
+          resetTokenExpiry: new Date(RESET_TOKEN_EXPIRY_TIME), 
         },
       });
 
