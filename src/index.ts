@@ -6,7 +6,7 @@ import collegeRoutes from './routes/collegeRoutes';
 import departmentRoutes from './routes/departmentRoutes';
 import sectionRoutes from './routes/sectionRoutes';
 import yearRoutes from './routes/yearRoute';
-import { BASE_URL } from './constants';
+import { BASE_URL } from './constants/constants';
 
 dotenv.config();
 
