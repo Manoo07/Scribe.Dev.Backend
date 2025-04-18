@@ -3,6 +3,20 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const UserDAO = {
+  findByEmail: async (email: string) => {
+    return prisma.user.findUnique({
+      where: { email },
+    });
+  },
+
+  updateLastLogin: async (userId: string) => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        lastLogin: new Date(),
+      },
+    });
+  },
   findByResetToken: async (hashedToken: string) => {
     return prisma.user.findFirst({
       where: {
@@ -24,6 +38,7 @@ const UserDAO = {
       },
     });
   },
+  
 };
 
 export default UserDAO;
