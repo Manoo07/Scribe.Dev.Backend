@@ -22,7 +22,7 @@ app.use(`${BASE_URL}/department`, departmentRoutes);
 app.use(`${BASE_URL}/section`, sectionRoutes);
 app.use(`${BASE_URL}/year`, yearRoutes);
 
-
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+  console.log('Hello all aerver has started');
 });
