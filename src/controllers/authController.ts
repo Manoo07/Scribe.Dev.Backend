@@ -2,10 +2,11 @@ import { hashPassword } from './../utils/hashUtil';
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import AuthService from '../services/authService';
-import { sendResetEmail } from '../utils/sendEmail';
+import { sendResetEmail } from '../services/emailService';
 import { generateResetToken } from '../utils/authUtil';
 import crypto from 'crypto';
-import { HTTP_STATUS_OK, RESET_TOKEN_EXPIRY_TIME } from '../constants';
+import { DIGEST_FORMAT, HASH_ALGORITHM, HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK, HTTP_STATUS_UNAUTHORIZED, RESET_TOKEN_EXPIRY_TIME } from '../constants/constants';
+import UserDAO from '../dao/UserDAO';
 
 const prisma = new PrismaClient();
 
@@ -32,18 +33,18 @@ class AuthController {
       });
 
       if (result.error) {
-        return res.status(result.status || 400).json({ error: result.error, message: result.message });
+        return res.status(result.status || HTTP_STATUS_BAD_REQUEST).json({ error: result.error, message: result.message });
       }
 
-      return res.status(201).json(result);
+      return res.status(HTTP_STATUS_CREATED).json(result);
     } catch (error: any) {
       console.error('Signup Error:', error);
 
       if (error.message.includes('Invalid collegeId')) {
-        return res.status(400).json({ error: error.message });
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
       }
 
-      return res.status(500).json({ error: 'An unknown error occurred' });
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'An unknown error occurred' });
     }
   };
 
@@ -53,7 +54,7 @@ class AuthController {
       const token = await this.authService.signin(email, password);
       if (token) {
 
-        res.status(200).json({ token });
+        res.status(HTTP_STATUS_OK ).json({ token });
         const user = await prisma.user.findUnique({ where: { email } });
         if (user) {
           await prisma.user.update({
@@ -63,10 +64,10 @@ class AuthController {
         }
         res.status(HTTP_STATUS_OK).json({ token });
       } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Invalid credentials' });
       }
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
     }
   };
 
@@ -99,38 +100,25 @@ class AuthController {
       });
     } catch (error) {
       console.error('Error sending reset email:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
     }
   };
 
   resetPassword = async (req: Request, res: Response): Promise<any> => {
     const { token, newPassword } = req.body;
 
-    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const hashed = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        resetToken: hashed,
-        resetTokenExpiry: {
-          gt: new Date(),
-        },
-      },
-    });
+    const user = await UserDAO.findByResetToken(hashed);
+
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Invalid or expired token' });
     }
 
     const hashedPassword = await hashPassword(newPassword);
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
+    await UserDAO.updatePasswordAndClearToken(user.id, hashedPassword);
 
     res.json({ message: 'Password has been reset successfully.' });
   };
