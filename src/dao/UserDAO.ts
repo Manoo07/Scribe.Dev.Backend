@@ -9,6 +9,8 @@ const UserDAO = {
     });
   },
 
+
+
   updateLastLogin: async (userId: string) => {
     return prisma.user.update({
       where: { id: userId },
@@ -35,6 +37,15 @@ const UserDAO = {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
+      },
+    });
+  },
+  updateResetToken: async (email: string, hashedToken: string, expiryTime: number) => {
+    return prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: hashedToken,
+        resetTokenExpiry: new Date(Date.now() + expiryTime),
       },
     });
   },

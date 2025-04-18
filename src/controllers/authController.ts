@@ -1,12 +1,17 @@
-import { hashPassword } from './../utils/hashUtil';
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import AuthService from '../services/authService';
-import { sendResetEmail } from '../services/emailService';
-import { generateResetToken } from '../utils/authUtil';
-import crypto from 'crypto';
-import { DIGEST_FORMAT, HASH_ALGORITHM, HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK, HTTP_STATUS_UNAUTHORIZED, RESET_TOKEN_EXPIRY_TIME } from '../constants/constants';
+
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CREATED,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+  HTTP_STATUS_UNAUTHORIZED,
+} from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
+
 
 const prisma = new PrismaClient();
 
@@ -33,7 +38,9 @@ class AuthController {
       });
 
       if (result.error) {
-        return res.status(result.status || HTTP_STATUS_BAD_REQUEST).json({ error: result.error, message: result.message });
+        return res
+          .status(result.status || HTTP_STATUS_BAD_REQUEST)
+          .json({ error: result.error, message: result.message });
       }
 
       return res.status(HTTP_STATUS_CREATED).json(result);
@@ -44,7 +51,7 @@ class AuthController {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
       }
 
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'An unknown error occurred' });
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'An unknown error occurred' });
     }
   };
 
@@ -53,8 +60,7 @@ class AuthController {
     try {
       const token = await this.authService.signin(email, password);
       if (token) {
-
-        res.status(HTTP_STATUS_OK ).json({ token });
+        res.status(HTTP_STATUS_OK).json({ token });
         const user = await UserDAO.findByEmail(email);
         if (user) {
           await UserDAO.updateLastLogin(user.id);
@@ -71,53 +77,39 @@ class AuthController {
   forgotPassword = async (req: Request, res: Response): Promise<any> => {
     const { email } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email } });
-
-    if (!user) {
-      return res.status(HTTP_STATUS_OK).json({
-        message: 'Reset Password link has been sent.',
+    if (!email) {
+      return res.status(HTTP_STATUS_NOT_FOUND).json({
+        message: 'Email is required',
       });
     }
-
-    const { token, hashed } = generateResetToken();
-
+  
     try {
-      await prisma.user.update({
-        where: { email },
-        data: {
-          resetToken: hashed,
-          resetTokenExpiry: new Date(Date.now()+RESET_TOKEN_EXPIRY_TIME),
-        },
-      });
-
-      await sendResetEmail(email, token);
-
+      await this.authService.forgotPassword(email);
       res.status(HTTP_STATUS_OK).json({
         message: 'A password reset link has been sent.',
       });
-    } catch (error) {
-      console.error('Error sending reset email:', error);
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+      if (error.message === 'User not found. Please sign up.') {
+        return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
+      }
+  
+      console.error('Error in forgotPassword:', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
     }
   };
 
   resetPassword = async (req: Request, res: Response): Promise<any> => {
     const { token, newPassword } = req.body;
-
-    const hashed = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
-
-    const user = await UserDAO.findByResetToken(hashed);
-
-
-    if (!user) {
-      return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Invalid or expired token' });
+    try {
+      await this.authService.resetPassword(token, newPassword);
+      res.status(HTTP_STATUS_OK).json({
+        message: 'Password has been reset successfully.',
+      });
+    } catch (error: any) {
+      res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to reset password',
+      });
     }
-
-    const hashedPassword = await hashPassword(newPassword);
-
-    await UserDAO.updatePasswordAndClearToken(user.id, hashedPassword);
-
-    res.json({ message: 'Password has been reset successfully.' });
   };
 }
 

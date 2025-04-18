@@ -14,6 +14,7 @@ export async function sendResetEmail(to: string, token: string) {
 
   await transporter.sendMail({
     from: process.env.SMTP_GMAIL,
+    to,
     subject: PASSWORD_RESET_SUBJECT,
     html: getPasswordResetHtml(RESET_URL(token))
   });
