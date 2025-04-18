@@ -55,12 +55,9 @@ class AuthController {
       if (token) {
 
         res.status(HTTP_STATUS_OK ).json({ token });
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await UserDAO.findByEmail(email);
         if (user) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() },
-          });
+          await UserDAO.updateLastLogin(user.id);
         }
         res.status(HTTP_STATUS_OK).json({ token });
       } else {
