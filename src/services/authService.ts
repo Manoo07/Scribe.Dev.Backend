@@ -1,13 +1,20 @@
 import { PrismaClient, Role } from '@prisma/client';
 import { comparePasswords, hashPassword } from '../utils/hashUtil';
 import { generateToken } from '../utils/jwtUtil';
-import { DIGEST_FORMAT, HASH_ALGORITHM, HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR, RESET_TOKEN_EXPIRY_TIME, USER_NOT_FOUND_ERROR } from '../constants/constants';
+import {
+  DIGEST_FORMAT,
+  HASH_ALGORITHM,
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  RESET_TOKEN_EXPIRY_TIME,
+  Roles,
+  USER_NOT_FOUND_ERROR,
+} from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
 import { generateResetToken } from '../utils/authUtil';
 import { sendResetEmail } from './emailService';
 import crypto from 'crypto';
 import { logger } from './logService';
-
 
 interface SignupParams {
   name: string;
@@ -40,7 +47,11 @@ class AuthService {
     const missingFields = this.checkMissingFields(params);
     if (missingFields) {
       logger.warn(`Missing required fields: ${missingFields.join(', ')}`);
-      return { error: 'Missing required fields.', message: `Missing fields: ${missingFields.join(', ')}`, status: HTTP_STATUS_BAD_REQUEST };
+      return {
+        error: 'Missing required fields.',
+        message: `Missing fields: ${missingFields.join(', ')}`,
+        status: HTTP_STATUS_BAD_REQUEST,
+      };
     }
 
     try {
@@ -60,9 +71,9 @@ class AuthService {
 
         await this.createUserRole(this.prisma, user.id, role, collegeId, departmentId, sectionId);
 
-        if (role === 'STUDENT') {
+        if (role === Roles.STUDENT) {
           await this.createStudent(this.prisma, user.id);
-        } else if (role === 'FACULTY') {
+        } else if (role === Roles.FACULTY) {
           await this.createFaculty(this.prisma, user.id, departmentId, specialization);
         }
 
@@ -73,7 +84,7 @@ class AuthService {
       return result;
     } catch (err: any) {
       logger.error(`Error during signup for user ${email}: ${err.message}`);
-      console.error('Error during signup:', err);
+      logger.error('Error during signup:', err);
       return this.handleSignupError(err);
     }
   }
@@ -94,27 +105,27 @@ class AuthService {
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await UserDAO.findByEmail(email);
-  
+
     if (!user) {
       logger.error(`User ${email} not found during password reset.`);
       throw new Error(USER_NOT_FOUND_ERROR);
     }
-  
+
     const { token, hashed } = generateResetToken();
     await UserDAO.updateResetToken(email, hashed, RESET_TOKEN_EXPIRY_TIME);
     await sendResetEmail(email, token);
     logger.info(`Password reset token sent to user ${email}.`);
   }
-  
+
   public async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashed = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
     const user = await UserDAO.findByResetToken(hashed);
-  
+
     if (!user) {
       logger.error(`Invalid or expired token during password reset.`);
       throw new Error('Invalid or expired token');
     }
-    
+
     const hashedPassword = await hashPassword(newPassword);
     await UserDAO.updatePasswordAndClearToken(user.id, hashedPassword);
     logger.info(`User ${user.email} successfully reset their password.`);

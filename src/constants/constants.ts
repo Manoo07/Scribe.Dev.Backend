@@ -18,3 +18,9 @@ export const BCRYPT_SALT_ROUNDS = 10;
 export const USER_NOT_FOUND_ERROR = 'User not found. Please sign up.';
 export const JWT_EXPIRATION = '1h';
 export const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+export const Roles = Object.freeze({
+  STUDENT: 'STUDENT',
+  FACULTY: 'FACULTY',
+  ADMIN: 'ADMIN',
+  PRINCIPAL: 'PRINCIPAL',
+});

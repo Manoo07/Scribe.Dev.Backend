@@ -6,7 +6,7 @@ import collegeRoutes from './routes/collegeRoutes';
 import departmentRoutes from './routes/departmentRoutes';
 import sectionRoutes from './routes/sectionRoutes';
 import yearRoutes from './routes/yearRoute';
-import { BASE_URL } from './constants/constants';
+import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from './constants/constants';
 import { logger } from './services/logService';
 
 dotenv.config();
@@ -27,7 +27,7 @@ app.use(`${BASE_URL}/year`, yearRoutes);
 // Global error handler middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error(`Unhandled Error: ${err.message}`, { stack: err.stack });
-  res.status(500).json({
+  res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
     message: 'Something went wrong!',
     error: err.message,
   });
