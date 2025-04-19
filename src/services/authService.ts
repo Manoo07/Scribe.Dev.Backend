@@ -1,6 +1,11 @@
 import { PrismaClient, Role } from '@prisma/client';
 import { comparePasswords, hashPassword } from '../utils/hashUtil';
 import { generateToken } from '../utils/jwtUtil';
+import { DIGEST_FORMAT, HASH_ALGORITHM, HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR, RESET_TOKEN_EXPIRY_TIME } from '../constants/constants';
+import UserDAO from '../dao/UserDAO';
+import { generateResetToken } from '../utils/authUtil';
+import { sendResetEmail } from './emailService';
+import crypto from 'crypto';
 
 interface SignupParams {
   name: string;
@@ -32,7 +37,7 @@ class AuthService {
 
     const missingFields = this.checkMissingFields(params);
     if (missingFields) {
-      return { error: 'Missing required fields.', message: `Missing fields: ${missingFields.join(', ')}`, status: 400 };
+      return { error: 'Missing required fields.', message: `Missing fields: ${missingFields.join(', ')}`, status: HTTP_STATUS_BAD_REQUEST };
     }
 
     try {
@@ -97,15 +102,15 @@ class AuthService {
     const { role, departmentId, sectionId } = params;
 
     if (!Object.values(Role).includes(role)) {
-      return { error: 'Invalid role provided.', status: 400 };
+      return { error: 'Invalid role provided.', status: HTTP_STATUS_BAD_REQUEST };
     }
 
     if ((role === 'STUDENT' || role === 'FACULTY') && !departmentId) {
-      return { error: 'Department ID is required for Student and Faculty roles.', status: 400 };
+      return { error: 'Department ID is required for Student and Faculty roles.', status: HTTP_STATUS_BAD_REQUEST };
     }
 
     if (role === 'STUDENT' && !sectionId) {
-      return { error: 'Section ID is required for Student roles.', status: 400 };
+      return { error: 'Section ID is required for Student roles.', status: HTTP_STATUS_BAD_REQUEST };
     }
     return null;
   }
@@ -186,13 +191,39 @@ class AuthService {
     if (error.code === 'P2002') {
       return { error: 'Email address is already in use.', status: 409 };
     } else if (error.code === 'P2025' || error.message === 'College Not found') {
-      return { error: 'Invalid College, Department, or Section ID.', status: 400 };
+      return { error: 'Invalid College, Department, or Section ID.', status:HTTP_STATUS_BAD_REQUEST  };
     } else if (error.message === 'Specialization is required for faculty.') {
-      return { error: error.message, status: 400 };
+      return { error: error.message, status: HTTP_STATUS_BAD_REQUEST };
     } else {
-      return { error: 'Failed to create user.', status: 500 };
+      return { error: 'Failed to create user.', status: HTTP_STATUS_INTERNAL_SERVER_ERROR };
     }
   }
+
+
+  public async forgotPassword(email: string): Promise<void> {
+    const user = await UserDAO.findByEmail(email);
+  
+    if (!user) {
+      throw new Error('User not found. Please sign up.');
+    }
+  
+    const { token, hashed } = generateResetToken();
+    await UserDAO.updateResetToken(email, hashed, RESET_TOKEN_EXPIRY_TIME);
+    await sendResetEmail(email, token);
+  }
+  
+  public async resetPassword(token: string, newPassword: string): Promise<void> {
+    const hashed = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
+    const user = await UserDAO.findByResetToken(hashed);
+  
+    if (!user) {
+      throw new Error('Invalid or expired token');
+    }
+  
+    const hashedPassword = await hashPassword(newPassword);
+    await UserDAO.updatePasswordAndClearToken(user.id, hashedPassword);
+  }
+    
 }
 
 export default AuthService;

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from '../constants/constants';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -20,23 +21,23 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(201).json({ message: 'College created successfully', college });
+    return res.status(HTTP_STATUS_CREATED).json({ message: 'College created successfully', college });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.errors });
     }
     console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const collegeData = await prisma.college.findMany({});
-    return res.status(200).json(collegeData);
+    return res.status(HTTP_STATUS_OK).json(collegeData);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 

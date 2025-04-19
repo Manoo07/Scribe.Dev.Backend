@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '../constants/constants';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -15,7 +16,7 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
     });
 
     if (!yearExists) {
-      return res.status(400).json({ error: 'Invalid yearId: No such year exists.' });
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid yearId: No such year exists.' });
     }
 
     // Create the section
@@ -26,10 +27,10 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(201).json(section);
+    return res.status(HTTP_STATUS_CREATED).json(section);
   } catch (error) {
     console.error('Error creating section:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -42,10 +43,10 @@ router.get('/', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(200).json(sections);
+    return res.status(HTTP_STATUS_OK ).json(sections);
   } catch (error) {
     console.error('Error fetching sections:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -60,13 +61,13 @@ router.get('/:id', async (req: Request, res: Response): Promise<any> => {
     });
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' });
+      return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Section not found' });
     }
 
-    return res.status(200).json(section);
+    return res.status(HTTP_STATUS_OK ).json(section);
   } catch (error) {
     console.error('Error fetching section:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -80,9 +81,10 @@ router.put('/:id', async (req: Request, res: Response): Promise<any> => {
     const sectionExists = await prisma.section.findUnique({
       where: { id },
     });
+    
 
     if (!sectionExists) {
-      return res.status(404).json({ error: 'Section not found' });
+      return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Section not found' });
     }
 
     // Update section
@@ -94,10 +96,10 @@ router.put('/:id', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(200).json(updatedSection);
+    return res.status(HTTP_STATUS_OK ).json(updatedSection);
   } catch (error) {
     console.error('Error updating section:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -112,7 +114,7 @@ router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
     });
 
     if (!sectionExists) {
-      return res.status(404).json({ error: 'Section not found' });
+      return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Section not found' });
     }
 
     // Delete section
@@ -120,10 +122,10 @@ router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
       where: { id },
     });
 
-    return res.status(200).json({ message: 'Section deleted successfully' });
+    return res.status(HTTP_STATUS_OK ).json({ message: 'Section deleted successfully' });
   } catch (error) {
     console.error('Error deleting section:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
 
