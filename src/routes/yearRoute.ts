@@ -1,11 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '../constants/constants';
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CREATED,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+} from '../constants/constants';
+import { logger } from '../services/logService';
 
 const prisma = new PrismaClient();
 const router = Router();
 
-// ✅ Create a new year
 router.post('/', async (req: Request, res: Response): Promise<any> => {
   const { name, departmentId } = req.body;
 
@@ -29,8 +35,8 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
 
     return res.status(HTTP_STATUS_CREATED).json(year);
   } catch (error) {
-    console.error('Error creating year:', error);
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    logger.error('Error creating year:', error);
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -43,10 +49,10 @@ router.get('/', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(HTTP_STATUS_OK ).json(years);
+    return res.status(HTTP_STATUS_OK).json(years);
   } catch (error) {
-    console.error('Error fetching years:', error);
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    logger.error('Error fetching years:', error);
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -64,10 +70,10 @@ router.get('/:id', async (req: Request, res: Response): Promise<any> => {
       return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Year not found' });
     }
 
-    return res.status(HTTP_STATUS_OK ).json(year);
+    return res.status(HTTP_STATUS_OK).json(year);
   } catch (error) {
-    console.error('Error fetching year:', error);
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    logger.error('Error fetching year:', error);
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -95,14 +101,13 @@ router.put('/:id', async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    return res.status(HTTP_STATUS_OK ).json(updatedYear);
+    return res.status(HTTP_STATUS_OK).json(updatedYear);
   } catch (error) {
-    console.error('Error updating year:', error);
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    logger.error('Error updating year:', error);
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
 
-// ✅ Delete year
 router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
 
@@ -121,10 +126,10 @@ router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
       where: { id },
     });
 
-    return res.status(HTTP_STATUS_OK ).json({ message: 'Year deleted successfully' });
+    return res.status(HTTP_STATUS_OK).json({ message: 'Year deleted successfully' });
   } catch (error) {
-    console.error('Error deleting year:', error);
-    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
+    logger.error('Error deleting year:', error);
+    return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
 

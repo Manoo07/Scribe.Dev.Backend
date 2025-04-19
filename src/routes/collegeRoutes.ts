@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from '../constants/constants';
+import { logger } from '../services/logService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -26,7 +27,7 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
     if (error instanceof z.ZodError) {
       return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.errors });
     }
-    console.error(error);
+    logger.error('Error while creating College',error);
     return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
@@ -36,7 +37,7 @@ router.get('/', async (req: Request, res: Response): Promise<any> => {
     const collegeData = await prisma.college.findMany({});
     return res.status(HTTP_STATUS_OK).json(collegeData);
   } catch (error) {
-    console.error(error);
+    logger.error('Error while fecthing Colleges',error);
     return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR ).json({ error: 'Internal Server Error' });
   }
 });
