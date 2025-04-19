@@ -1,16 +1,18 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Use a secure secret in production
-const JWT_EXPIRATION = '1h'; // Token expiration time
+import { JWT_EXPIRATION, JWT_SECRET } from '../constants/constants';
+import { logger } from '../services/logService';
 
 export const generateToken = (userId: string) => {
-    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  logger.info('Generating token');
+  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 };
 
 export const verifyToken = (token: string) => {
-    try {
-        return jwt.verify(token, JWT_SECRET);
-    } catch (error) {
-        return null;
-    }
+  logger.info('Verifing the JWT token');
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    logger.warn('Error while verifing JWT token');
+    return null;
+  }
 };

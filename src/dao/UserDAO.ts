@@ -1,55 +1,89 @@
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../services/logService';
 
 const prisma = new PrismaClient();
 
 const UserDAO = {
   findByEmail: async (email: string) => {
-    return prisma.user.findUnique({
-      where: { email },
-    });
+    try {
+      logger.info(`Finding user by email: ${email}`);
+      const user = await prisma.user.findUnique({ where: { email } });
+      logger.info(`User ${user ? 'found' : 'not found'} for email: ${email}`);
+      return user;
+    } catch (error) {
+      logger.error(`Error finding user by email ${email}: ${error}`);
+      throw error;
+    }
   },
-
-
 
   updateLastLogin: async (userId: string) => {
-    return prisma.user.update({
-      where: { id: userId },
-      data: {
-        lastLogin: new Date(),
-      },
-    });
+    try {
+      logger.info(`Updating last login for user ID: ${userId}`);
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { lastLogin: new Date() },
+      });
+      logger.info(`Last login updated for user ID: ${userId}`);
+      return updatedUser;
+    } catch (error) {
+      logger.error(`Error updating last login for user ID ${userId}: ${error}`);
+      throw error;
+    }
   },
+
   findByResetToken: async (hashedToken: string) => {
-    return prisma.user.findFirst({
-      where: {
-        resetToken: hashedToken,
-        resetTokenExpiry: {
-          gt: new Date(),
+    try {
+      logger.info(`Finding user by reset token`);
+      const user = await prisma.user.findFirst({
+        where: {
+          resetToken: hashedToken,
+          resetTokenExpiry: { gt: new Date() },
         },
-      },
-    });
+      });
+      logger.info(`User ${user ? 'found' : 'not found'} with reset token`);
+      return user;
+    } catch (error) {
+      logger.error(`Error finding user by reset token: ${error}`);
+      throw error;
+    }
   },
 
   updatePasswordAndClearToken: async (userId: string, hashedPassword: string) => {
-    return prisma.user.update({
-      where: { id: userId },
-      data: {
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null,
-      },
-    });
+    try {
+      logger.info(`Updating password and clearing token for user ID: ${userId}`);
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+          resetToken: null,
+          resetTokenExpiry: null,
+        },
+      });
+      logger.info(`Password updated and token cleared for user ID: ${userId}`);
+      return updatedUser;
+    } catch (error) {
+      logger.error(`Error updating password and clearing token for user ID ${userId}: ${error}`);
+      throw error;
+    }
   },
+
   updateResetToken: async (email: string, hashedToken: string, expiryTime: number) => {
-    return prisma.user.update({
-      where: { email },
-      data: {
-        resetToken: hashedToken,
-        resetTokenExpiry: new Date(Date.now() + expiryTime),
-      },
-    });
+    try {
+      logger.info(`Updating reset token for email: ${email}`);
+      const updatedUser = await prisma.user.update({
+        where: { email },
+        data: {
+          resetToken: hashedToken,
+          resetTokenExpiry: new Date(Date.now() + expiryTime),
+        },
+      });
+      logger.info(`Reset token updated for email: ${email}`);
+      return updatedUser;
+    } catch (error) {
+      logger.error(`Error updating reset token for email ${email}: ${error}`);
+      throw error;
+    }
   },
-  
 };
 
 export default UserDAO;

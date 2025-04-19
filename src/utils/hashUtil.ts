@@ -1,12 +1,15 @@
 import bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../constants/constants';
+import { logger } from '../services/logService';
 
-const SALT_ROUNDS = 10;
 
 export const hashPassword = async (password: string): Promise<string> => {
-    const salt = await bcrypt.genSalt(SALT_ROUNDS);
+    logger.info('Hashing password')
+    const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
     return await bcrypt.hash(password, salt);
 };
 
 export const comparePasswords = async (password: string, hashedPassword: string): Promise<boolean> => {
+    logger.info('Comparing hash & plain string password')
     return await bcrypt.compare(password, hashedPassword);
 };
