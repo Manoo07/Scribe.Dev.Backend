@@ -1,9 +1,41 @@
-import { PrismaClient } from '@prisma/client';
 import { logger } from '../services/logService';
+import { PrismaClient, User } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 const UserDAO = {
+  findAll: async () => {
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        email: true,
+      },
+    });
+  },
+
+  findById: async (id: string) => {
+    return prisma.user.findUnique({
+      where: { id },
+    });
+  },
+
+  findByUsername: (username: string) => {
+    return prisma.user.findUnique({
+      where: { username },
+    });
+  },
+
+  updateById: (id: string, data: Partial<User>) => {
+    return prisma.user.update({ where: { id }, data });
+  },
+
+  deleteById: (id: string) => {
+    return prisma.user.delete({ where: { id } });
+  },
+
   findByEmail: async (email: string) => {
     try {
       logger.info(`Finding user by email: ${email}`);

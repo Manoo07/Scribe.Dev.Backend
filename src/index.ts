@@ -8,6 +8,7 @@ import sectionRoutes from './routes/sectionRoutes';
 import yearRoutes from './routes/yearRoute';
 import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from './constants/constants';
 import { logger } from './services/logService';
+import userRoutes from './routes/userRoutes';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(`${BASE_URL}/college`, collegeRoutes);
 app.use(`${BASE_URL}/department`, departmentRoutes);
 app.use(`${BASE_URL}/section`, sectionRoutes);
 app.use(`${BASE_URL}/year`, yearRoutes);
+app.use(`${BASE_URL}/user`, userRoutes);
 
 // Global error handler middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
