@@ -10,9 +10,11 @@ import {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
   HTTP_STATUS_UNAUTHORIZED,
+  PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
+import { generateUsername } from '../utils/userUtils';
 
 const prisma = new PrismaClient();
 
@@ -29,9 +31,7 @@ class AuthController {
     logger.info('[AuthController] Signup request received for email:', email);
 
     try {
-      let newUsername=username?.trim();
-      if(!newUsername && firstName && lastName)
-        newUsername= `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase()}`
+      const newUsername = generateUsername(username, firstName, lastName);
       const result = await this.authService.signup({
         firstName,
         lastName,
@@ -57,7 +57,7 @@ class AuthController {
     } catch (error: any) {
       logger.error('[AuthController] Signup error:', error);
 
-      if(error.code==='P2002' && error.meta?.target?.includes('username'))
+      if(error.code===PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username'))
         return res.status(HTTP_STATUS_CONFLICT).json({error:'Username already taken'})
 
       if (error.message.includes('Invalid collegeId')) {

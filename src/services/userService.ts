@@ -2,6 +2,7 @@ import { PrismaClient, User } from '@prisma/client';
 import UserDAO from '../dao/UserDAO';
 import { logger } from './logService';
 import {
+  ALPHABETIC_ONLY_REGEX,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
@@ -35,19 +36,13 @@ class UserService {
 
   async updateUser(id: string, data: Partial<User>) {
     try {
-      if (data.username && !/^[a-zA-Z]+$/.test(data.username)) {
+      if (data.username && !ALPHABETIC_ONLY_REGEX.test(data.username)) {
         logger.warn(`[UserService] Invalid username format: ${data.username}`);
         throw { status: HTTP_STATUS_BAD_REQUEST, message: 'Username must contain only alphabets' };
       }
 
       if (data.username) {
-        const existingUser = await this.prisma.user.findFirst({
-          where: {
-            username: data.username,
-            NOT: { id },
-          },
-        });
-
+        const existingUser = await UserDAO.findByUsernameExcludingId(data.username, id);
         if (existingUser) {
           logger.warn(`[UserService] Username already taken: ${data.username}`);
           throw { status: HTTP_STATUS_BAD_REQUEST, message: 'Username already taken' };

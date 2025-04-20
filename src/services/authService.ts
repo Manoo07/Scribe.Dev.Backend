@@ -5,9 +5,13 @@ import {
   DIGEST_FORMAT,
   HASH_ALGORITHM,
   HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CONFLICT,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  PRISMA_RECORD_NOT_FOUND,
+  PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   RESET_TOKEN_EXPIRY_TIME,
   Roles,
+  USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
 } from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
@@ -15,6 +19,7 @@ import { generateResetToken } from '../utils/authUtil';
 import { sendResetEmail } from './emailService';
 import crypto from 'crypto';
 import { logger } from './logService';
+import { generateUsername } from '../utils/userUtils';
 
 interface SignupParams {
   firstName: string;
@@ -66,13 +71,8 @@ class AuthService {
       }
 
       logger.info(`Signing up user: ${email}`);
-      let finalUsername = username?.trim();
-      if (!finalUsername)
-        finalUsername = `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName
-          .charAt(0)
-          .toUpperCase()}`;
-
-        const usernameRegex=/^[A-Za-z]+(?: [A-Za-z])?$/;
+      const finalUsername = generateUsername(username, firstName, lastName);
+        const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
         if (!usernameRegex.test(finalUsername)) {
           return { error: 'Username must contain only alphabetic characters (a-z, A-Z)', status: HTTP_STATUS_BAD_REQUEST };
         }
@@ -161,9 +161,10 @@ class AuthService {
   }
 
   private checkMissingFields(params: SignupParams): string[] | null {
-    const { username, email, password, collegeId, role, departmentId, sectionId } = params;
+    const { firstName,lastName,username, email, password, collegeId, role, departmentId, sectionId } = params;
     const missing: string[] = [];
-
+    if(!firstName) missing.push('firstName')
+    if(!lastName) missing.push('lastName')
     if (!username) missing.push('username');
     if (!email) missing.push('email');
     if (!password) missing.push('password');
@@ -280,10 +281,10 @@ class AuthService {
   }
 
   private handleSignupError(error: any): ErrorResponse {
-    if (error.code === 'P2002') {
+    if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION) {
       logger.warn('Email address is already in use.');
-      return { error: 'Email address is already in use.', status: 409 };
-    } else if (error.code === 'P2025' || error.message === 'College Not found') {
+      return { error: 'Email address is already in use.', status: HTTP_STATUS_CONFLICT };
+    } else if (error.code === PRISMA_RECORD_NOT_FOUND || error.message === 'College Not found') {
       logger.warn('Invalid College, Department, or Section ID.');
 
       return { error: 'Invalid College, Department, or Section ID.', status: HTTP_STATUS_BAD_REQUEST };
