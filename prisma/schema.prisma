@@ -43,7 +43,7 @@ model UserRole {
   departmentId String?     @db.Uuid
   section      Section?    @relation(fields: [sectionId], references: [id])
   sectionId    String?     @db.Uuid
-  user         User        @relation("UserToUserRole", fields: [userId], references: [id])
+  user         User        @relation("UserToUserRole", fields: [userId], references: [id],onDelete:Cascade)
 }
 
 enum Role {

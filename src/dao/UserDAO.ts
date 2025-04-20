@@ -6,6 +6,8 @@ import { PRISMA_RECORD_NOT_FOUND } from '../constants/constants';
 const prisma = new PrismaClient();
 
 const UserDAO = {
+  
+
   findAll: async () => {
     try {
       logger.info('Fetching all users');

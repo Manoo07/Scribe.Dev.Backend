@@ -109,6 +109,8 @@ class AuthService {
         return user;
       });
 
+      
+
       logger.info(`User ${email} successfully signed up.`);
       return result;
     } catch (err: any) {

@@ -57,7 +57,6 @@ class UserService {
       throw error.status ? error : { status: HTTP_STATUS_INTERNAL_SERVER_ERROR, message: 'Failed to update user' };
     }
   }
-  //deleteUser is on Hold for now
   async deleteUser(id: string) {
     try {
       const user = await UserDAO.deleteById(id);
