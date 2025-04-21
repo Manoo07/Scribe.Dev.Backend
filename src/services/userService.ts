@@ -1,5 +1,5 @@
 import { PrismaClient, User } from '@prisma/client';
-import UserDAO from '@dao/UserDAO';
+import UserDAO from '@dao/userDAO';
 import { logger } from '@services/logService';
 import {
   ALPHABETIC_ONLY_REGEX,

@@ -1,14 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from '@routes/authRoutes';
-import collegeRoutes from '@routes/collegeRoutes';
-import departmentRoutes from '@routes/departmentRoutes';
-import sectionRoutes from '@routes/sectionRoutes';
-import yearRoutes from '@routes/yearRoute';
 import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
 import { logger } from '@services/logService';
-import userRoutes from '@routes/userRoutes';
+import { routers } from '@routes/index';
 
 dotenv.config();
 
@@ -18,13 +13,10 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use(`${BASE_URL}/auth`, authRoutes);
-app.use(`${BASE_URL}/college`, collegeRoutes);
-app.use(`${BASE_URL}/department`, departmentRoutes);
-app.use(`${BASE_URL}/section`, sectionRoutes);
-app.use(`${BASE_URL}/year`, yearRoutes);
-app.use(`${BASE_URL}/user`, userRoutes);
+// Define routes
+routers.forEach(({ basePath, router, middleware = [] }) => {
+  app.use(`${BASE_URL}${basePath}`, ...middleware, router);
+});
 
 // Global error handler middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

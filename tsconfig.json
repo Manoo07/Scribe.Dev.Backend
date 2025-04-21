@@ -10,7 +10,8 @@
       "@utils/*": ["utils/*"],
       "@controllers/*": ["controllers/*"],
       "@middleware/*": ["middleware/*"],
-      "@routes/*": ["routes/*"]
+      "@routes/*": ["routes/*"],
+      "@customTypes/*": ["customTypes/*"]
     },
     "module": "commonjs",
     "target": "ES2020",

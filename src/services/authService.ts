@@ -14,7 +14,7 @@ import {
   USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
-import UserDAO from '@dao/UserDAO';
+import UserDAO from '@dao/userDAO';
 import { generateResetToken } from '@utils/authUtil';
 import { sendResetEmail } from '@services/emailService';
 import crypto from 'crypto';

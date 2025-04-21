@@ -10,10 +10,9 @@ import {
 import { logger } from '@services/logService';
 
 const prisma = new PrismaClient();
-const router = Router();
+export const sectionRouter = Router();
 
-// ✅ Create a new section
-router.post('/', async (req: Request, res: Response): Promise<any> => {
+sectionRouter.post('/', async (req: Request, res: Response): Promise<any> => {
   const { name, yearId } = req.body;
 
   try {
@@ -41,8 +40,7 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// ✅ Get all sections
-router.get('/', async (req: Request, res: Response): Promise<any> => {
+sectionRouter.get('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const sections = await prisma.section.findMany({
       include: {
@@ -57,8 +55,7 @@ router.get('/', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// ✅ Get section by ID
-router.get('/:id', async (req: Request, res: Response): Promise<any> => {
+sectionRouter.get('/:id', async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
 
   try {
@@ -78,8 +75,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// ✅ Update section
-router.put('/:id', async (req: Request, res: Response): Promise<any> => {
+sectionRouter.put('/:id', async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
   const { name, yearId } = req.body;
 
@@ -109,8 +105,7 @@ router.put('/:id', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// ✅ Delete section
-router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
+sectionRouter.delete('/:id', async (req: Request, res: Response): Promise<any> => {
   const { id } = req.params;
 
   try {
@@ -134,5 +129,3 @@ router.delete('/:id', async (req: Request, res: Response): Promise<any> => {
     return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
   }
 });
-
-export default router;

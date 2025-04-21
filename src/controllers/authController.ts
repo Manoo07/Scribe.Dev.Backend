@@ -13,7 +13,7 @@ import {
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
-import UserDAO from '@dao/UserDAO';
+import UserDAO from '@dao/userDAO';
 import { generateUsername } from '@utils/userUtils';
 
 const prisma = new PrismaClient();
