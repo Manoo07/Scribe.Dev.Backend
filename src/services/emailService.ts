@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
-import { getPasswordResetHtml, PASSWORD_RESET_SUBJECT } from '../constants/EmailTemplate';
-import { GMAIL_SERVICE, RESET_URL } from '../constants/constants';
-import { logger } from './logService';
+import { getPasswordResetHtml, PASSWORD_RESET_SUBJECT } from '@constants/EmailTemplate';
+import { GMAIL_SERVICE, RESET_URL } from '@constants/constants';
+import { logger } from '@services/logService';
 
 export async function sendResetEmail(to: string, token: string) {
   logger.info(`Attempting to send password reset email to ${to}`);

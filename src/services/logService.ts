@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-import { LOG_FORMAT, LOG_LEVEL } from '../constants/constants';
+import { LOG_FORMAT, LOG_LEVEL } from '@constants/constants';
 
 const { splat, combine, timestamp, printf } = winston.format;
 

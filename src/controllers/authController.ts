@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
-import AuthService from '../services/authService';
-import { logger } from '../services/logService';
+import AuthService from '@services/authService';
+import { logger } from '@services/logService';
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CONFLICT,
@@ -12,9 +12,9 @@ import {
   HTTP_STATUS_UNAUTHORIZED,
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
-} from '../constants/constants';
-import UserDAO from '../dao/UserDAO';
-import { generateUsername } from '../utils/userUtils';
+} from '@constants/constants';
+import UserDAO from '@dao/userDAO';
+import { generateUsername } from '@utils/userUtils';
 
 const prisma = new PrismaClient();
 

@@ -6,10 +6,10 @@ import {
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_OK,
-} from '../constants/constants';
-import { logger } from '../services/logService';
+} from '@constants/constants';
+import { logger } from '@services/logService';
 
-const router = Router();
+export const collegeRouter = Router();
 const prisma = new PrismaClient();
 
 // Define validation schema using zod
@@ -18,7 +18,7 @@ const collegeSchema = z.object({
   name: z.string().min(3, 'College name must be at least 3 characters long'),
 });
 
-router.post('/', async (req: Request, res: Response): Promise<any> => {
+collegeRouter.post('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const validatedData = collegeSchema.parse(req.body);
     const college = await prisma.college.create({
@@ -37,7 +37,7 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-router.get('/', async (req: Request, res: Response): Promise<any> => {
+collegeRouter.get('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const collegeData = await prisma.college.findMany({});
     return res.status(HTTP_STATUS_OK).json(collegeData);
@@ -47,4 +47,4 @@ router.get('/', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-export default router;
+export default collegeRouter;
