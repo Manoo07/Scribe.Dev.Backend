@@ -10,10 +10,6 @@ const customFormat = printf(({ timestamp, level, message, meta }) => {
 export const logger = winston.createLogger({
   handleExceptions: true,
   level: LOG_LEVEL,
-  format: combine(
-    timestamp({ format: LOG_FORMAT }),
-    splat(),
-    customFormat
-  ),
+  format: combine(timestamp({ format: LOG_FORMAT }), splat(), customFormat),
   transports: [new winston.transports.Console()],
 });

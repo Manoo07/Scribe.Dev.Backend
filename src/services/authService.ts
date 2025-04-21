@@ -72,17 +72,20 @@ class AuthService {
 
       logger.info(`Signing up user: ${email}`);
       const finalUsername = generateUsername(username, firstName, lastName);
-        const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
-        if (!usernameRegex.test(finalUsername)) {
-          return { error: 'Username must contain only alphabetic characters (a-z, A-Z)', status: HTTP_STATUS_BAD_REQUEST };
-        }
-        const existingUserWithUsername = await this.prisma.user.findUnique({
-          where: { username: finalUsername },
-        });
+      const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
+      if (!usernameRegex.test(finalUsername)) {
+        return {
+          error: 'Username must contain only alphabetic characters (a-z, A-Z)',
+          status: HTTP_STATUS_BAD_REQUEST,
+        };
+      }
+      const existingUserWithUsername = await this.prisma.user.findUnique({
+        where: { username: finalUsername },
+      });
 
-        if (existingUserWithUsername) {
-          return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
-        }
+      if (existingUserWithUsername) {
+        return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
+      }
 
       const hashedPassword = await hashPassword(password);
 
@@ -108,8 +111,6 @@ class AuthService {
 
         return user;
       });
-
-      
 
       logger.info(`User ${email} successfully signed up.`);
       return result;
@@ -163,10 +164,10 @@ class AuthService {
   }
 
   private checkMissingFields(params: SignupParams): string[] | null {
-    const { firstName,lastName,username, email, password, collegeId, role, departmentId, sectionId } = params;
+    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId } = params;
     const missing: string[] = [];
-    if(!firstName) missing.push('firstName')
-    if(!lastName) missing.push('lastName')
+    if (!firstName) missing.push('firstName');
+    if (!lastName) missing.push('lastName');
     if (!username) missing.push('username');
     if (!email) missing.push('email');
     if (!password) missing.push('password');
@@ -298,6 +299,5 @@ class AuthService {
       return { error: 'Failed to create user.', status: HTTP_STATUS_INTERNAL_SERVER_ERROR };
     }
   }
-
 }
 export default AuthService;

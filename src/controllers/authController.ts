@@ -26,7 +26,8 @@ class AuthController {
   }
 
   signup = async (req: Request, res: Response): Promise<any> => {
-    const { firstName,lastName,username, email, password, collegeId, role, departmentId, sectionId, specialization } = req.body;
+    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
+      req.body;
 
     logger.info('[AuthController] Signup request received for email:', email);
 
@@ -35,7 +36,7 @@ class AuthController {
       const result = await this.authService.signup({
         firstName,
         lastName,
-        username:newUsername,
+        username: newUsername,
         email,
         password,
         collegeId,
@@ -57,8 +58,8 @@ class AuthController {
     } catch (error: any) {
       logger.error('[AuthController] Signup error:', error);
 
-      if(error.code===PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username'))
-        return res.status(HTTP_STATUS_CONFLICT).json({error:'Username already taken'})
+      if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username'))
+        return res.status(HTTP_STATUS_CONFLICT).json({ error: 'Username already taken' });
 
       if (error.message.includes('Invalid collegeId')) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
