@@ -5,9 +5,13 @@ import {
   DIGEST_FORMAT,
   HASH_ALGORITHM,
   HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CONFLICT,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  PRISMA_RECORD_NOT_FOUND,
+  PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   RESET_TOKEN_EXPIRY_TIME,
   Roles,
+  USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
 } from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
@@ -15,9 +19,12 @@ import { generateResetToken } from '../utils/authUtil';
 import { sendResetEmail } from './emailService';
 import crypto from 'crypto';
 import { logger } from './logService';
+import { generateUsername } from '../utils/userUtils';
 
 interface SignupParams {
-  name: string;
+  firstName: string;
+  lastName: string;
+  username: string;
   email: string;
   password: string;
   collegeId: string;
@@ -42,11 +49,13 @@ class AuthService {
   }
 
   public async signup(params: SignupParams): Promise<SignupResult> {
-    const { name, email, password, collegeId, role, departmentId, sectionId, specialization } = params;
+    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
+      params;
 
     const missingFields = this.checkMissingFields(params);
     if (missingFields) {
       logger.warn(`Missing required fields: ${missingFields.join(', ')}`);
+
       return {
         error: 'Missing required fields.',
         message: `Missing fields: ${missingFields.join(', ')}`,
@@ -62,12 +71,32 @@ class AuthService {
       }
 
       logger.info(`Signing up user: ${email}`);
+      const finalUsername = generateUsername(username, firstName, lastName);
+        const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
+        if (!usernameRegex.test(finalUsername)) {
+          return { error: 'Username must contain only alphabetic characters (a-z, A-Z)', status: HTTP_STATUS_BAD_REQUEST };
+        }
+        const existingUserWithUsername = await this.prisma.user.findUnique({
+          where: { username: finalUsername },
+        });
+
+        if (existingUserWithUsername) {
+          return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
+        }
 
       const hashedPassword = await hashPassword(password);
 
       // Prisma Transaction
       const result = await this.prisma.$transaction(async () => {
-        const user = await this.createUser(this.prisma, name, email, hashedPassword, collegeId);
+        const user = await this.createUser(
+          this.prisma,
+          firstName,
+          lastName,
+          username,
+          email,
+          hashedPassword,
+          collegeId
+        );
 
         await this.createUserRole(this.prisma, user.id, role, collegeId, departmentId, sectionId);
 
@@ -79,6 +108,8 @@ class AuthService {
 
         return user;
       });
+
+      
 
       logger.info(`User ${email} successfully signed up.`);
       return result;
@@ -132,10 +163,11 @@ class AuthService {
   }
 
   private checkMissingFields(params: SignupParams): string[] | null {
-    const { name, email, password, collegeId, role, departmentId, sectionId } = params;
+    const { firstName,lastName,username, email, password, collegeId, role, departmentId, sectionId } = params;
     const missing: string[] = [];
-
-    if (!name) missing.push('name');
+    if(!firstName) missing.push('firstName')
+    if(!lastName) missing.push('lastName')
+    if (!username) missing.push('username');
     if (!email) missing.push('email');
     if (!password) missing.push('password');
     if (!collegeId) missing.push('collegeId');
@@ -171,7 +203,9 @@ class AuthService {
 
   private async createUser(
     prisma: PrismaClient,
-    name: string,
+    firstName: string,
+    lastName: string,
+    username: string,
     email: string,
     passwordHash: string,
     collegeId?: string
@@ -186,7 +220,9 @@ class AuthService {
 
       const user = await prisma.user.create({
         data: {
-          name,
+          firstName,
+          lastName,
+          username,
           email,
           password: passwordHash,
           collegeId,
@@ -247,11 +283,12 @@ class AuthService {
   }
 
   private handleSignupError(error: any): ErrorResponse {
-    if (error.code === 'P2002') {
+    if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION) {
       logger.warn('Email address is already in use.');
-      return { error: 'Email address is already in use.', status: 409 };
-    } else if (error.code === 'P2025' || error.message === 'College Not found') {
+      return { error: 'Email address is already in use.', status: HTTP_STATUS_CONFLICT };
+    } else if (error.code === PRISMA_RECORD_NOT_FOUND || error.message === 'College Not found') {
       logger.warn('Invalid College, Department, or Section ID.');
+
       return { error: 'Invalid College, Department, or Section ID.', status: HTTP_STATUS_BAD_REQUEST };
     } else if (error.message === 'Specialization is required for faculty.') {
       logger.warn('Specialization is required for faculty.');
@@ -261,6 +298,6 @@ class AuthService {
       return { error: 'Failed to create user.', status: HTTP_STATUS_INTERNAL_SERVER_ERROR };
     }
   }
-}
 
+}
 export default AuthService;

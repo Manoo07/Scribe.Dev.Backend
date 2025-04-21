@@ -4,14 +4,17 @@ import AuthService from '../services/authService';
 import { logger } from '../services/logService';
 import {
   HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CONFLICT,
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
   HTTP_STATUS_UNAUTHORIZED,
+  PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '../constants/constants';
 import UserDAO from '../dao/UserDAO';
+import { generateUsername } from '../utils/userUtils';
 
 const prisma = new PrismaClient();
 
@@ -23,13 +26,16 @@ class AuthController {
   }
 
   signup = async (req: Request, res: Response): Promise<any> => {
-    const { name, email, password, collegeId, role, departmentId, sectionId, specialization } = req.body;
+    const { firstName,lastName,username, email, password, collegeId, role, departmentId, sectionId, specialization } = req.body;
 
     logger.info('[AuthController] Signup request received for email:', email);
 
     try {
+      const newUsername = generateUsername(username, firstName, lastName);
       const result = await this.authService.signup({
-        name,
+        firstName,
+        lastName,
+        username:newUsername,
         email,
         password,
         collegeId,
@@ -50,6 +56,10 @@ class AuthController {
       return res.status(HTTP_STATUS_CREATED).json(result);
     } catch (error: any) {
       logger.error('[AuthController] Signup error:', error);
+
+      if(error.code===PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username'))
+        return res.status(HTTP_STATUS_CONFLICT).json({error:'Username already taken'})
+
       if (error.message.includes('Invalid collegeId')) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
       }

@@ -9,12 +9,13 @@ generator client {
 
 model User {
   id             String          @id @default(uuid()) @db.Uuid
-  name           String
+  firstName      String
+  lastName       String
+  username       String          @unique
   email          String          @unique
   password       String
   college        College?        @relation(fields: [collegeId], references: [id])
   collegeId      String?         @db.Uuid
-  roles          UserRole[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   mfaSecret      String?
@@ -23,9 +24,10 @@ model User {
   faculty        Faculty[]
   threadLikes    ThreadLike[]
   threadComments ThreadComment[]
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-
+  messages       Messages[]
+  userRole       UserRole?       @relation("UserToUserRole")
+  resetToken     String?
+  resetTokenExpiry DateTime?
 
   @@index([email])
   @@index([collegeId])
@@ -33,7 +35,7 @@ model User {
 
 model UserRole {
   id           String      @id @default(uuid()) @db.Uuid
-  userId       String      @db.Uuid
+  userId       String      @unique @db.Uuid
   role         Role
   college      College?    @relation(fields: [collegeId], references: [id], name: "UserRoleToCollege")
   collegeId    String?     @db.Uuid
@@ -41,10 +43,7 @@ model UserRole {
   departmentId String?     @db.Uuid
   section      Section?    @relation(fields: [sectionId], references: [id])
   sectionId    String?     @db.Uuid
-  user         User        @relation(fields: [userId], references: [id])
-
-  @@unique([userId, role, departmentId, sectionId])
-  @@index([role])
+  user         User        @relation("UserToUserRole", fields: [userId], references: [id],onDelete:Cascade)
 }
 
 enum Role {
@@ -233,6 +232,7 @@ model Thread {
   parentId       String?          @db.Uuid
   threadLikes    ThreadLike[]
   threadComments ThreadComment[]
+  messages       Messages[]
   createdAt      DateTime         @default(now())
   replies        Thread[]         @relation("ThreadReplies")
 
@@ -262,4 +262,18 @@ model ThreadComment {
   updatedAt DateTime @updatedAt
 
   @@index([threadId])
+}
+
+model Messages {
+  id        String   @id @default(uuid()) @db.Uuid
+  content   String
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  threadId  String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([threadId])
+  @@index([userId])
 }

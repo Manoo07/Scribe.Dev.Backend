@@ -1,9 +1,110 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { logger } from '../services/logService';
+import { PrismaClient, User } from '@prisma/client';
+import { PRISMA_RECORD_NOT_FOUND } from '../constants/constants';
 
 const prisma = new PrismaClient();
 
 const UserDAO = {
+  
+
+  findAll: async () => {
+    try {
+      logger.info('Fetching all users');
+      return await prisma.user.findMany({
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          email: true,
+        },
+      });
+    } catch (error) {
+      logger.error('Error fetching all users:', error);
+      throw new Error('Failed to fetch users');
+    }
+  },
+  findByUsernameExcludingId: async (username: string, excludeId: string) => {
+    try {
+      logger.info(`Checking if username "${username}" is taken by another user (excluding ID: ${excludeId})`);
+      const user = await prisma.user.findFirst({
+        where: {
+          username,
+          NOT: { id: excludeId },
+        },
+      });
+  
+      if (user) {
+        logger.info(`Username "${username}" is already taken by another user.`);
+      } else {
+        logger.info(`Username "${username}" is available.`);
+      }
+  
+      return user;
+    } catch (error) {
+      logger.error(`Error checking username uniqueness for "${username}":`, error);
+      throw new Error('Failed to check username uniqueness');
+    }
+  },
+  
+
+  findById: async (id: string) => {
+    try {
+      logger.info(`Fetching user by ID: ${id}`);
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) {
+        logger.warn(`User not found with ID: ${id}`);
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      logger.error(`Error fetching user by ID: ${id}`, error);
+      throw error;
+    }
+  },
+
+  findByUsername: async (username: string) => {
+    try {
+      logger.info(`Fetching user by username: ${username}`);
+      return await prisma.user.findUnique({ where: { username } });
+    } catch (error) {
+      logger.error(`Error fetching user by username: ${username}`, error);
+      throw error;
+    }
+  },
+
+  updateById: async (id: string, data: Partial<User>) => {
+    try {
+      logger.info(`Updating user with ID: ${id}`, data);
+      return await prisma.user.update({
+        where: { id },
+        data,
+      });
+    } catch (error: any) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === PRISMA_RECORD_NOT_FOUND) {
+        logger.warn(`User not found for update: ${id}`);
+        throw new Error('User not found');
+      }
+      logger.error(`Error updating user by ID: ${id}`, error);
+      throw new Error('Failed to update user');
+    }
+  },
+
+  deleteById: async (id: string) => {
+    try {
+      logger.info(`Deleting user with ID: ${id}`);
+      return await prisma.user.delete({ where: { id } });
+    } catch (error: any) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === PRISMA_RECORD_NOT_FOUND) {
+        logger.warn(`User not found for deletion: ${id}`);
+        throw new Error('User not found');
+      }
+      logger.error(`Error deleting user with ID: ${id}`, error);
+      throw new Error('Failed to delete user');
+    }
+  },
+
   findByEmail: async (email: string) => {
     try {
       logger.info(`Finding user by email: ${email}`);
