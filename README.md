@@ -92,6 +92,27 @@ npx prisma migrate deploy
 npx prisma generate
 ```
 
+### 7. Seeding the Database
+
+After setting up your database and running migrations, you can populate it with initial (sample) data using the Prisma seed script.
+
+- Ensure your database is running and migrations are applied.
+- Run the seed command:
+
+```bash
+npx prisma db seed
+```
+
+This will execute the seed script defined in your package.json (`prisma/seed.ts`), inserting temporary data into your database.
+
+Inspect the Seeded Data:
+
+- Use Prisma Studio to visually check your seeded data:
+
+```bash
+npx prisma studio
+```
+
 ## Additional Notes
 
 - If you update your Prisma models in `schema.prisma`, rerun:
