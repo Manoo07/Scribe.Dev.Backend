@@ -6,8 +6,6 @@ import { PRISMA_RECORD_NOT_FOUND } from '../constants/constants';
 const prisma = new PrismaClient();
 
 const UserDAO = {
-  
-
   findAll: async () => {
     try {
       logger.info('Fetching all users');
@@ -34,20 +32,19 @@ const UserDAO = {
           NOT: { id: excludeId },
         },
       });
-  
+
       if (user) {
         logger.info(`Username "${username}" is already taken by another user.`);
       } else {
         logger.info(`Username "${username}" is available.`);
       }
-  
+
       return user;
     } catch (error) {
       logger.error(`Error checking username uniqueness for "${username}":`, error);
       throw new Error('Failed to check username uniqueness');
     }
   },
-  
 
   findById: async (id: string) => {
     try {

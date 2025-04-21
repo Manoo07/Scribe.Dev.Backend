@@ -78,11 +78,51 @@ The server should now be running at `http://localhost:3000` (or your configured 
 
 ---
 
+### 6. Applying Prisma Migrations Locally
+
+- Use the following command to apply any pending migrations to the local database:
+
+```bash
+npx prisma migrate deploy
+```
+
+- After applying the migrations, regenerate the `Prisma Client` to reflect the updated schema:
+
+```bash
+npx prisma generate
+```
+
+### 7. Seeding the Database
+
+After setting up your database and running migrations, you can populate it with initial (sample) data using the Prisma seed script.
+
+- Ensure your database is running and migrations are applied.
+- Run the seed command:
+
+```bash
+npx prisma db seed
+```
+
+This will execute the seed script defined in your package.json (`prisma/seed.ts`), inserting temporary data into your database.
+
+Inspect the Seeded Data:
+
+- Use Prisma Studio to visually check your seeded data:
+
+```bash
+npx prisma studio
+```
+
 ## Additional Notes
 
 - If you update your Prisma models in `schema.prisma`, rerun:
-  - `npx prisma migrate dev --name your-migration-name`
-  - `npx prisma generate`
+  ```bash
+  npx prisma migrate dev --name your-migration-name
+  ```
+- To generate the prisma client we need to run :
+  ```bash
+  npx prisma generate
+  ```
 - Make sure PostgreSQL is running before running migrations or starting the server.
 
 ---
