@@ -6,8 +6,8 @@ import {
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_OK,
-} from '../constants/constants';
-import { logger } from '../services/logService';
+} from '@constants/constants';
+import { logger } from '@services/logService';
 
 const router = Router();
 const prisma = new PrismaClient();

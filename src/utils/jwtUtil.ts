@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { JWT_EXPIRATION, JWT_SECRET } from '../constants/constants';
-import { logger } from '../services/logService';
+import { JWT_EXPIRATION, JWT_SECRET } from '@constants/constants';
+import { logger } from '@services/logService';
 
 export const generateToken = (userId: string) => {
   logger.info('Generating token');

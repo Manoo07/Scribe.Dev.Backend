@@ -1,12 +1,12 @@
 import { PrismaClient, User } from '@prisma/client';
-import UserDAO from '../dao/UserDAO';
-import { logger } from './logService';
+import UserDAO from '@dao/UserDAO';
+import { logger } from '@services/logService';
 import {
   ALPHABETIC_ONLY_REGEX,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
-} from '../constants/constants';
+} from '@constants/constants';
 
 class UserService {
   private prisma = new PrismaClient();

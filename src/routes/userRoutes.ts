@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import UserController from '../controllers/userController';
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../constants/constants';
+import UserController from '@controllers/userController';
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
 
 const router = Router();
 const userController = new UserController();

@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
-import { comparePasswords, hashPassword } from '../utils/hashUtil';
-import { generateToken } from '../utils/jwtUtil';
+import { comparePasswords, hashPassword } from '@utils/hashUtil';
+import { generateToken } from '@utils/jwtUtil';
 import {
   DIGEST_FORMAT,
   HASH_ALGORITHM,
@@ -13,13 +13,13 @@ import {
   Roles,
   USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
-} from '../constants/constants';
-import UserDAO from '../dao/UserDAO';
-import { generateResetToken } from '../utils/authUtil';
-import { sendResetEmail } from './emailService';
+} from '@constants/constants';
+import UserDAO from '@dao/UserDAO';
+import { generateResetToken } from '@utils/authUtil';
+import { sendResetEmail } from '@services/emailService';
 import crypto from 'crypto';
-import { logger } from './logService';
-import { generateUsername } from '../utils/userUtils';
+import { logger } from '@services/logService';
+import { generateUsername } from '@utils/userUtils';
 
 interface SignupParams {
   firstName: string;

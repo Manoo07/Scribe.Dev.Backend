@@ -1,14 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes';
-import collegeRoutes from './routes/collegeRoutes';
-import departmentRoutes from './routes/departmentRoutes';
-import sectionRoutes from './routes/sectionRoutes';
-import yearRoutes from './routes/yearRoute';
-import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from './constants/constants';
-import { logger } from './services/logService';
-import userRoutes from './routes/userRoutes';
+import authRoutes from '@routes/authRoutes';
+import collegeRoutes from '@routes/collegeRoutes';
+import departmentRoutes from '@routes/departmentRoutes';
+import sectionRoutes from '@routes/sectionRoutes';
+import yearRoutes from '@routes/yearRoute';
+import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
+import { logger } from '@services/logService';
+import userRoutes from '@routes/userRoutes';
 
 dotenv.config();
 

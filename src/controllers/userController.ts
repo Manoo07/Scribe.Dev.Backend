@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { HTTP_STATUS_OK, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../constants/constants';
-import { logger } from '../services/logService';
-import UserService from '../services/userService';
+import { HTTP_STATUS_OK, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
+import { logger } from '@services/logService';
+import UserService from '@services/userService';
 
 class UserController {
   private userService = new UserService();

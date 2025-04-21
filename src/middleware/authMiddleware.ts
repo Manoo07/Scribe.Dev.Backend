@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwtUtil';
-import '../types/express';
-import { HTTP_STATUS_UNAUTHORIZED } from '../constants/constants';
+import { verifyToken } from '@utils/jwtUtil';
+import '@types/express';
+import { HTTP_STATUS_UNAUTHORIZED } from '@constants/constants';
 
 declare module 'express-serve-static-core' {
   interface Request {

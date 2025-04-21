@@ -1,7 +1,7 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { logger } from '../services/logService';
+import { logger } from '@services/logService';
 import { PrismaClient, User } from '@prisma/client';
-import { PRISMA_RECORD_NOT_FOUND } from '../constants/constants';
+import { PRISMA_RECORD_NOT_FOUND } from '@constants/constants';
 
 const prisma = new PrismaClient();
 

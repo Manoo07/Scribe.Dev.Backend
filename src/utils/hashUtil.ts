@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import { BCRYPT_SALT_ROUNDS } from '../constants/constants';
-import { logger } from '../services/logService';
+import { BCRYPT_SALT_ROUNDS } from '@constants/constants';
+import { logger } from '@services/logService';
 
 export const hashPassword = async (password: string): Promise<string> => {
   logger.info('Hashing password');
