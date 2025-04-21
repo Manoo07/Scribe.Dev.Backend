@@ -1,5 +1,10 @@
-// src/controllers/collegeController.ts
-import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NO_CONTENT, HTTP_STATUS_OK } from '@constants/constants';
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_CREATED,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NO_CONTENT,
+  HTTP_STATUS_OK,
+} from '@constants/constants';
 import { Request, Response } from 'express';
 import CollegeService from '../services/collegeService';
 
@@ -47,7 +52,7 @@ export class CollegeController {
   };
 
   public deleteCollege = async (req: Request, res: Response): Promise<void> => {
-    const id = req.params.id
+    const id = req.params.id;
 
     try {
       await this.collegeService.deleteCollege(id);

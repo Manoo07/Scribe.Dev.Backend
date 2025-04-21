@@ -40,7 +40,6 @@ yearRouter.post('/', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// ✅ Get all years
 yearRouter.get('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const years = await prisma.year.findMany({
