@@ -78,11 +78,30 @@ The server should now be running at `http://localhost:3000` (or your configured 
 
 ---
 
+### 6. Applying Prisma Migrations Locally
+
+- Use the following command to apply any pending migrations to the local database:
+
+```bash
+npx prisma migrate deploy
+```
+
+- After applying the migrations, regenerate the `Prisma Client` to reflect the updated schema:
+
+```bash
+npx prisma generate
+```
+
 ## Additional Notes
 
 - If you update your Prisma models in `schema.prisma`, rerun:
-  - `npx prisma migrate dev --name your-migration-name`
-  - `npx prisma generate`
+  ```bash
+  npx prisma migrate dev --name your-migration-name
+  ```
+- To generate the prisma client we need to run :
+  ```bash
+  npx prisma generate
+  ```
 - Make sure PostgreSQL is running before running migrations or starting the server.
 
 ---
