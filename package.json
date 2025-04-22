@@ -12,7 +12,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.10.1",
-    "prisma": "^6.4.1",
+    "prisma": "^6.6.0",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
   },
@@ -31,10 +31,10 @@
   },
   "scripts": {
     "dev": "nodemon",
-    "start": "ts-node -r tsconfig-paths/register src/index.ts"
+    "start": "ts-node --transpile-only prisma/seed.ts"
   },
   "prisma": {
-    "seed": "ts-node --transpile-only prisma/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed.ts"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
