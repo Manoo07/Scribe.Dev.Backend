@@ -9,20 +9,35 @@ import {
 } from '@constants/constants';
 import { logger } from '@services/logService';
 import SectionService from '@services/sectionService';
+import { sectionSchema } from '@utils/validations/section.schema';
+import { ZodError } from 'zod';
+import SectionDAO from '@dao/sectionDAO';
 
 export class SectionController {
   private sectionService = new SectionService();
 
   public createSection = async (req: Request, res: Response): Promise<void> => {
     logger.info('[SectionController] Received request to create section', req.body);
-    const result = await this.sectionService.createSection(req.body);
+    try {
+      sectionSchema.parse(req.body);
 
-    if (result.error) {
-      logger.warn('[SectionController] Failed to create section', result.error);
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
-    } else {
+      const yearExists = await SectionDAO.yearExists(req.body.yearId);
+      if (!yearExists) {
+        logger.warn(`[SectionController] Invalid yearId: ${req.body.yearId}`);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid yearId: No such year exists.' });
+      }
+
+      const result = await this.sectionService.createSection(req.body);
       logger.info('[SectionController] Section created successfully');
       res.status(HTTP_STATUS_CREATED).json(result.section);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationMessage = error.errors.map((e) => e.message).join(', ');
+        logger.warn('[SectionController] Validation error:', validationMessage);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: validationMessage });
+      }
+      logger.error('[SectionController] Failed to create section', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to create section' });
     }
   };
 
@@ -45,36 +60,53 @@ export class SectionController {
     if (!section) {
       logger.warn(`[SectionController] Section not found for ID: ${id}`);
       res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Section not found' });
-    } else {
-      res.status(HTTP_STATUS_OK).json(section);
     }
+
+    res.status(HTTP_STATUS_OK).json(section);
   };
 
   public updateSection = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
     logger.info(`[SectionController] Updating section with ID: ${id}`, req.body);
-    const result = await this.sectionService.updateSection(id, req.body);
 
-    if (result.error) {
-      logger.warn(`[SectionController] Failed to update section ID ${id}`, result.error);
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
-    } else {
+    try {
+      sectionSchema.partial().parse(req.body);
+
+      if (req.body.yearId) {
+        const yearExists = await SectionDAO.yearExists(req.body.yearId);
+        if (!yearExists) {
+          logger.warn(`[SectionController] Invalid yearId: ${req.body.yearId}`);
+          res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid yearId: No such year exists.' });
+        }
+      }
+
+      const result = await this.sectionService.updateSection(id, req.body);
+      if (result.error) {
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      }
+
       logger.info(`[SectionController] Section with ID ${id} updated successfully`);
       res.status(HTTP_STATUS_OK).json(result.section);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationMessage = error.errors.map((e) => e.message).join(', ');
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: validationMessage });
+      }
+      logger.error('[SectionController] Error updating section', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to update section' });
     }
   };
 
   public deleteSection = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
-    logger.info(`[SectionController]Deleting section with ID: ${id}`);
+    logger.info(`[SectionController] Deleting section with ID: ${id}`);
     const result = await this.sectionService.deleteSection(id);
 
     if (result.error) {
-      logger.error(`[SectionController] Failed to delete section ID ${id}`, result.error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: result.error });
-    } else {
-      logger.info(`[SectionController] Section with ID ${id} deleted successfully`);
-      res.status(HTTP_STATUS_NO_CONTENT).send();
     }
+
+    logger.info(`[SectionController] Section with ID ${id} deleted successfully`);
+    res.status(HTTP_STATUS_NO_CONTENT).send();
   };
 }

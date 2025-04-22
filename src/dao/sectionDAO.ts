@@ -1,61 +1,38 @@
 import { PrismaClient, Section } from '@prisma/client';
 import { logger } from '@services/logService';
+
 const prisma = new PrismaClient();
 
 const SectionDAO = {
   createSection: async (data: { name: string; yearId: string }): Promise<Section> => {
-    try {
-      logger.info('[SectionDAO] Creating new section', data);
-      const section = await prisma.section.create({ data });
-      logger.info('[SectionDAO] Section created successfully', section);
-      return section;
-    } catch (error) {
-      logger.error('[SectionDAO] Error creating section', error);
-      throw error;
-    }
+    logger.info('[SectionDAO] Creating new section', data);
+    return await prisma.section.create({ data });
   },
 
   getSections: async (): Promise<Section[]> => {
-    try {
-      logger.info('[SectionDAO] Fetching all sections');
-      const sections = await prisma.section.findMany({ include: { year: true } });
-      logger.info(`[SectionDAO] Fetched ${sections.length} sections`);
-      return sections;
-    } catch (error) {
-      logger.error('[SectionDAO] Error fetching sections', error);
-      throw error;
-    }
+    logger.info('[SectionDAO] Fetching all sections');
+    return await prisma.section.findMany({ include: { year: true } });
   },
 
   getSectionById: async (id: string): Promise<Section | null> => {
-    try {
-      logger.info(`[SectionDAO] Fetching section with ID: ${id}`);
-      return await prisma.section.findUnique({ where: { id }, include: { year: true } });
-    } catch (error) {
-      logger.error(`[SectionDAO] Error fetching section with ID ${id}`, error);
-      throw error;
-    }
+    logger.info(`[SectionDAO] Fetching section ID ${id}`);
+    return await prisma.section.findUnique({ where: { id }, include: { year: true } });
   },
 
-  updateSection: async (id: string, data: { name?: string; yearId?: string }): Promise<Section> => {
-    try {
-      logger.info(`[SectionDAO] Updating section id=${id}`, data);
-      return await prisma.section.update({ where: { id }, data });
-    } catch (error) {
-      logger.error(`[SectionDAO] Error updating section with ID ${id}`, error);
-      throw error;
-    }
+  updateSection: async (id: string, data: { name?: string; yearId?: string }): Promise<Section | null> => {
+    logger.info(`[SectionDAO] Updating section ID ${id}`, data);
+    return await prisma.section.update({ where: { id }, data });
   },
 
   deleteSection: async (id: string): Promise<void> => {
-    try {
-      logger.info(`[SectionDAO] Deleting section with ID: ${id}`);
-      await prisma.section.delete({ where: { id } });
-      logger.info('[SectionDAO] Section deleted successfully');
-    } catch (error) {
-      logger.error(`[SectionDAO] Error deleting section with ID ${id}`, error);
-      throw error;
-    }
+    logger.info(`[SectionDAO] Deleting section ID ${id}`);
+    await prisma.section.delete({ where: { id } });
+  },
+
+  yearExists: async (yearId: string): Promise<boolean> => {
+    logger.info(`[SectionDAO] Checking existence of year ID: ${yearId}`);
+    const year = await prisma.year.findUnique({ where: { id: yearId } });
+    return !!year;
   },
 };
 
