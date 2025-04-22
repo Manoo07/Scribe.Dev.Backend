@@ -77,7 +77,7 @@ export class DepartmentController {
     }
   };
 
-  public updateDepartment = async (req: Request, res: Response): Promise<void | ZodError> => {
+  public updateDepartment = async (req: Request, res: Response): Promise<void > => {
     const { id } = req.params;
     const updateFields = req.body;
 
