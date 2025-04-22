@@ -14,7 +14,7 @@ class DepartmentService {
   }): Promise<{ department?: Department; error?: string }> {
     try {
       logger.info('[DepartmentService] Validating department creation input');
-      departmentSchema.parse(params);
+      
 
       logger.info(`[DepartmentService] Checking if college ID=${params.collegeId} exists`);
       const college = await prisma.college.findUnique({ where: { id: params.collegeId } });
@@ -28,10 +28,6 @@ class DepartmentService {
       const department = await DepartmentDAO.createDepartment(params);
       return { department };
     } catch (error) {
-      if (error instanceof ZodError) {
-        logger.warn('[DepartmentService] Validation error:', error.errors);
-        return { error: error.errors.map((e) => e.message).join(', ') };
-      }
       logger.error('[DepartmentService] Unexpected error during department creation:', error);
       return { error: 'An unexpected error occurred' };
     }
@@ -62,10 +58,6 @@ class DepartmentService {
 
       return department ? { department } : { error: 'Department not found' };
     } catch (error) {
-      if (error instanceof ZodError) {
-        logger.warn('[DepartmentService] Validation error during update:', error.errors);
-        return { error: error.errors.map((e) => e.message).join(', ') };
-      }
       logger.error(`[DepartmentService] Unexpected error updating department ID=${id}:`, error);
       return { error: 'Failed to update department' };
     }
