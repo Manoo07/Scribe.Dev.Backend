@@ -8,25 +8,25 @@ generator client {
 }
 
 model User {
-  id             String          @id @default(uuid()) @db.Uuid
-  firstName      String
-  lastName       String
-  username       String          @unique
-  email          String          @unique
-  password       String
-  college        College?        @relation(fields: [collegeId], references: [id])
-  collegeId      String?         @db.Uuid
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  mfaSecret      String?
-  lastLogin      DateTime?
-  students       Student[]
-  faculty        Faculty[]
-  threadLikes    ThreadLike[]
-  threadComments ThreadComment[]
-  messages       Messages[]
-  userRole       UserRole?       @relation("UserToUserRole")
-  resetToken     String?
+  id               String          @id @default(uuid()) @db.Uuid
+  firstName        String
+  lastName         String
+  username         String          @unique
+  email            String          @unique
+  password         String
+  college          College?        @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  collegeId        String?         @db.Uuid
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  mfaSecret        String?
+  lastLogin        DateTime?
+  students         Student[]
+  faculty          Faculty[]
+  threadLikes      ThreadLike[]
+  threadComments   ThreadComment[]
+  messages         Messages[]
+  userRole         UserRole?       @relation("UserToUserRole")
+  resetToken       String?
   resetTokenExpiry DateTime?
 
   @@index([email])
@@ -37,13 +37,13 @@ model UserRole {
   id           String      @id @default(uuid()) @db.Uuid
   userId       String      @unique @db.Uuid
   role         Role
-  college      College?    @relation(fields: [collegeId], references: [id], name: "UserRoleToCollege")
+  college      College?    @relation(fields: [collegeId], references: [id], name: "UserRoleToCollege", onDelete: Cascade)
   collegeId    String?     @db.Uuid
-  department   Department? @relation(fields: [departmentId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   departmentId String?     @db.Uuid
-  section      Section?    @relation(fields: [sectionId], references: [id])
+  section      Section?    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId    String?     @db.Uuid
-  user         User        @relation("UserToUserRole", fields: [userId], references: [id],onDelete:Cascade)
+  user         User        @relation("UserToUserRole", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
@@ -56,7 +56,7 @@ enum Role {
 }
 
 model College {
-  id          String       @id @default(uuid()) @db.Uuid // Ensure id is UUID
+  id          String       @id @default(uuid()) @db.Uuid
   name        String       @unique
   departments Department[]
   users       User[]
@@ -67,7 +67,7 @@ model College {
 model Department {
   id        String     @id @default(uuid()) @db.Uuid
   name      String
-  college   College    @relation(fields: [collegeId], references: [id])
+  college   College    @relation(fields: [collegeId], references: [id], onDelete: Cascade)
   collegeId String     @db.Uuid
   years     Year[]
   createdAt DateTime   @default(now())
@@ -79,7 +79,7 @@ model Department {
 model Year {
   id           String     @id @default(uuid()) @db.Uuid
   name         String
-  department   Department @relation(fields: [departmentId], references: [id])
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   departmentId String     @db.Uuid
   sections     Section[]
   createdAt    DateTime   @default(now())
@@ -90,7 +90,7 @@ model Year {
 model Section {
   id         String             @id @default(uuid()) @db.Uuid
   name       String
-  year       Year               @relation(fields: [yearId], references: [id])
+  year       Year               @relation(fields: [yearId], references: [id], onDelete: Cascade)
   yearId     String             @db.Uuid
   classrooms VirtualClassroom[]
   createdAt  DateTime           @default(now())
@@ -101,7 +101,7 @@ model Section {
 
 model Student {
   id                       String                    @id @default(uuid()) @db.Uuid
-  user                     User                      @relation(fields: [userId], references: [id])
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId                   String                    @db.Uuid
   enrollmentNo             String                    @unique
   createdAt                DateTime                  @default(now())
@@ -113,7 +113,7 @@ model Student {
 
 model Faculty {
   id             String             @id @default(uuid()) @db.Uuid
-  user           User               @relation(fields: [userId], references: [id])
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String             @db.Uuid
   specialization String
   classrooms     VirtualClassroom[]
@@ -123,9 +123,9 @@ model Faculty {
 model VirtualClassroom {
   id                       String                    @id @default(uuid()) @db.Uuid
   name                     String
-  section                  Section                   @relation(fields: [sectionId], references: [id])
+  section                  Section                   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId                String                    @db.Uuid
-  faculty                  Faculty                   @relation(fields: [facultyId], references: [id])
+  faculty                  Faculty                   @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   facultyId                String                    @db.Uuid
   units                    Unit[]
   assignments              Assignment[]
@@ -141,9 +141,9 @@ model VirtualClassroom {
 
 model VirtualClassroomStudent {
   id          String           @id @default(uuid()) @db.Uuid
-  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId String           @db.Uuid
-  student     Student          @relation(fields: [studentId], references: [id])
+  student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId   String           @db.Uuid
   enrolledAt  DateTime         @default(now())
 
@@ -153,7 +153,7 @@ model VirtualClassroomStudent {
 model Unit {
   id                  String               @id @default(uuid()) @db.Uuid
   name                String
-  classroom           VirtualClassroom     @relation(fields: [classroomId], references: [id])
+  classroom           VirtualClassroom     @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId         String               @db.Uuid
   educationalContents EducationalContent[]
   createdAt           DateTime             @default(now())
@@ -165,7 +165,7 @@ model Unit {
 
 model EducationalContent {
   id        String      @id @default(uuid()) @db.Uuid
-  unit      Unit        @relation(fields: [unitId], references: [id])
+  unit      Unit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
   unitId    String      @db.Uuid
   type      ContentType
   content   String
@@ -185,9 +185,9 @@ enum ContentType {
 
 model ClassAttendance {
   id          String           @id @default(uuid()) @db.Uuid
-  student     Student          @relation(fields: [studentId], references: [id])
+  student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId   String           @db.Uuid
-  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroom   VirtualClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId String           @db.Uuid
   date        DateTime
   present     Boolean
@@ -200,7 +200,7 @@ model Assignment {
   title                 String
   content               String
   deadline              DateTime
-  classroom             VirtualClassroom       @relation(fields: [classroomId], references: [id])
+  classroom             VirtualClassroom       @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId           String                 @db.Uuid
   assignmentSubmissions AssignmentSubmission[]
   createdAt             DateTime               @default(now())
@@ -210,9 +210,9 @@ model Assignment {
 
 model AssignmentSubmission {
   id           String     @id @default(uuid()) @db.Uuid
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   assignmentId String     @db.Uuid
-  student      Student    @relation(fields: [studentId], references: [id])
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String     @db.Uuid
   content      String
   submittedAt  DateTime   @default(now())
@@ -224,11 +224,11 @@ model Thread {
   id             String           @id @default(uuid()) @db.Uuid
   title          String
   content        String
-  unit           Unit?            @relation(fields: [unitId], references: [id])
+  unit           Unit?            @relation(fields: [unitId], references: [id], onDelete: Cascade)
   unitId         String?          @db.Uuid
-  classroom      VirtualClassroom @relation(fields: [classroomId], references: [id])
+  classroom      VirtualClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId    String           @db.Uuid
-  parent         Thread?          @relation("ThreadReplies", fields: [parentId], references: [id])
+  parent         Thread?          @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: Cascade)
   parentId       String?          @db.Uuid
   threadLikes    ThreadLike[]
   threadComments ThreadComment[]
@@ -242,9 +242,9 @@ model Thread {
 
 model ThreadLike {
   id        String   @id @default(uuid()) @db.Uuid
-  thread    Thread   @relation(fields: [threadId], references: [id])
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   threadId  String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   createdAt DateTime @default(now())
 
@@ -253,9 +253,9 @@ model ThreadLike {
 
 model ThreadComment {
   id        String   @id @default(uuid()) @db.Uuid
-  thread    Thread   @relation(fields: [threadId], references: [id])
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   threadId  String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   content   String
   createdAt DateTime @default(now())
@@ -267,9 +267,9 @@ model ThreadComment {
 model Messages {
   id        String   @id @default(uuid()) @db.Uuid
   content   String
-  thread    Thread   @relation(fields: [threadId], references: [id])
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   threadId  String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
