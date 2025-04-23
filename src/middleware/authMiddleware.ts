@@ -45,10 +45,6 @@ export const authMiddleware = (
       .json({ error: 'Unauthorized' });
   }
 
-  // logger.info(
-  //   `[AUTH] Authenticated user=${decoded.id ?? decoded.email ?? 'unknown'} │ IP=${req.ip} │ URL=${req.originalUrl}`
-  // );
-
   req.user = decoded;
   next();
 };
