@@ -44,6 +44,8 @@ model UserRole {
   section      Section?    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId    String?     @db.Uuid
   user         User        @relation("UserToUserRole", fields: [userId], references: [id], onDelete: Cascade)
+    createdAt   DateTime     @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 enum Role {
@@ -61,6 +63,7 @@ model College {
   departments Department[]
   users       User[]
   createdAt   DateTime     @default(now())
+  updatedAt DateTime    @updatedAt
   userRoles   UserRole[]   @relation(name: "UserRoleToCollege")
 }
 
@@ -71,6 +74,7 @@ model Department {
   collegeId String     @db.Uuid
   years     Year[]
   createdAt DateTime   @default(now())
+  updatedAt DateTime    @updatedAt
   UserRole  UserRole[]
 
   @@index([collegeId])
@@ -83,6 +87,7 @@ model Year {
   departmentId String     @db.Uuid
   sections     Section[]
   createdAt    DateTime   @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
 
   @@index([departmentId])
 }
@@ -92,9 +97,10 @@ model Section {
   name       String
   year       Year               @relation(fields: [yearId], references: [id], onDelete: Cascade)
   yearId     String             @db.Uuid
-  classrooms VirtualClassroom[]
-  createdAt  DateTime           @default(now())
+  
   UserRole   UserRole[]
+  createdAt  DateTime           @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@index([yearId])
 }
@@ -109,6 +115,7 @@ model Student {
   submissions              AssignmentSubmission[]
   virtualClassroomStudents VirtualClassroomStudent[]
   classAttendances         ClassAttendance[]
+  updatedAt DateTime    @updatedAt
 }
 
 model Faculty {
@@ -118,13 +125,12 @@ model Faculty {
   specialization String
   classrooms     VirtualClassroom[]
   createdAt      DateTime           @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model VirtualClassroom {
   id                       String                    @id @default(uuid()) @db.Uuid
   name                     String
-  section                  Section                   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  sectionId                String                    @db.Uuid
   faculty                  Faculty                   @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   facultyId                String                    @db.Uuid
   units                    Unit[]
@@ -133,9 +139,9 @@ model VirtualClassroom {
   classAttendances         ClassAttendance[]
   virtualClassroomStudents VirtualClassroomStudent[]
   createdAt                DateTime                  @default(now())
+  updateAt                 DateTime                  @default(now())
   threads                  Thread[]
 
-  @@index([sectionId])
   @@index([facultyId])
 }
 
@@ -146,6 +152,8 @@ model VirtualClassroomStudent {
   student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId   String           @db.Uuid
   enrolledAt  DateTime         @default(now())
+    createdAt                DateTime                  @default(now())
+  updateAt                 DateTime                  @default(now())
 
   @@unique([classroomId, studentId])
 }
@@ -191,6 +199,8 @@ model ClassAttendance {
   classroomId String           @db.Uuid
   date        DateTime
   present     Boolean
+    createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@index([studentId, classroomId])
 }
@@ -204,6 +214,7 @@ model Assignment {
   classroomId           String                 @db.Uuid
   assignmentSubmissions AssignmentSubmission[]
   createdAt             DateTime               @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@index([classroomId])
 }
@@ -216,6 +227,8 @@ model AssignmentSubmission {
   studentId    String     @db.Uuid
   content      String
   submittedAt  DateTime   @default(now())
+    createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@index([assignmentId])
 }
@@ -234,6 +247,7 @@ model Thread {
   threadComments ThreadComment[]
   messages       Messages[]
   createdAt      DateTime         @default(now())
+  updatedAt DateTime    @updatedAt
   replies        Thread[]         @relation("ThreadReplies")
 
   @@index([classroomId])
@@ -247,6 +261,7 @@ model ThreadLike {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   createdAt DateTime @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@unique([threadId, userId])
 }
