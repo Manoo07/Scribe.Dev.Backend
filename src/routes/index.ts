@@ -3,9 +3,9 @@ import { Route } from '@customTypes/route';
 import { authRouter } from '@routes/authRoutes';
 import { collegeRouter } from '@routes/collegeRoutes';
 import { departmentRouter } from '@routes/departmentRoutes';
-import { yearRouter } from '@routes/yearRoute';
 import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
+import { yearRouter } from './yearRoutes';
 
 export const routers: Route[] = [
   {
