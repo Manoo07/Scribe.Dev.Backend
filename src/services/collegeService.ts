@@ -30,7 +30,6 @@ class CollegeService {
   async updateCollege(id: string, updateFields: Partial<College>): Promise<{ college?: College; error?: string }> {
     try {
       const college = await CollegeDAO.updateCollege(id, updateFields);
-
       return { college: college ?? undefined };
     } catch (error) {
       throw new Error('Error while updating college');
