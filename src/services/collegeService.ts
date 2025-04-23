@@ -9,37 +9,30 @@ interface CollegeDAO {
 }
 
 class CollegeService {
-  public async createCollege(params: { name: string }): Promise<{ college?: College; error?: string }> {
+  public async createCollege(params: { name: string }): Promise<{ college: College }> {
     try {
-      const validatedData = collegeSchema.parse(params);
-      const college = await CollegeDAO.createCollege(validatedData.name);
+      const college = await CollegeDAO.createCollege(params.name);
       return { college };
     } catch (error) {
-      if (error instanceof ZodError) {
-        return { error: error.errors.map((e) => e.message).join(', ') };
-      }
       logger.error('Unexpected error during college creation:', error);
-      return { error: 'An unexpected error occurred' }; // Provide a generic error message
+      throw new Error('An unexpected error occurred while creating the college.');
     }
   }
 
   async getColleges(filterOptions: Partial<College> = {}): Promise<College[]> {
-    return CollegeDAO.getColleges(filterOptions);
+    try {
+      return await CollegeDAO.getColleges(filterOptions);
+    } catch (error: any) {
+      throw new Error(error?.message || 'Failed to fetch colleges');
+    }
   }
 
   async updateCollege(id: string, updateFields: Partial<College>): Promise<{ college?: College; error?: string }> {
     try {
-      if (updateFields.name) {
-        collegeSchema.pick({ name: true }).parse({ name: updateFields.name });
-      }
       const college = await CollegeDAO.updateCollege(id, updateFields);
-
       return { college: college ?? undefined };
     } catch (error) {
-      if (error instanceof ZodError) {
-        return { error: error.errors.map((e) => e.message).join(', ') };
-      }
-      throw error;
+      throw new Error('Error while updating college');
     }
   }
 
