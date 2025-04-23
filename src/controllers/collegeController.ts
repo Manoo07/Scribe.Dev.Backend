@@ -5,6 +5,9 @@ import {
   HTTP_STATUS_NO_CONTENT,
   HTTP_STATUS_OK,
 } from '@constants/constants';
+import { collegeSchema } from '@utils/validations/college.schema';
+import { Request, Response } from 'express';
+import { ZodError } from 'zod';
 import { Request, Response } from 'express';
 import CollegeService from '../services/collegeService';
 
@@ -13,13 +16,16 @@ export class CollegeController {
 
   public createCollege = async (req: Request, res: Response): Promise<void> => {
     const { name } = req.body;
-
-    const result = await this.collegeService.createCollege({ name });
-
-    if (result.error) {
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
-    } else {
+    const validatedData = collegeSchema.parse({ name });
+    try {
+      const result = await this.collegeService.createCollege(validatedData);
       res.status(HTTP_STATUS_CREATED).json(result.college);
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        const errorMsg = error.errors.map((e) => e.message).join(', ');
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: `Validation failed: ${errorMsg}` });
+      }
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
     }
   };
 
@@ -47,6 +53,10 @@ export class CollegeController {
         res.status(HTTP_STATUS_OK).json(result.college);
       }
     } catch (error) {
+      if (error instanceof ZodError) {
+        const errorMessage = error.errors.map((e) => e.message).join(', ');
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: errorMessage });
+      }
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to update college' });
     }
   };

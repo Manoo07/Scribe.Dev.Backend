@@ -15,26 +15,14 @@ import {
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
 import UserDAO from '@dao/userDAO';
-import { generateResetToken } from '@utils/authUtil';
+import { generateResetToken, validateSignupParams } from '@utils/authUtil';
 import { sendResetEmail } from '@services/emailService';
 import crypto from 'crypto';
 import { logger } from '@services/logService';
 import { generateUsername } from '@utils/userUtils';
+import { SignupParams } from '@customTypes/user';
 
-interface SignupParams {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  password: string;
-  collegeId: string;
-  role: Role;
-  departmentId: string;
-  sectionId: string;
-  specialization?: string;
-}
-
-interface ErrorResponse {
+export interface ErrorResponse {
   error: string;
   status: number;
 }
@@ -52,36 +40,28 @@ class AuthService {
     const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
       params;
 
-    const missingFields = this.checkMissingFields(params);
-    if (missingFields) {
-      logger.warn(`Missing required fields: ${missingFields.join(', ')}`);
-
-      return {
-        error: 'Missing required fields.',
-        message: `Missing fields: ${missingFields.join(', ')}`,
-        status: HTTP_STATUS_BAD_REQUEST,
-      };
-    }
-
     try {
-      const validationError = this.validateSignupParams(params);
+      const validationError = validateSignupParams(params);
       if (validationError) {
         logger.warn(validationError.error);
         return validationError;
       }
 
-      logger.info(`Signing up user: ${email}`);
-      const finalUsername = generateUsername(username, firstName, lastName);
-      const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
-      if (!usernameRegex.test(finalUsername)) {
-        return {
-          error: 'Username must contain only alphabetic characters (a-z, A-Z)',
-          status: HTTP_STATUS_BAD_REQUEST,
-        };
+      logger.info(`[AuthService] Signing up user: ${email}`);
+      let finalUsername = username;
+      if (!username) {
+        finalUsername = generateUsername(username, firstName, lastName);
+      } else {
+        const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
+        if (!usernameRegex.test(username)) {
+          return {
+            error: 'Username must contain only alphabetic characters (a-z, A-Z)',
+            status: HTTP_STATUS_BAD_REQUEST,
+          };
+        }
       }
-      const existingUserWithUsername = await this.prisma.user.findUnique({
-        where: { username: finalUsername },
-      });
+
+      const existingUserWithUsername = await UserDAO.findByUsername(finalUsername);
 
       if (existingUserWithUsername) {
         return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
@@ -89,27 +69,18 @@ class AuthService {
 
       const hashedPassword = await hashPassword(password);
 
-      // Prisma Transaction
-      const result = await this.prisma.$transaction(async () => {
-        const user = await this.createUser(
-          this.prisma,
-          firstName,
-          lastName,
-          username,
-          email,
-          hashedPassword,
-          collegeId
-        );
-
-        await this.createUserRole(this.prisma, user.id, role, collegeId, departmentId, sectionId);
-
-        if (role === Roles.STUDENT) {
-          await this.createStudent(this.prisma, user.id);
-        } else if (role === Roles.FACULTY) {
-          await this.createFaculty(this.prisma, user.id, departmentId, specialization);
-        }
-
-        return user;
+      // Create a user
+      const result = await UserDAO.createUser({
+        firstName,
+        lastName,
+        username: finalUsername,
+        email,
+        password: hashedPassword,
+        collegeId,
+        role,
+        departmentId,
+        sectionId,
+        specialization,
       });
 
       logger.info(`User ${email} successfully signed up.`);
@@ -163,125 +134,7 @@ class AuthService {
     logger.info(`User ${user.email} successfully reset their password.`);
   }
 
-  private checkMissingFields(params: SignupParams): string[] | null {
-    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId } = params;
-    const missing: string[] = [];
-    if (!firstName) missing.push('firstName');
-    if (!lastName) missing.push('lastName');
-    if (!username) missing.push('username');
-    if (!email) missing.push('email');
-    if (!password) missing.push('password');
-    if (!collegeId) missing.push('collegeId');
-    if (!role) missing.push('role');
-    if (!departmentId) missing.push('departmentId');
-    if (!sectionId) missing.push('sectionId');
-
-    return missing.length > 0 ? missing : null;
-  }
-
   // -------------------- Helper Functions --------------------
-
-  private validateSignupParams(params: SignupParams): ErrorResponse | null {
-    const { role, departmentId, sectionId } = params;
-
-    if (!Object.values(Role).includes(role)) {
-      logger.warn(`Invalid role provided: ${role}`);
-      return { error: 'Invalid role provided.', status: HTTP_STATUS_BAD_REQUEST };
-    }
-
-    if ((role === 'STUDENT' || role === 'FACULTY') && !departmentId) {
-      logger.warn(`Department ID is required for Student and Faculty roles.`);
-      return { error: 'Department ID is required for Student and Faculty roles.', status: HTTP_STATUS_BAD_REQUEST };
-    }
-
-    if (role === 'STUDENT' && !sectionId) {
-      logger.warn(`Section ID is required for Student roles.`);
-      return { error: 'Section ID is required for Student roles.', status: HTTP_STATUS_BAD_REQUEST };
-    }
-
-    return null;
-  }
-
-  private async createUser(
-    prisma: PrismaClient,
-    firstName: string,
-    lastName: string,
-    username: string,
-    email: string,
-    passwordHash: string,
-    collegeId?: string
-  ) {
-    try {
-      // Check if college is present or not
-      await prisma.college.findFirstOrThrow({
-        where: {
-          id: collegeId,
-        },
-      });
-
-      const user = await prisma.user.create({
-        data: {
-          firstName,
-          lastName,
-          username,
-          email,
-          password: passwordHash,
-          collegeId,
-        },
-      });
-      logger.debug(`User created: ${email}`);
-      return user;
-    } catch (error: any) {
-      logger.error(`Error creating user ${email}: ${error.message}`);
-      throw new Error('College Not found');
-    }
-  }
-
-  private async createUserRole(
-    prisma: PrismaClient,
-    userId: string,
-    role: Role,
-    collegeId?: string,
-    departmentId?: string,
-    sectionId?: string
-  ) {
-    await prisma.userRole.create({
-      data: {
-        userId,
-        role,
-        collegeId,
-        departmentId,
-        sectionId,
-      },
-    });
-    logger.debug(`Assigned role ${role} to user ${userId}`);
-  }
-
-  private async createStudent(prisma: PrismaClient, userId: string) {
-    await prisma.student.create({
-      data: {
-        userId,
-        enrollmentNo: 'TEMP' + userId, // TODO: Implement a better enrollment number generation
-      },
-    });
-    logger.debug(`Created student profile for user ${userId}`);
-  }
-
-  private async createFaculty(prisma: PrismaClient, userId: string, departmentId: string, specialization?: string) {
-    const facultyData: any = {
-      userId,
-      department: { connect: { id: departmentId } },
-      user: { connect: { id: userId } },
-    };
-    if (specialization) {
-      facultyData.specialization = specialization;
-    }
-
-    await prisma.faculty.create({
-      data: facultyData,
-    });
-    logger.debug(`Created faculty profile for user ${userId}`);
-  }
 
   private handleSignupError(error: any): ErrorResponse {
     if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION) {

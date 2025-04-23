@@ -14,7 +14,7 @@ import {
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
 import UserDAO from '@dao/userDAO';
-import { generateUsername } from '@utils/userUtils';
+import { checkMissingFields } from '@utils/authUtil';
 
 const prisma = new PrismaClient();
 
@@ -26,25 +26,19 @@ class AuthController {
   }
 
   signup = async (req: Request, res: Response): Promise<any> => {
-    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
-      req.body;
+    const params = req.body;
+    const missingFields = checkMissingFields(params); // Should return string[] or []
 
-    logger.info('[AuthController] Signup request received for email:', email);
+    if (missingFields && missingFields.length > 0) {
+      const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+      logger.error(`[AuthController] ${errorMessage}`);
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: errorMessage });
+    }
+
+    logger.info('[AuthController] Signup request received for email:', params.email);
 
     try {
-      const newUsername = generateUsername(username, firstName, lastName);
-      const result = await this.authService.signup({
-        firstName,
-        lastName,
-        username: newUsername,
-        email,
-        password,
-        collegeId,
-        role,
-        departmentId,
-        sectionId,
-        specialization,
-      });
+      const result = await this.authService.signup(params);
 
       if (result.error) {
         logger.error('[AuthController] Signup failed:', result.error);
@@ -53,15 +47,20 @@ class AuthController {
           .json({ error: result.error, message: result.message });
       }
 
-      logger.info('[AuthController] Signup successful for email:', email);
+      logger.info('[AuthController] Signup successful for email:', params.email);
       return res.status(HTTP_STATUS_CREATED).json(result);
     } catch (error: any) {
       logger.error('[AuthController] Signup error:', error);
 
-      if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username'))
+      if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username')) {
         return res.status(HTTP_STATUS_CONFLICT).json({ error: 'Username already taken' });
+      }
 
-      if (error.message.includes('Invalid collegeId')) {
+      if (error.message?.includes('Invalid collegeId')) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+      }
+
+      if (error.message?.toLowerCase().includes('missing required fields')) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
       }
 
