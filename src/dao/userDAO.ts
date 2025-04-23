@@ -1,6 +1,6 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { logger } from '@services/logService';
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient, Role, User } from '@prisma/client';
 import { PRISMA_RECORD_NOT_FOUND } from '@constants/constants';
 
 const prisma = new PrismaClient();
@@ -46,6 +46,124 @@ const UserDAO = {
     }
   },
 
+  findByUsername: async (username: string): Promise<User | null> => {
+    try {
+      logger.info(`Checking if username exists: ${username}`);
+      return await prisma.user.findUnique({ where: { username } });
+    } catch (error) {
+      logger.error(`Error checking username existence: ${error}`);
+      throw error;
+    }
+  },
+
+  async createUser(params: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+    collegeId?: string;
+    role: Role;
+    departmentId?: string;
+    sectionId?: string;
+    specialization?: string;
+  }) {
+    const {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      collegeId,
+      role,
+      departmentId,
+      sectionId: inputSectionId,
+      specialization,
+    } = params;
+
+    return await prisma.$transaction(async (tx) => {
+      // Validate college
+      if (collegeId) {
+        await tx.college.findFirstOrThrow({
+          where: { id: collegeId },
+        });
+      }
+
+      // Create user
+      const user = await tx.user.create({
+        data: {
+          firstName,
+          lastName,
+          username,
+          email,
+          password,
+          collegeId,
+        },
+      });
+
+      logger.debug(`User created: ${email}`);
+
+      // Handle section fallback to "ALPHA" if not provided
+      let sectionId = inputSectionId;
+      if (!sectionId) {
+        const defaultSection = await tx.section.findFirst({
+          where: { name: 'ALPHA' },
+        });
+
+        if (!defaultSection) {
+          throw new Error('Default section "ALPHA" not found in the database.');
+        }
+
+        sectionId = defaultSection.id;
+      }
+
+      // Create user role
+      await tx.userRole.create({
+        data: {
+          userId: user.id,
+          role,
+          collegeId,
+          departmentId,
+          sectionId,
+        },
+      });
+
+      logger.debug(`Assigned role ${role} to user ${user.id}`);
+
+      // Role-specific profile
+      if (role === Role.STUDENT) {
+        await tx.student.create({
+          data: {
+            userId: user.id,
+            enrollmentNo: 'TEMP' + user.id,
+          },
+        });
+        logger.debug(`Created student profile for user ${user.id}`);
+      }
+
+      if (role === Role.FACULTY) {
+        if (!departmentId) {
+          throw new Error('Department ID is required for faculty.');
+        }
+
+        const facultyData: any = {
+          userId: user.id,
+          department: { connect: { id: departmentId } },
+          user: { connect: { id: user.id } },
+        };
+
+        if (specialization) {
+          facultyData.specialization = specialization;
+        }
+
+        await tx.faculty.create({ data: facultyData });
+        logger.debug(`Created faculty profile for user ${user.id}`);
+      }
+
+      return user;
+    });
+  },
+
   findById: async (id: string) => {
     try {
       logger.info(`[UserDAO] Fetching user by ID: ${id}`);
@@ -57,16 +175,6 @@ const UserDAO = {
       return user;
     } catch (error) {
       logger.error(`[UserDAO] Error fetching user by ID: ${id}`, error);
-      throw error;
-    }
-  },
-
-  findByUsername: async (username: string) => {
-    try {
-      logger.info(`[UserDAO] Fetching user by username: ${username}`);
-      return await prisma.user.findUnique({ where: { username } });
-    } catch (error) {
-      logger.error(`[UserDAO] Error fetching user by username: ${username}`, error);
       throw error;
     }
   },
