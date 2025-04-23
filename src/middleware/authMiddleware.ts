@@ -9,40 +9,24 @@ declare module 'express-serve-static-core' {
   }
 }
 
-export const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    logger.warn(
-      `[AUTH] No Authorization header │ IP=${req.ip} │ URL=${req.originalUrl}`
-    );
-    return res
-      .status(HTTP_STATUS_UNAUTHORIZED)
-      .json({ error: 'Unauthorized' });
+    logger.warn(`[AUTH] No Authorization header │ IP=${req.ip} │ URL=${req.originalUrl}`);
+    return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
 
   const token = authHeader.split(' ')[1];
   if (!token) {
-    logger.warn(
-      `[AUTH] Malformed Authorization header │ IP=${req.ip} │ URL=${req.originalUrl}`
-    );
-    return res
-      .status(HTTP_STATUS_UNAUTHORIZED)
-      .json({ error: 'Unauthorized' });
+    logger.warn(`[AUTH] Malformed Authorization header │ IP=${req.ip} │ URL=${req.originalUrl}`);
+    return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
   const decoded = verifyToken(token);
 
   if (!decoded) {
-    logger.warn(
-      `[AUTH] Invalid / expired token │ IP=${req.ip} │ URL=${req.originalUrl}`
-    );
-    return res
-      .status(HTTP_STATUS_UNAUTHORIZED)
-      .json({ error: 'Unauthorized' });
+    logger.warn(`[AUTH] Invalid / expired token │ IP=${req.ip} │ URL=${req.originalUrl}`);
+    return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
 
   req.user = decoded;
