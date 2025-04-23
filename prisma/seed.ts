@@ -168,7 +168,6 @@ async function main() {
       await prisma.virtualClassroom.create({
         data: {
           name: `Classroom for ${section.name} - ${year?.name}`,
-          sectionId: section.id,
           facultyId: facultyForDept.facultyProfile.id,
           syllabusUrl: 'http://example.com/syllabus.pdf',
         },
