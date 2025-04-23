@@ -6,7 +6,6 @@ import {
   HTTP_STATUS_OK,
 } from '@constants/constants';
 import { collegeSchema } from '@utils/validations/college.schema';
-import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { Request, Response } from 'express';
 import CollegeService from '../services/collegeService';
