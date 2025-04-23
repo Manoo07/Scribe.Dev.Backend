@@ -1,4 +1,5 @@
 import { Route } from '@customTypes/route';
+import { authMiddleware } from '@middleware/authMiddleware';
 
 import { authRouter } from '@routes/authRoutes';
 import { collegeRouter } from '@routes/collegeRoutes';
@@ -15,21 +16,26 @@ export const routers: Route[] = [
   {
     basePath: '/college',
     router: collegeRouter,
+    middleware:[authMiddleware]
   },
   {
     basePath: '/department',
     router: departmentRouter,
+    middleware:[authMiddleware]
   },
   {
     basePath: '/year',
     router: yearRouter,
+    middleware:[authMiddleware]
   },
   {
     basePath: '/section',
     router: sectionRouter,
+    middleware:[authMiddleware]
   },
   {
     basePath: '/user',
     router: userRouter,
+    middleware:[authMiddleware]
   },
 ];
