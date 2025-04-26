@@ -30,3 +30,15 @@ export const Roles = Object.freeze({
   ADMIN: 'ADMIN',
   PRINCIPAL: 'PRINCIPAL',
 });
+export const ALLOWED_FILTER_KEYS = new Set([
+  'id',
+  'name',
+  'facultyId',
+  'sectionId',
+  'syllabusUrl',
+  'createdAt',
+  'updatedAt',
+  'AND',
+  'OR',
+  'NOT',
+]);

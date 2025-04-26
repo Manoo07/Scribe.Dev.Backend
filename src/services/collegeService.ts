@@ -1,5 +1,5 @@
 import { z, ZodError } from 'zod';
-import CollegeDAO from '../dao/CollegeDAO';
+import CollegeDAO from '../dao/collegeDAO';
 import { College } from '@prisma/client';
 import { logger } from './logService';
 import { collegeSchema } from '@utils/validations/college.schema';

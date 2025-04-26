@@ -7,6 +7,7 @@ import { departmentRouter } from '@routes/departmentRoutes';
 import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
 import { yearRouter } from './yearRoutes';
+import { virtualClassroomRouter } from './virtualClassroomRoutes';
 
 export const routers: Route[] = [
   {
@@ -16,26 +17,31 @@ export const routers: Route[] = [
   {
     basePath: '/college',
     router: collegeRouter,
-    middleware:[authMiddleware]
+    middleware: [authMiddleware],
   },
   {
     basePath: '/department',
     router: departmentRouter,
-    middleware:[authMiddleware]
+    middleware: [authMiddleware],
   },
   {
     basePath: '/year',
     router: yearRouter,
-    middleware:[authMiddleware]
+    middleware: [authMiddleware],
   },
   {
     basePath: '/section',
     router: sectionRouter,
-    middleware:[authMiddleware]
+    middleware: [authMiddleware],
   },
   {
     basePath: '/user',
     router: userRouter,
-    middleware:[authMiddleware]
+    middleware: [authMiddleware],
+  },
+  {
+    basePath: '/classroom',
+    router: virtualClassroomRouter,
+    middleware: [authMiddleware],
   },
 ];

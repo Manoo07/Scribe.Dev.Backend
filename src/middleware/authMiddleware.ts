@@ -22,13 +22,16 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     logger.warn(`[AUTH] Malformed Authorization header │ IP=${req.ip} │ URL=${req.originalUrl}`);
     return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
-  const decoded = verifyToken(token);
+  const decoded: any = verifyToken(token);
 
   if (!decoded) {
     logger.warn(`[AUTH] Invalid / expired token │ IP=${req.ip} │ URL=${req.originalUrl}`);
     return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
 
-  req.user = decoded;
+  req.user = { id: decoded.id };
+  logger.info(
+    `[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${JSON.stringify(decoded.id)}`
+  );
   next();
 };
