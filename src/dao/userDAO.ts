@@ -222,14 +222,14 @@ const UserDAO = {
     }
   },
 
-  getUserRole:async(userId:string)=>{
-    const userRole=await prisma.userRole.findFirst(
+  getUserRole: async (userId: string) => {
+    const userRole = await prisma.userRole.findFirst(
       {
-        where:{userId},
-        select:{role: true},
+        where: { userId },
+        select: { role: true },
       }
     );
-    return userRole?.role||null;
+    return userRole?.role || null;
   },
 
   updateLastLogin: async (userId: string) => {

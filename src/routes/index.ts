@@ -13,37 +13,36 @@ export const routers: Route[] = [
   {
     basePath: '/auth',
     router: authRouter,
-    middleware: []
-
+    middleware: [],
   },
   {
     basePath: '/college',
     router: collegeRouter,
-    middleware: [authMiddleware,allowRoles(['ADMIN','FACULTY'])]
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/department',
     router: departmentRouter,
-    middleware: [authMiddleware,allowRoles(['ADMIN','FACULTY'])],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/year',
     router: yearRouter,
-    middleware: [authMiddleware,allowRoles(['ADMIN','FACULTY'])],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/section',
     router: sectionRouter,
-    middleware: [authMiddleware,allowRoles(['ADMIN','FACULTY'])],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/user',
     router: userRouter,
-    middleware: [authMiddleware ,allowRoles(['ADMIN','STUDENT','FACULTY'])],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
   },
   {
     basePath: '/classroom',
     router: virtualClassroomRouter,
-    middleware: [authMiddleware ,allowRoles(['ADMIN','STUDENT','FACULTY'])],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
   },
 ];

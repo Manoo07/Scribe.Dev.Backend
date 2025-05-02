@@ -100,17 +100,13 @@ class AuthService {
     if (user && (await comparePasswords(password, user.password))) {
       logger.info(`User ${email} successfully signed in.`);
 
-      const userRole=await UserDAO.getUserRole(user.id);
-      if(!userRole)
-      {
+      const userRole = await UserDAO.getUserRole(user.id);
+      if (!userRole) {
         logger.warn("Role not found for the user ${email}");
         return null;
       }
-      // db call from userRole
-      // move tbis to DAO dont call dirctly
-      // const userRole = DAO.getRole(user.id);
-      // pass this userRole to the generate token fun
-      return generateToken(user.id,userRole);
+
+      return generateToken(user.id, userRole);
     }
 
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
