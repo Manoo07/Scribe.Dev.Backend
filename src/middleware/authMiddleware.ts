@@ -3,9 +3,13 @@ import { verifyToken } from '@utils/jwtUtil';
 import { HTTP_STATUS_UNAUTHORIZED } from '@constants/constants';
 import { logger } from '@services/logService';
 
+interface AuthenticatedUser {
+  id: string;
+  role: string;
+}
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: any;
+    user?: AuthenticatedUser;
   }
 }
 
@@ -24,14 +28,17 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
   const decoded: any = verifyToken(token);
 
-  if (!decoded) {
+  if (!decoded || typeof decoded !== 'object' || !decoded.id || !decoded.role) {
     logger.warn(`[AUTH] Invalid / expired token │ IP=${req.ip} │ URL=${req.originalUrl}`);
     return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
 
-  req.user = { id: decoded.id };
+  
+
+  req.user = { id: decoded.id, role: decoded.role };
   logger.info(
     `[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${JSON.stringify(decoded.id)}`
   );
+
   next();
 };

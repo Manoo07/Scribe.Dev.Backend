@@ -222,6 +222,16 @@ const UserDAO = {
     }
   },
 
+  getUserRole:async(userId:string)=>{
+    const userRole=await prisma.userRole.findFirst(
+      {
+        where:{userId},
+        select:{role: true},
+      }
+    );
+    return userRole?.role||null;
+  },
+
   updateLastLogin: async (userId: string) => {
     try {
       logger.info(`[UserDAO] Updating last login for user ID: ${userId}`);

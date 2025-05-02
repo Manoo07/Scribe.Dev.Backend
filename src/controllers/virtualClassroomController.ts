@@ -30,6 +30,7 @@ export class VirtualClassroomController {
     this.virtualClassroomService = new VirtualClassroomService();
     this.prisma = new PrismaClient();
   }
+  
 
   // Helper method to validate missing fields
   private validateFields(fields: { key: string; value: any }[], res: Response): boolean {
@@ -53,9 +54,13 @@ export class VirtualClassroomController {
 
   // Create Virtual Classroom
   createClassroom = async (req: Request, res: Response) => {
+  
     try {
+      if (!req.user || !req.user.id) {
+        throw new Error("Unauthorized: User ID missing from request.");
+      }
+      const userId = req.user.id;
       const { name, syllabusUrl, sectionId }: VirtualClassroomParams = req.body;
-      const userId = await req.user.id;
 
       if (
         !this.validateFields(
@@ -159,7 +164,7 @@ export class VirtualClassroomController {
     try {
       console.log('HI there');
       const { classroomId } = await req.body;
-      const userId = await req.user.id;
+      const userId = req.user?.id;
 
       logger.info(`[VirtualClassroomController] User ID: ${userId}`);
       logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
@@ -203,9 +208,14 @@ export class VirtualClassroomController {
 
   // Leave Virtual Classroom
   leaveClassroom = async (req: Request, res: Response) => {
+    
     try {
       const { classroomId } = req.body;
-      const userId = req.user.id;
+    
+        if (!req.user || !req.user.id) {
+          throw new Error("Unauthorized: User ID missing from request.");
+        }
+        const userId = req.user.id;
 
       if (
         !this.validateFields(
