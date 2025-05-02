@@ -170,6 +170,7 @@ async function main() {
           name: `Classroom for ${section.name} - ${year?.name}`,
           facultyId: facultyForDept.facultyProfile.id,
           syllabusUrl: 'http://example.com/syllabus.pdf',
+          sectionId: section.id,
         },
       });
     }

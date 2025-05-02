@@ -27,7 +27,7 @@ class AuthController {
 
   signup = async (req: Request, res: Response): Promise<any> => {
     const params = req.body;
-    const missingFields = checkMissingFields(params); // Should return string[] or []
+    const missingFields = checkMissingFields(params);
 
     if (missingFields && missingFields.length > 0) {
       const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
