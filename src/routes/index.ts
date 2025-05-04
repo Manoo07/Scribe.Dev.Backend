@@ -13,7 +13,6 @@ export const routers: Route[] = [
   {
     basePath: '/auth',
     router: authRouter,
-    middleware: [],
   },
   {
     basePath: '/college',

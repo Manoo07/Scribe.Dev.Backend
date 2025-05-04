@@ -103,14 +103,14 @@ class AuthService {
       const userRole = await UserDAO.getUserRole(user.id);
       if (!userRole) {
         logger.warn("Role not found for the user ${email}");
-        return null;
+        throw new Error('Invalid email or password')
       }
 
       return generateToken(user.id, userRole);
     }
 
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
-    return null;
+    throw new Error('Failed to sign in');
   }
 
   public async forgotPassword(email: string): Promise<void> {
