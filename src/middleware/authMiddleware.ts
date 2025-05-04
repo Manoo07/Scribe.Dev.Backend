@@ -39,6 +39,5 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   logger.info(
     `[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${JSON.stringify(decoded.id)}`
   );
-
   next();
 };
