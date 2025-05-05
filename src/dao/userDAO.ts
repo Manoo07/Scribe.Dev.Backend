@@ -2,6 +2,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { logger } from '@services/logService';
 import { PrismaClient, Role, User } from '@prisma/client';
 import { PRISMA_RECORD_NOT_FOUND } from '@constants/constants';
+import { error } from 'console';
 
 const prisma = new PrismaClient();
 
@@ -220,6 +221,26 @@ const UserDAO = {
       logger.error(`[UserDAO] Error finding user by email ${email}: ${error}`);
       throw error;
     }
+  },
+
+  getUserRole: async (userId: string) => {
+    try {
+      const userRole = await prisma.userRole.findFirst({
+        where: { userId },
+        select: { role: true },
+      });
+
+      if (!userRole) {
+        logger.error(`[AUTH] Role not found │ userId=${userId}`);
+        throw error;
+      }
+
+      return userRole.role;
+    } catch (error) {
+      logger.error(`[AUTH] Failed to get user role │ userId=${userId} │ Error=${(error as Error).message}`);
+      throw error;
+    }
+
   },
 
   updateLastLogin: async (userId: string) => {

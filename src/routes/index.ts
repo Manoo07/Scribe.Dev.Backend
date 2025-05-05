@@ -1,3 +1,4 @@
+import { allowRoles } from './../middleware/roleMiddleware';
 import { Route } from '@customTypes/route';
 import { authMiddleware } from '@middleware/authMiddleware';
 
@@ -8,7 +9,6 @@ import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
 import { yearRouter } from './yearRoutes';
 import { virtualClassroomRouter } from './virtualClassroomRoutes';
-
 export const routers: Route[] = [
   {
     basePath: '/auth',
@@ -17,31 +17,31 @@ export const routers: Route[] = [
   {
     basePath: '/college',
     router: collegeRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/department',
     router: departmentRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/year',
     router: yearRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/section',
     router: sectionRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/user',
     router: userRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
   },
   {
     basePath: '/classroom',
     router: virtualClassroomRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
   },
 ];
