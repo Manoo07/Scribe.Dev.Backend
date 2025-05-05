@@ -23,14 +23,10 @@ export class UnitController {
 
             logger.info('[UnitController] Creating unit');
             const result = await this.unitService.createUnit({ name, classroomId, educationalContents });
-            if (result.error) {
-                logger.warn(`[UnitController] Failed to create unit: ${result.error}`);
-                res.status(HTTP_STATUS_BAD_REQUEST).json({ message: result.error });
-            } else {
-                logger.info('[UnitController] Unit created successfully');
-                res.status(HTTP_STATUS_CREATED).json(result.unit);
-            }
-        } catch (error) {
+            logger.info('[UnitController] Unit created successfully');
+            res.status(HTTP_STATUS_CREATED).json(result.unit);
+        }
+        catch (error) {
             if (error instanceof ZodError) {
                 const errorMessage = error.errors.map((e) => e.message).join(', ');
                 logger.warn(`[UnitController] Validation error: ${errorMessage}`);
@@ -76,13 +72,9 @@ export class UnitController {
         try {
             logger.info(`[UnitController] Updating unit ID=${id}`);
             const result = await this.unitService.updateUnit(id, updateFields);
-            if (result.error) {
-                logger.warn(`[UnitController] Failed to update unit ID=${id}: ${result.error}`);
-                res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
-            } else {
-                logger.info(`[UnitController] Unit ID=${id} updated successfully`);
-                res.status(HTTP_STATUS_OK).json(result.unit);
-            }
+
+            logger.info(`[UnitController] Unit ID=${id} updated successfully`);
+            res.status(HTTP_STATUS_OK).json(result.unit);
         } catch (error) {
             logger.error(`[UnitController] Error updating unit ID=${id}:`, error);
             res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Something went wrong' });

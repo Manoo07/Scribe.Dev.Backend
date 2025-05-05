@@ -1,5 +1,5 @@
 import { ContentType, PrismaClient } from '@prisma/client';
-import { logger } from '../services/logService';
+import { logger } from '@services/logService';
 
 const prisma = new PrismaClient();
 
@@ -57,7 +57,7 @@ const UnitDAO = {
         }
     },
 
-    updateUnit: async (id: string, updateFields: any) => {
+    updateUnit: async (id: string, updateFields: { name?: string; classroomId?: string }) => {
         try {
             logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
             const result = await prisma.unit.update({
