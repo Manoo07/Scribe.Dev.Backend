@@ -11,6 +11,9 @@ import {
 import { PrismaClient } from '@prisma/client';
 import studentDAO from '@dao/studentDAO';
 import FacultyDAO from '@dao/facultyDAO';
+import UserDAO from '@dao/userDAO';
+
+const prisma = new PrismaClient();
 
 // Initialize Logger
 logger.info('[VirtualClassroomController] Initialized');
@@ -131,9 +134,23 @@ export class VirtualClassroomController {
       });
     }
   };
+
   getClassrooms = async (req: Request, res: Response) => {
     try {
-      const { filter } = req.body;
+      let { filter } = req.body;
+      logger.info(`[VirtualClassroomController] : Hi there`);
+      if (!filter) {
+        logger.info(`[VirtualClassroomController] : Setting the filter`);
+        const userId = req.user.id;
+        logger.info(`[VirtualClassroomController] : fetching userId : ${userId}`);
+        const faculty = await FacultyDAO.getFacultyByUserId(userId);
+        logger.info(`[VirtualClassroomController] : Fetched facultyId : ${faculty.id}`);
+        filter = {
+          facultyId: faculty.id,
+        };
+        logger.info(`[VirtualClassroomController] : filter : ${filter}`);
+      }
+
       if (filter) {
         if (typeof filter !== 'object' || Array.isArray(filter)) {
           return res.status(HTTP_STATUS_BAD_REQUEST).json({
@@ -156,6 +173,125 @@ export class VirtualClassroomController {
         message: 'Failed to fetch virtual classrooms',
         error: (error as Error).message,
       });
+    }
+  };
+
+  getEligibleStudents = async (req: Request, res: Response) => {
+    try {
+      const classroomId = req.params.id;
+      logger.info(`GetEligilbleStudents : Fetched ClassroomId ${classroomId}`);
+      // Fetch classroom with section, faculty, and their college/department info if needed
+      const classroom = await prisma.virtualClassroom.findUnique({
+        where: { id: classroomId },
+        include: {
+          section: true,
+          faculty: {
+            include: {
+              user: {
+                include: {
+                  userRole: true, // to potentially access department/college if needed
+                },
+              },
+            },
+          },
+        },
+      });
+      logger.info(`GetEligilbleStudents : Fetched classroom ${classroom}`);
+      if (!classroom) {
+        return res.status(404).json({ error: 'Classroom not found' });
+      }
+
+      const sectionId = classroom.sectionId;
+      logger.info(`GetEligilbleStudents : Fetched sectionId ${sectionId}`);
+
+      // Get already enrolled student IDs
+      const enrolled = await prisma.virtualClassroomStudent.findMany({
+        where: { classroomId },
+        select: { studentId: true },
+      });
+      logger.info(`GetEligilbleStudents : Fetched enrolled stduents ${JSON.stringify(enrolled)}`);
+
+      const enrolledIds = enrolled.map((e) => e.studentId);
+      logger.info(`GetEligilbleStudents : Fetched enrolled stduentIds ${JSON.stringify(enrolledIds)}`);
+
+      // Find eligible students by joining through user → userRole
+      const eligibleStudentsRaw = await prisma.student.findMany({
+        where: {
+          id: { notIn: enrolledIds },
+          user: {
+            userRole: {
+              sectionId: sectionId,
+            },
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      });
+      const eligibleStudents = eligibleStudentsRaw.map((student) => ({
+        ...student,
+        firstName: student.user.firstName,
+        lastName: student.user.lastName,
+        email: student.user.email,
+        userId: student.user.id,
+      }));
+      logger.info(`GetEligilbleStudents : Fetched elgible students ${JSON.stringify(eligibleStudents)}`);
+      res.status(200).json(eligibleStudents);
+    } catch (error) {
+      logger.error('Error fetching eligible students:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  getEnrolledStudents = async (req: Request, res: Response) => {
+    try {
+      const classroomId = req.params.id;
+      logger.info(`GetEligilbleStudents : Fetched ClassroomId ${classroomId}`);
+      const enrolledStudents = await prisma.virtualClassroom.findUnique({
+        where: { id: classroomId },
+        include: {
+          virtualClassroomStudents: {
+            include: {
+              student: {
+                include: {
+                  user: {
+                    select: {
+                      id:true,
+                      firstName: true,
+                      lastName: true,
+                      email: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const flattenedStudents = enrolledStudents?.virtualClassroomStudents.map((entry) => ({
+        id: entry.student.id,
+        enrollmentNo: entry.student.enrollmentNo,
+        createdAt: entry.student.createdAt,
+        updatedAt: entry.student.updatedAt,
+        firstName: entry.student.user.firstName,
+        lastName: entry.student.user.lastName,
+        email: entry.student.user.email,
+        userId: entry.student.user.id
+      }));
+
+      logger.info(`GetEligibleStudents : Fetched enrolled students ${JSON.stringify(flattenedStudents)}`);
+      res.status(200).json(flattenedStudents);
+    } catch (error) {
+      logger.error('Error fetching eligible students:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   };
 

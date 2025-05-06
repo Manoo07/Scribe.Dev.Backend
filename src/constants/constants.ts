@@ -22,7 +22,7 @@ export const BCRYPT_SALT_ROUNDS = 10;
 export const USER_NOT_FOUND_ERROR = 'User not found. Please sign up.';
 export const USER_NAME_REGEX_PATTERN = /^[A-Za-z]+(?: [A-Za-z])?$/;
 export const ALPHABETIC_ONLY_REGEX = /^[a-zA-Z]+$/;
-export const JWT_EXPIRATION = '1h';
+export const JWT_EXPIRATION = '12h';
 export const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 export const Roles = Object.freeze({
   STUDENT: 'STUDENT',
