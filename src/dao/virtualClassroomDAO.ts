@@ -29,7 +29,21 @@ export const VirtualClassroomDAO = {
     try {
       const virtualClassroom = await prisma.virtualClassroom.findFirst({
         where: filter,
+        include: {
+          faculty: true,
+          section: true,
+          units: true,
+          assignments: true,
+          classAttendances: true,
+          threads: true,
+          virtualClassroomStudents: {
+            include: {
+              student: true,
+            },
+          },
+        },
       });
+
       return virtualClassroom;
     } catch (error) {
       logger.error('Error fetching virtual classroom:', error);
@@ -61,7 +75,8 @@ export const VirtualClassroomDAO = {
           },
         },
       });
-      return virtualClassrooms;
+
+      return virtualClassrooms ?? [];
     } catch (error) {
       logger.error('Error fetching virtual classrooms:', error);
       throw error;
