@@ -14,7 +14,7 @@ class DepartmentService {
   }): Promise<{ department?: Department; error?: string }> {
     try {
       logger.info('[DepartmentService] Validating department creation input');
-      
+
 
       logger.info(`[DepartmentService] Checking if college ID=${params.collegeId} exists`);
       const college = await prisma.college.findUnique({ where: { id: params.collegeId } });
@@ -62,6 +62,12 @@ class DepartmentService {
       return { error: 'Failed to update department' };
     }
   }
+
+  public async getDepartmentsFilter(filters: Record<string, any> = {}): Promise<Department[]> {
+    logger.info('[DepartmentService] Getting departments with filters:', filters);
+    return DepartmentDAO.getDepartmentsFilter(filters);
+  }
+
 
   public async deleteDepartment(id: string): Promise<void> {
     try {
