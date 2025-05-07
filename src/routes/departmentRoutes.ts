@@ -6,6 +6,8 @@ export const departmentRouter = Router();
 
 departmentRouter.post('/', departmentController.createDepartment);
 departmentRouter.get('/', departmentController.getDepartments);
+departmentRouter.get('/filter', departmentController.getDepartmentsByFilter);
 departmentRouter.get('/:id', departmentController.getDepartmentById);
 departmentRouter.put('/:id', departmentController.updateDepartment);
 departmentRouter.delete('/:id', departmentController.deleteDepartment);
+

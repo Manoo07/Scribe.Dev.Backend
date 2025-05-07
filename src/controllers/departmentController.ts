@@ -6,6 +6,7 @@ import {
   HTTP_STATUS_OK,
   HTTP_STATUS_NOT_FOUND,
 } from '@constants/constants';
+import { Prisma } from '@prisma/client';
 import DepartmentService from '@services/departmentService';
 import { logger } from '@services/logService';
 import { departmentSchema } from '@utils/validations/department.schema';
@@ -77,7 +78,31 @@ export class DepartmentController {
     }
   };
 
-  public updateDepartment = async (req: Request, res: Response): Promise<void > => {
+  public getDepartmentsByFilter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { name, collegeId } = req.query;
+
+      const filter: any = {};
+      if (name) filter.name = name;
+      if (collegeId) filter.collegeId = collegeId;
+
+      logger.info('[DepartmentController] Fetching departments with filter:', filter);
+
+      const departments = await this.departmentService.getDepartmentsByFilter(filter);
+
+      res.status(HTTP_STATUS_OK).json({ departments });
+    } catch (error) {
+      logger.error('[DepartmentController] Error fetching departments:', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to fetch departments',
+        error: (error as Error).message,
+      });
+    }
+  };
+
+
+
+  public updateDepartment = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const updateFields = req.body;
 

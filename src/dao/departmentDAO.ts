@@ -1,4 +1,4 @@
-import { PrismaClient, Department } from '@prisma/client';
+import { PrismaClient, Department, Prisma } from '@prisma/client';
 import { logger } from '../services/logService';
 
 const prisma = new PrismaClient();
@@ -38,6 +38,23 @@ const DepartmentDAO = {
       throw error;
     }
   },
+
+  getDepartmentsByFilter: async (filter: Record<string, any> = {}): Promise<Department[]> => {
+    try {
+      logger.info('[DepartmentDAO] Fetching departments with filter:', filter);
+      const departments = await prisma.department.findMany({
+        where: filter,
+        include: { college: true },
+      });
+      logger.info(`[DepartmentDAO] Fetched ${departments.length} departments`);
+      return departments;
+    } catch (error) {
+      logger.error('[DepartmentDAO] Error fetching departments:', error);
+      throw error;
+    }
+  },
+
+
 
   updateDepartment: async (id: string, updateFields: Partial<Department>): Promise<Department | null> => {
     try {

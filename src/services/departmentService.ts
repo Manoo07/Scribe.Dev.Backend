@@ -1,5 +1,5 @@
 import DepartmentDAO from '@dao/departmentDAO';
-import { Department } from '@prisma/client';
+import { Department, Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logService';
@@ -14,7 +14,7 @@ class DepartmentService {
   }): Promise<{ department?: Department; error?: string }> {
     try {
       logger.info('[DepartmentService] Validating department creation input');
-      
+
 
       logger.info(`[DepartmentService] Checking if college ID=${params.collegeId} exists`);
       const college = await prisma.college.findUnique({ where: { id: params.collegeId } });
@@ -42,6 +42,13 @@ class DepartmentService {
     logger.info(`[DepartmentService] Getting department by ID=${id}`);
     return DepartmentDAO.getDepartmentById(id);
   }
+
+  public async getDepartmentsByFilter(filter: Record<string, any> = {}): Promise<Department[]> {
+    logger.info('[DepartmentService] Getting departments with filter:', filter);
+    return DepartmentDAO.getDepartmentsByFilter(filter);
+  }
+
+
 
   public async updateDepartment(
     id: string,
