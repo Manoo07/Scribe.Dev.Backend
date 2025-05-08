@@ -1,23 +1,10 @@
 import { PrismaClient, Department } from '@prisma/client';
 import { logger } from '../services/logService';
+import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 
 const prisma = new PrismaClient();
 
-function buildWhereClause(obj: any): any {
-  const result: any = {};
 
-  for (const key in obj) {
-    const value = obj[key];
-
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      result[key] = buildWhereClause(value);
-    } else {
-      result[key] = value;
-    }
-  }
-
-  return result;
-}
 
 const DepartmentDAO = {
   createDepartment: async (data: { name: string; collegeId: string }): Promise<Department> => {
@@ -31,14 +18,20 @@ const DepartmentDAO = {
       throw error;
     }
   },
+  async findCollegeById(collegeId: string) {
+    logger.info(`[DepartmentDAO] Checking existence of college ID=${collegeId}`);
+    return prisma.college.findUnique({
+      where: { id: collegeId },
+    });
+  },
 
-  getDepartmentsFilter: async (filters: Record<string, any> = {}): Promise<Department[]> => {
+  getDepartmentsByFilter: async (filters: Record<string, any> = {}): Promise<Department[]> => {
     try {
       logger.info('[DepartmentDAO] Fetching departments with filters:', filters);
-      const where = buildWhereClause(filters);
+      const queryFilter = buildWhereClause(filters);
 
       const departments = await prisma.department.findMany({
-        where,
+        where: queryFilter,
         include: {
           college: true,
         },

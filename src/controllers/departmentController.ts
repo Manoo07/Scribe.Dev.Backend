@@ -78,12 +78,12 @@ export class DepartmentController {
   };
 
 
-  public getDepartmentsFilter = async (req: Request, res: Response): Promise<void> => {
+  public getDepartmentsByFilter = async (req: Request, res: Response): Promise<void> => {
     try {
-      const filters = req.body.filter || {};
-      logger.info('[DepartmentController] Fetching departments with filters:', filters);
+      const filter = req.body.filter || {};
+      logger.info('[DepartmentController] Fetching departments with filters:', filter);
 
-      const departments = await this.departmentService.getDepartmentsFilter(filters);
+      const departments = await this.departmentService.getDepartmentsFilter(filter);
       res.status(HTTP_STATUS_OK).json(departments);
     } catch (error) {
       logger.error('[DepartmentController] Error fetching departments:', error);
