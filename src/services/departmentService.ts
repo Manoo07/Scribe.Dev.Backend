@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logService';
 import { departmentSchema } from '@utils/validations/department.schema';
+import CollegeDAO from '@dao/collegeDAO';
 
 const prisma = new PrismaClient();
 
@@ -15,7 +16,7 @@ class DepartmentService {
     try {
       logger.info('[DepartmentService] Validating department creation input');
       logger.info(`[DepartmentService] Checking if college ID=${params.collegeId} exists`);
-      const college = await DepartmentDAO.findCollegeById(params.collegeId);
+      const college = await CollegeDAO.findCollegeById(params.collegeId);
 
       if (!college) {
         logger.warn(`[DepartmentService] Invalid college ID=${params.collegeId}`);
@@ -63,7 +64,7 @@ class DepartmentService {
 
   public async getDepartmentsFilter(filters: Record<string, any> = {}): Promise<Department[]> {
     logger.info('[DepartmentService] Getting departments with filters:', filters);
-    return DepartmentDAO.getDepartmentsByFilter(filters);
+    return DepartmentDAO.getDepartmentsByFilters(filters);
   }
 
 

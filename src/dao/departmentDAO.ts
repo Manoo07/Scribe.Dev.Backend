@@ -18,14 +18,9 @@ const DepartmentDAO = {
       throw error;
     }
   },
-  async findCollegeById(collegeId: string) {
-    logger.info(`[DepartmentDAO] Checking existence of college ID=${collegeId}`);
-    return prisma.college.findUnique({
-      where: { id: collegeId },
-    });
-  },
 
-  getDepartmentsByFilter: async (filters: Record<string, any> = {}): Promise<Department[]> => {
+
+  getDepartmentsByFilters: async (filters: Record<string, any> = {}): Promise<Department[]> => {
     try {
       logger.info('[DepartmentDAO] Fetching departments with filters:', filters);
       const queryFilter = buildWhereClause(filters);

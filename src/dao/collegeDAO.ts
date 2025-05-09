@@ -58,6 +58,14 @@ const CollegeDAO = {
       throw error;
     }
   },
+  findCollegeById:async(collegeId: string)=> {
+    logger.info(`Checking existence of college ID=${collegeId}`);
+    return prisma.college.findUnique({
+      where: { id: collegeId },
+    });
+  },
 };
+
+  
 
 export default CollegeDAO;
