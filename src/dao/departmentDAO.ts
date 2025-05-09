@@ -1,7 +1,10 @@
 import { PrismaClient, Department } from '@prisma/client';
 import { logger } from '../services/logService';
+import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 
 const prisma = new PrismaClient();
+
+
 
 const DepartmentDAO = {
   createDepartment: async (data: { name: string; collegeId: string }): Promise<Department> => {
@@ -15,6 +18,29 @@ const DepartmentDAO = {
       throw error;
     }
   },
+
+
+  getDepartmentsByFilters: async (filters: Record<string, any> = {}): Promise<Department[]> => {
+    try {
+      logger.info('[DepartmentDAO] Fetching departments with filters:', filters);
+      const queryFilter = buildWhereClause(filters);
+
+      const departments = await prisma.department.findMany({
+        where: queryFilter,
+        include: {
+          college: true,
+        },
+      });
+
+      logger.info(`[DepartmentDAO] Fetched ${departments.length} departments`);
+      return departments;
+    } catch (error) {
+      logger.error('[DepartmentDAO] Error fetching departments with filters:', error);
+      throw error;
+    }
+  },
+
+
 
   getDepartments: async (): Promise<Department[]> => {
     try {
