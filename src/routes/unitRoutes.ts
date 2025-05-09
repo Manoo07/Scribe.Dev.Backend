@@ -6,6 +6,6 @@ export const unitRouter = Router();
 
 unitRouter.post('/', unitController.createUnit);
 unitRouter.get('/', unitController.getUnits);
-unitRouter.get('/:id', unitController.getUnitById);
+unitRouter.get('/:id', unitController.getUnitByUnitId);
 unitRouter.put('/:id', unitController.updateUnit);
-unitRouter.delete('/:id', unitController.deleteUnit);
+unitRouter.delete('/:id', unitController.deleteUnitByUnitId);

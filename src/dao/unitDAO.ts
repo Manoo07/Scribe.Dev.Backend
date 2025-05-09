@@ -10,6 +10,11 @@ interface CreateUnitInput {
 }
 
 const UnitDAO = {
+    async getClassroomById(classroomId: string) {
+        return await prisma.virtualClassroom.findUnique({
+            where: { id: classroomId },
+        });
+    },
     createUnit: async ({ name, classroomId, educationalContents = [] }: CreateUnitInput) => {
         try {
             logger.info('[UnitDAO] Creating unit with educational content');
@@ -44,15 +49,15 @@ const UnitDAO = {
         }
     },
 
-    getUnitById: async (id: string) => {
+    getUnitByUnitId: async (UnitId: string) => {
         try {
-            logger.info(`[UnitDAO] Fetching unit by ID: ${id}`);
+            logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
             return await prisma.unit.findUnique({
-                where: { id },
+                where: { id: UnitId },
                 include: { educationalContents: true, classroom: true },
             });
         } catch (error) {
-            logger.error(`[UnitDAO] Error fetching unit ID=${id}:`, error);
+            logger.error(`[UnitDAO] Error fetching unit ID=${UnitId}:`, error);
             throw new Error('Failed to fetch unit by ID');
         }
     },
@@ -76,14 +81,14 @@ const UnitDAO = {
         }
     },
 
-    deleteUnit: async (id: string) => {
+    deleteUnitByUnitId: async (UnitId: string) => {
         try {
-            logger.info(`[UnitDAO] Deleting unit ID=${id}`);
-            const result = await prisma.unit.delete({ where: { id } });
-            logger.info(`[UnitDAO] Unit ID=${id} deleted successfully`);
+            logger.info(`[UnitDAO] Deleting unit ID=${UnitId}`);
+            const result = await prisma.unit.delete({ where: { id: UnitId } });
+            logger.info(`[UnitDAO] Unit ID=${UnitId} deleted successfully`);
             return result;
         } catch (error) {
-            logger.error(`[UnitDAO] Error deleting unit ID=${id}:`, error);
+            logger.error(`[UnitDAO] Error deleting unit ID=${UnitId}:`, error);
             throw new Error('Failed to delete unit');
         }
     },
