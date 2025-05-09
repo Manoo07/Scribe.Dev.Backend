@@ -77,7 +77,22 @@ export class DepartmentController {
     }
   };
 
-  public updateDepartment = async (req: Request, res: Response): Promise<void > => {
+
+  public getDepartmentsByFilter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const filter = req.body.filter || {};
+      logger.info('[DepartmentController] Fetching departments with filters:', filter);
+
+      const departments = await this.departmentService.getDepartmentsFilter(filter);
+      res.status(HTTP_STATUS_OK).json(departments);
+    } catch (error) {
+      logger.error('[DepartmentController] Error fetching departments:', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch departments' });
+    }
+  };
+
+
+  public updateDepartment = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const updateFields = req.body;
 
