@@ -16,7 +16,7 @@ export const PRISMA_UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
 export const HASH_ALGORITHM = 'sha256';
 export const DIGEST_FORMAT = 'hex';
 export const RANDOM_BYTES_LENGTH = 32;
-export const RESET_URL = (token: string): string => `https://localhost:3000/reset-password?token=${token}`;
+export const RESET_URL = (token: string): string => `http://localhost:5173/reset-password?token=${token}`;
 export const GMAIL_SERVICE = 'Gmail';
 export const BCRYPT_SALT_ROUNDS = 10;
 export const USER_NOT_FOUND_ERROR = 'User not found. Please sign up.';
