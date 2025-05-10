@@ -264,7 +264,7 @@ const UserDAO = {
       const user = await prisma.user.findFirst({
         where: {
           resetToken: hashedToken,
-          resetTokenExpiry: { gt: new Date() },
+          resetTokenExpiry: { gte: Date.now() },
         },
       });
       logger.info(`[UserDAO] User ${user ? 'found' : 'not found'} with reset token`);
@@ -294,14 +294,14 @@ const UserDAO = {
     }
   },
 
-  updateResetToken: async (email: string, hashedToken: string, expiryTime: number) => {
+  updateResetToken: async (email: string, hashedToken: string, expiryTime: bigint) => {
     try {
       logger.info(`[UserDAO] Updating reset token for email: ${email}`);
       const updatedUser = await prisma.user.update({
         where: { email },
         data: {
           resetToken: hashedToken,
-          resetTokenExpiry: new Date(Date.now() + expiryTime),
+          resetTokenExpiry: expiryTime,
         },
       });
       logger.info(`[UserDAO] Reset token updated for email: ${email}`);

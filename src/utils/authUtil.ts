@@ -9,8 +9,8 @@ import {
 } from '@constants/constants';
 import { logger } from '@services/logService';
 import { SignupParams } from '@customTypes/user';
-import { Role } from '@prisma/client';
 import { ErrorResponse } from 'types/express';
+import { Role, PrismaClient } from '@prisma/client';
 
 export function generateResetToken() {
   logger.info('[AuthUtils] Generating reset token');
@@ -26,11 +26,10 @@ export async function hashPassword(password: string) {
 }
 
 export function checkMissingFields(params: SignupParams): string[] | null {
-  const { firstName, lastName, username, email, password, collegeId, role, departmentId } = params;
+  const { firstName, lastName, email, password, collegeId, role, departmentId } = params;
   const missing: string[] = [];
   if (!firstName) missing.push('firstName');
   if (!lastName) missing.push('lastName');
-  if (!username) missing.push('username');
   if (!email) missing.push('email');
   if (!password) missing.push('password');
   if (!collegeId) missing.push('collegeId');
@@ -40,18 +39,44 @@ export function checkMissingFields(params: SignupParams): string[] | null {
   return missing.length > 0 ? missing : null;
 }
 
-export function validateSignupParams(params: SignupParams): ErrorResponse | null {
-  const { role, departmentId, sectionId } = params;
+const prisma = new PrismaClient();
+
+export async function validateSignupParams(params: SignupParams): Promise<ErrorResponse | null> {
+  const { role, departmentId, sectionId, collegeId } = params;
 
   if (!Object.values(Role).includes(role)) {
     logger.warn(`Invalid role provided: ${role}`);
     return { error: 'Invalid role provided.', status: HTTP_STATUS_BAD_REQUEST };
   }
-
-  if ((role === 'STUDENT' || role === 'FACULTY') && !departmentId) {
-    logger.warn(`Department ID is required for Student and Faculty roles.`);
-    return { error: 'Department ID is required for Student and Faculty roles.', status: HTTP_STATUS_BAD_REQUEST };
+  const college = await prisma.college.findUnique({ where: { id: collegeId } });
+  if (!college) {
+    logger.warn(`College ID does not exist: ${collegeId}`);
+    return { error: 'College does not exist.', status: HTTP_STATUS_BAD_REQUEST };
   }
+
+  if ((role === 'STUDENT' || role === 'FACULTY')) {
+    if (!departmentId) {
+      logger.warn('Department ID is required for Student and Faculty roles.');
+      return { error: 'Department ID is required.', status: HTTP_STATUS_BAD_REQUEST };
+    }
+
+    const department = await prisma.department.findUnique({ where: { id: departmentId } });
+    if (!department) {
+      logger.warn(`Department ID does not exist: ${departmentId}`);
+      return { error: 'Department does not exist.', status: HTTP_STATUS_BAD_REQUEST };
+    }
+  }
+
+  if (role === 'STUDENT' && sectionId) {
+    const section = await prisma.section.findUnique({ where: { id: sectionId } });
+    if (!section) {
+      logger.warn(`Section ID does not exist: ${sectionId}`);
+      return { error: 'Section does not exist.', status: HTTP_STATUS_BAD_REQUEST };
+    }
+  }
+
+
+
 
   return null;
 }

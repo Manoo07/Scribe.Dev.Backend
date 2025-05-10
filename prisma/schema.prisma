@@ -31,7 +31,7 @@ model User {
   messages         Messages[]
   userRole         UserRole?       @relation("UserToUserRole")
   resetToken       String?
-  resetTokenExpiry DateTime?
+  resetTokenExpiry BigInt?
 
   @@index([email])
   @@index([collegeId])

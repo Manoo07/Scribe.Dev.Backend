@@ -35,7 +35,7 @@ class AuthService {
       params;
 
     try {
-      const validationError = validateSignupParams(params);
+      const validationError = await validateSignupParams(params);
       if (validationError) {
         logger.warn(validationError.error);
         return validationError;
@@ -116,14 +116,14 @@ class AuthService {
     }
 
     const { token, hashed } = generateResetToken();
-    await UserDAO.updateResetToken(email, hashed, RESET_TOKEN_EXPIRY_TIME);
+    await UserDAO.updateResetToken(email, hashed, BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME));
     await sendResetEmail(email, token);
     logger.info(`Password reset token sent to user ${email}.`);
   }
 
   public async resetPassword(token: string, newPassword: string): Promise<void> {
-    const hashed = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
-    const user = await UserDAO.findByResetToken(hashed);
+    const hashedToken = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
+    const user = await UserDAO.findByResetToken(hashedToken);
 
     if (!user) {
       logger.error(`Invalid or expired token during password reset.`);
