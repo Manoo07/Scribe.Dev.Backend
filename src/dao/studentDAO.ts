@@ -24,17 +24,34 @@ const studentDAO = {
       throw error;
     }
   },
-  getStudentsByFilter: async (filter: Prisma.StudentWhereInput) => {
+  getStudentsByFilter: async ({
+    filter = {},
+    select,
+    include,
+  }: {
+    filter?: Prisma.StudentWhereInput;
+    select?: Prisma.StudentSelect;
+    include?: Prisma.StudentInclude;
+  }) => {
     try {
-      const students = await prisma.student.findMany({
+      const query: any = {
         where: filter,
-      });
+      };
+
+      if (select) {
+        query.select = select;
+      } else if (include) {
+        query.include = include;
+      }
+
+      const students = await prisma.student.findMany(query);
       return students;
     } catch (error) {
       logger.error('Error fetching students by filter:', error);
       throw error;
     }
   },
+
   getStudentById: async (id: string) => {
     try {
       const student = await prisma.student.findUnique({

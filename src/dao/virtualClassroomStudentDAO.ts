@@ -29,11 +29,12 @@ const VirtualClassroomStudentDAO = {
       throw error;
     }
   },
-  get: async (filter: Prisma.VirtualClassroomStudentWhereInput) => {
+  get: async (filter: Prisma.VirtualClassroomStudentWhereInput, include?: Prisma.VirtualClassroomStudentInclude) => {
     logger.info('Fetching virtual classroom student with filter:', filter);
     try {
       const virtualClassroomStudent = await prisma.virtualClassroomStudent.findFirst({
         where: filter,
+        include: include,
       });
       logger.info('Virtual classroom student fetched:', virtualClassroomStudent);
       return virtualClassroomStudent;
@@ -42,17 +43,35 @@ const VirtualClassroomStudentDAO = {
       throw error;
     }
   },
-  getAll: async (filter: Prisma.VirtualClassroomStudentWhereInput) => {
+
+  getAll: async ({
+    filter = {},
+    select,
+    include,
+  }: {
+    filter?: Prisma.VirtualClassroomStudentWhereInput;
+    select?: Prisma.VirtualClassroomStudentSelect;
+    include?: Prisma.VirtualClassroomStudentInclude;
+  }) => {
     try {
-      const virtualClassroomStudents = await prisma.virtualClassroomStudent.findMany({
+      const query: any = {
         where: filter,
-      });
+      };
+
+      if (select) {
+        query.select = select;
+      } else if (include) {
+        query.include = include;
+      }
+
+      const virtualClassroomStudents = await prisma.virtualClassroomStudent.findMany(query);
       return virtualClassroomStudents;
     } catch (error) {
       logger.error('Error fetching virtual classroom students:', error);
       throw error;
     }
   },
+
   update: async (id: string, data: Prisma.VirtualClassroomStudentUpdateInput) => {
     try {
       const virtualClassroomStudent = await prisma.virtualClassroomStudent.update({

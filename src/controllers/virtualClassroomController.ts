@@ -2,21 +2,58 @@ import { VirtualClassroomService } from '@services/virtualClassroomService';
 import { Request, Response } from 'express';
 import { logger } from '@services/logService';
 import {
-  ALLOWED_FILTER_KEYS,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_OK,
+  HTTP_STATUS_NOT_FOUND,
 } from '@constants/constants';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import studentDAO from '@dao/studentDAO';
 import FacultyDAO from '@dao/facultyDAO';
-import UserDAO from '@dao/userDAO';
+import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
+import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
+import { validateFilter } from '@utils/prismaFilters';
+import { classroomIncludeFields, virtualClassroomIncludeFields } from '@utils/prismaIncludes';
+import { studentSelectFields, virtualClassroomStudentSelectFields } from '@utils/prismaSelects';
 
 const prisma = new PrismaClient();
 
-// Initialize Logger
-logger.info('[VirtualClassroomController] Initialized');
+type StudentWithUser = {
+  id: string;
+  userId: string;
+  enrollmentNo: string;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt: Date | null;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+};
+
+type EnrolledStudents = Prisma.VirtualClassroomGetPayload<{
+  include: {
+    virtualClassroomStudents: {
+      include: {
+        student: {
+          include: {
+            user: {
+              select: {
+                id: true;
+                firstName: true;
+                lastName: true;
+                email: true;
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+}>;
 
 export interface VirtualClassroomParams {
   name: string;
@@ -46,14 +83,6 @@ export class VirtualClassroomController {
     }
     return true;
   }
-
-  private validateFilter = (filter: any): string[] => {
-    if (!filter || typeof filter !== 'object' || Array.isArray(filter)) {
-      throw new Error('Filter must be a valid object');
-    }
-    const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
-    return invalidKeys;
-  };
 
   // Create Virtual Classroom
   createClassroom = async (req: Request, res: Response) => {
@@ -106,26 +135,21 @@ export class VirtualClassroomController {
     }
   };
 
-  //getClassroom
+  // Get Virtual Classroom with Filters
   getClassroom = async (req: Request, res: Response) => {
     try {
       const { filter } = req.body;
       if (filter) {
-        if (typeof filter !== 'object' || Array.isArray(filter)) {
-          return res.status(HTTP_STATUS_BAD_REQUEST).json({
-            message: 'Filter must be a valid object',
-          });
-        }
-
-        const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
+        const invalidKeys = validateFilter(filter);
         if (invalidKeys.length > 0) {
           return res.status(HTTP_STATUS_BAD_REQUEST).json({
             message: `Invalid filter field(s): ${invalidKeys.join(', ')}`,
           });
         }
       }
-      const classrooms = await this.virtualClassroomService.getVirtualClassroom(filter);
-      return res.status(HTTP_STATUS_OK).json({ classrooms });
+
+      const classroom = await this.virtualClassroomService.getVirtualClassroom(filter);
+      return res.status(HTTP_STATUS_OK).json({ classroom });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error fetching classrooms:', error);
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
@@ -135,36 +159,25 @@ export class VirtualClassroomController {
     }
   };
 
+  // Get All Virtual Classrooms
   getClassrooms = async (req: Request, res: Response) => {
     try {
       let { filter } = req.body;
-      logger.info(`[VirtualClassroomController] : Hi there`);
       if (!filter) {
-        logger.info(`[VirtualClassroomController] : Setting the filter`);
         const userId = req.user.id;
-        logger.info(`[VirtualClassroomController] : fetching userId : ${userId}`);
         const faculty = await FacultyDAO.getFacultyByUserId(userId);
-        logger.info(`[VirtualClassroomController] : Fetched facultyId : ${faculty.id}`);
-        filter = {
-          facultyId: faculty.id,
-        };
-        logger.info(`[VirtualClassroomController] : filter : ${filter}`);
+        filter = { facultyId: faculty.id };
       }
 
       if (filter) {
-        if (typeof filter !== 'object' || Array.isArray(filter)) {
-          return res.status(HTTP_STATUS_BAD_REQUEST).json({
-            message: 'Filter must be a valid object',
-          });
-        }
-
-        const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
+        const invalidKeys = validateFilter(filter);
         if (invalidKeys.length > 0) {
           return res.status(HTTP_STATUS_BAD_REQUEST).json({
             message: `Invalid filter field(s): ${invalidKeys.join(', ')}`,
           });
         }
       }
+
       const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(filter);
       return res.status(HTTP_STATUS_OK).json({ classrooms });
     } catch (error) {
@@ -176,65 +189,38 @@ export class VirtualClassroomController {
     }
   };
 
+  // Get Eligible Students
   getEligibleStudents = async (req: Request, res: Response) => {
     try {
       const classroomId = req.params.id;
-      logger.info(`GetEligilbleStudents : Fetched ClassroomId ${classroomId}`);
-      // Fetch classroom with section, faculty, and their college/department info if needed
-      const classroom = await prisma.virtualClassroom.findUnique({
-        where: { id: classroomId },
-        include: {
-          section: true,
-          faculty: {
-            include: {
-              user: {
-                include: {
-                  userRole: true, // to potentially access department/college if needed
-                },
-              },
-            },
-          },
-        },
-      });
-      logger.info(`GetEligilbleStudents : Fetched classroom ${classroom}`);
+
+      const classroom = await VirtualClassroomDAO.get({ id: classroomId }, classroomIncludeFields);
       if (!classroom) {
-        return res.status(404).json({ error: 'Classroom not found' });
+        return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Classroom not found' });
       }
 
       const sectionId = classroom.sectionId;
-      logger.info(`GetEligilbleStudents : Fetched sectionId ${sectionId}`);
-
-      // Get already enrolled student IDs
-      const enrolled = await prisma.virtualClassroomStudent.findMany({
-        where: { classroomId },
-        select: { studentId: true },
+      const enrolledStudents = await VirtualClassroomStudentDAO.getAll({
+        filter: { classroomId },
+        select: virtualClassroomStudentSelectFields,
       });
-      logger.info(`GetEligilbleStudents : Fetched enrolled stduents ${JSON.stringify(enrolled)}`);
 
-      const enrolledIds = enrolled.map((e) => e.studentId);
-      logger.info(`GetEligilbleStudents : Fetched enrolled stduentIds ${JSON.stringify(enrolledIds)}`);
+      const enrolledStudentIds = enrolledStudents.map((e) => e.studentId);
 
-      // Find eligible students by joining through user → userRole
-      const eligibleStudentsRaw = await prisma.student.findMany({
-        where: {
-          id: { notIn: enrolledIds },
-          user: {
-            userRole: {
-              sectionId: sectionId,
-            },
+      const studentFilter = {
+        id: { notIn: enrolledStudentIds },
+        user: {
+          userRole: {
+            sectionId: sectionId,
           },
         },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
+      };
+
+      const eligibleStudentsRaw = (await studentDAO.getStudentsByFilter({
+        filter: studentFilter,
+        select: studentSelectFields,
+      })) as StudentWithUser[];
+
       const eligibleStudents = eligibleStudentsRaw.map((student) => ({
         ...student,
         firstName: student.user.firstName,
@@ -242,56 +228,45 @@ export class VirtualClassroomController {
         email: student.user.email,
         userId: student.user.id,
       }));
-      logger.info(`GetEligilbleStudents : Fetched elgible students ${JSON.stringify(eligibleStudents)}`);
+
       res.status(200).json(eligibleStudents);
     } catch (error) {
       logger.error('Error fetching eligible students:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
+  // Get Enrolled Students
   getEnrolledStudents = async (req: Request, res: Response) => {
     try {
       const classroomId = req.params.id;
-      logger.info(`GetEligilbleStudents : Fetched ClassroomId ${classroomId}`);
-      const enrolledStudents = await prisma.virtualClassroom.findUnique({
-        where: { id: classroomId },
-        include: {
-          virtualClassroomStudents: {
-            include: {
-              student: {
-                include: {
-                  user: {
-                    select: {
-                      id:true,
-                      firstName: true,
-                      lastName: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
+      logger.info(`GetEligibleStudents : Fetched ClassroomId ${classroomId}`);
 
-      const flattenedStudents = enrolledStudents?.virtualClassroomStudents.map((entry) => ({
-        id: entry.student.id,
-        enrollmentNo: entry.student.enrollmentNo,
-        createdAt: entry.student.createdAt,
-        updatedAt: entry.student.updatedAt,
-        firstName: entry.student.user.firstName,
-        lastName: entry.student.user.lastName,
-        email: entry.student.user.email,
-        userId: entry.student.user.id
-      }));
+      // Call the get method with filter and include
+      const enrolledStudents = (await VirtualClassroomDAO.getAll({
+        filter: { id: classroomId },
+        include: virtualClassroomIncludeFields,
+      })) as EnrolledStudents[];
+
+      // Map the enrolled students to the flattened structure
+      const flattenedStudents = enrolledStudents.flatMap((vc) =>
+        vc.virtualClassroomStudents.map((vcs) => ({
+          id: vcs.student.id,
+          enrollmentNo: vcs.student.enrollmentNo,
+          createdAt: vcs.student.createdAt,
+          updatedAt: vcs.student.updatedAt,
+          firstName: vcs.student.user.firstName,
+          lastName: vcs.student.user.lastName,
+          email: vcs.student.user.email,
+          userId: vcs.student.user.id,
+        }))
+      );
 
       logger.info(`GetEligibleStudents : Fetched enrolled students ${JSON.stringify(flattenedStudents)}`);
-      res.status(200).json(flattenedStudents);
+      res.status(HTTP_STATUS_OK).json(flattenedStudents);
     } catch (error) {
       logger.error('Error fetching eligible students:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
@@ -315,9 +290,7 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-      if (!userId) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'User ID is required' });
-      }
+
       const student = await studentDAO.getStudentByUserId(userId);
       if (!student?.id) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student not found for the given User ID' });
@@ -327,11 +300,8 @@ export class VirtualClassroomController {
       if (isAlreadyEnrolled) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student is already enrolled in the classroom' });
       }
-      logger.info(`[VirtualClassroomController] Student ID: ${student.id}`);
-      logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
-      await this.virtualClassroomService.joinClassroom(student.id, classroomId);
 
-      logger.info('[VirtualClassroomController] Student joined classroom:', classroomId);
+      await this.virtualClassroomService.joinClassroom(student.id, classroomId);
       return res.status(HTTP_STATUS_OK).json({ message: 'Joined virtual classroom successfully' });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error joining classroom:', error);
@@ -364,24 +334,17 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-      logger.info(`[VirtualClassroomController] User ID: ${userId}`);
-      const student = await studentDAO.getStudentByUserId(userId);
-      const studentId = student?.id;
-      logger.info(`[VirtualClassroomController] Student ID: ${studentId}`);
-      logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
 
-      if (!studentId) {
+      const student = await studentDAO.getStudentByUserId(userId);
+      if (!student?.id) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student not found for the given User ID' });
       }
 
-      const result = await this.virtualClassroomService.leaveClassroom(studentId, classroomId);
-
+      const result = await this.virtualClassroomService.leaveClassroom(student.id, classroomId);
       if (!result) {
-        logger.error('[VirtualClassroomController] Failed to leave virtual classroom');
         return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Failed to leave virtual classroom' });
       }
 
-      logger.info('[VirtualClassroomController] Student left classroom:', classroomId);
       return res.status(HTTP_STATUS_OK).json({ message: 'Left virtual classroom successfully' });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error leaving classroom:', error);

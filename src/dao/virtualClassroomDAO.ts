@@ -1,6 +1,7 @@
 import { VirtualClassroomParams } from '@controllers/virtualClassroomController';
 import { Prisma, PrismaClient, VirtualClassroom } from '@prisma/client';
 import { logger } from '@services/logService';
+import { defaultInclude } from '@utils/prismaIncludes';
 import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
 
 const prisma = new PrismaClient();
@@ -25,23 +26,14 @@ export const VirtualClassroomDAO = {
     }
   },
 
-  get: async (filter: Prisma.VirtualClassroomWhereInput) => {
+  get: async (
+    filter: Prisma.VirtualClassroomWhereInput = {},
+    include: Prisma.VirtualClassroomInclude = defaultInclude
+  ) => {
     try {
       const virtualClassroom = await prisma.virtualClassroom.findFirst({
         where: filter,
-        include: {
-          faculty: true,
-          section: true,
-          units: true,
-          assignments: true,
-          classAttendances: true,
-          threads: true,
-          virtualClassroomStudents: {
-            include: {
-              student: true,
-            },
-          },
-        },
+        include,
       });
 
       return virtualClassroom;
@@ -50,38 +42,32 @@ export const VirtualClassroomDAO = {
       throw error;
     }
   },
-  getAll: async (filter: Prisma.VirtualClassroomWhereInput) => {
-    try {
-      const virtualClassrooms = await prisma.virtualClassroom.findMany({
-        where: filter,
-        include: {
-          section: true,
-          faculty: true,
-          virtualClassroomStudents: {
-            include: {
-              student: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      firstName: true,
-                      lastName: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
 
+  getAll: async ({
+    filter = {},
+    include,
+    select,
+  }: {
+    filter?: Prisma.VirtualClassroomWhereInput;
+    include?: Prisma.VirtualClassroomInclude;
+    select?: Prisma.VirtualClassroomSelect;
+  }) => {
+    try {
+      const query: Prisma.VirtualClassroomFindManyArgs = {
+        where: filter,
+      };
+
+      if (include) query.include = include;
+      if (select) query.select = select;
+
+      const virtualClassrooms = await prisma.virtualClassroom.findMany(query);
       return virtualClassrooms ?? [];
     } catch (error) {
       logger.error('Error fetching virtual classrooms:', error);
       throw error;
     }
   },
+
   update: async (id: string, data: Prisma.VirtualClassroomUpdateInput) => {
     try {
       const virtualClassroom = await prisma.virtualClassroom.update({
