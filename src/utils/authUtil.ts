@@ -11,6 +11,9 @@ import { logger } from '@services/logService';
 import { SignupParams } from '@customTypes/user';
 import { ErrorResponse } from 'types/express';
 import { Role, PrismaClient } from '@prisma/client';
+import DepartmentDAO from '@dao/departmentDAO';
+import SectionDAO from '@dao/sectionDAO';
+import CollegeDAO from '@dao/collegeDAO';
 
 export function generateResetToken() {
   logger.info('[AuthUtils] Generating reset token');
@@ -48,7 +51,7 @@ export async function validateSignupParams(params: SignupParams): Promise<ErrorR
     logger.warn(`Invalid role provided: ${role}`);
     return { error: 'Invalid role provided.', status: HTTP_STATUS_BAD_REQUEST };
   }
-  const college = await prisma.college.findUnique({ where: { id: collegeId } });
+  const college = await CollegeDAO.findCollegeById(collegeId);
   if (!college) {
     logger.warn(`College ID does not exist: ${collegeId}`);
     return { error: 'College does not exist.', status: HTTP_STATUS_BAD_REQUEST };
@@ -60,7 +63,7 @@ export async function validateSignupParams(params: SignupParams): Promise<ErrorR
       return { error: 'Department ID is required.', status: HTTP_STATUS_BAD_REQUEST };
     }
 
-    const department = await prisma.department.findUnique({ where: { id: departmentId } });
+    const department = await DepartmentDAO.getDepartmentById(departmentId);
     if (!department) {
       logger.warn(`Department ID does not exist: ${departmentId}`);
       return { error: 'Department does not exist.', status: HTTP_STATUS_BAD_REQUEST };
@@ -68,7 +71,7 @@ export async function validateSignupParams(params: SignupParams): Promise<ErrorR
   }
 
   if (role === 'STUDENT' && sectionId) {
-    const section = await prisma.section.findUnique({ where: { id: sectionId } });
+    const section = await SectionDAO.getSectionById(sectionId);
     if (!section) {
       logger.warn(`Section ID does not exist: ${sectionId}`);
       return { error: 'Section does not exist.', status: HTTP_STATUS_BAD_REQUEST };
