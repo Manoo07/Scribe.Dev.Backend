@@ -7,6 +7,7 @@ import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_OK,
   HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_UNAUTHORIZED,
 } from '@constants/constants';
 import { Prisma, PrismaClient } from '@prisma/client';
 import studentDAO from '@dao/studentDAO';
@@ -71,7 +72,6 @@ export class VirtualClassroomController {
     this.prisma = new PrismaClient();
   }
 
-
   // Helper method to validate missing fields
   private validateFields(fields: { key: string; value: any }[], res: Response): boolean {
     const missing = fields.filter((field) => !field.value).map((field) => field.key);
@@ -86,10 +86,9 @@ export class VirtualClassroomController {
 
   // Create Virtual Classroom
   createClassroom = async (req: Request, res: Response) => {
-
     try {
       if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+        throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
       const { name, syllabusUrl, sectionId }: VirtualClassroomParams = req.body;
@@ -164,7 +163,10 @@ export class VirtualClassroomController {
     try {
       let { filter } = req.body;
       if (!filter) {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        if (!userId) {
+          return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: 'User unauthorized' });
+        }
         const faculty = await FacultyDAO.getFacultyByUserId(userId);
         filter = { facultyId: faculty.id };
       }
@@ -274,9 +276,10 @@ export class VirtualClassroomController {
   joinClassroom = async (req: Request, res: Response) => {
     try {
       const { classroomId } = await req.body;
-      const userId = req.user?.id; if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+      if (!req.user || !req.user.id) {
+        throw new Error('Unauthorized: User ID missing from request.');
       }
+      const userId = req.user?.id;
       logger.info(`[VirtualClassroomController] User ID: ${userId}`);
       logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
       if (
@@ -314,12 +317,11 @@ export class VirtualClassroomController {
 
   // Leave Virtual Classroom
   leaveClassroom = async (req: Request, res: Response) => {
-
     try {
       const { classroomId } = req.body;
 
       if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+        throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
 
