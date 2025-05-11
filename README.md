@@ -138,4 +138,3 @@ npx prisma studio
 
 ---
 
-If you ever want to add a **Contributing** section or **API Documentation**, just let me know and I can help draft that too!
