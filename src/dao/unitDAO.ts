@@ -62,6 +62,21 @@ const UnitDAO = {
         }
     },
 
+    getUnitByClassroomId:async (classroomId:string)=>{
+        try{
+            logger.info(`[UNITDAO] Fetching unit by Virtual Classroom Id : ${classroomId}`);
+            return await prisma.unit.findMany({
+                where: { classroomId },
+                include:{educationalContents:true,
+                    classroom:true}
+            })
+        }
+        catch (error) {
+            logger.error(`[UnitDAO] Error fetching classroom ID=${classroomId}:`, error);
+            throw new Error('Failed to fetch unit by Classroom ID');
+        }
+    },
+
     updateUnit: async (id: string, updateFields: { name?: string; classroomId?: string }) => {
         try {
             logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
