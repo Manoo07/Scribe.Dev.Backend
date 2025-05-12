@@ -50,15 +50,15 @@ class UnitService {
         }
     }
 
-    public async getUnitByClassroomId(id: string) {
+    public async getUnitByClassroomId(classroomId: string) {
         try {
-            logger.info(`[UNITService] Unit fetched successfully for ID=${id}`);
-            const unit = await UnitDAO.getUnitByClassroomId(id);
-            logger.info(`[UnitService] Unit fetched successfully for ID=${id}`);
+            logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
+            const unit = await UnitDAO.getUnitByClassroomId(classroomId);
+            logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
             return unit;
         }
         catch (error) {
-            logger.error(`[UnitService] Error while fetching Classroom ID=${id}`, error);
+            logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
             throw error;
         }
     }
