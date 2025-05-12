@@ -10,7 +10,7 @@ import {
 import { logger } from '@services/logService';
 import { SignupParams } from '@customTypes/user';
 import { Role } from '@prisma/client';
-import { ErrorResponse } from '@services/authService';
+import { ErrorResponse } from 'types/express';
 
 export function generateResetToken() {
   logger.info('[AuthUtils] Generating reset token');

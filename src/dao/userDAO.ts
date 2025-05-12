@@ -24,6 +24,7 @@ const UserDAO = {
       throw new Error('[UserDAO] Failed to fetch users');
     }
   },
+  
   findByUsernameExcludingId: async (username: string, excludeId: string) => {
     try {
       logger.info(`[UserDAO] Checking if username "${username}" is taken by another user (excluding ID: ${excludeId})`);
@@ -240,7 +241,6 @@ const UserDAO = {
       logger.error(`[AUTH] Failed to get user role │ userId=${userId} │ Error=${(error as Error).message}`);
       throw error;
     }
-
   },
 
   updateLastLogin: async (userId: string) => {

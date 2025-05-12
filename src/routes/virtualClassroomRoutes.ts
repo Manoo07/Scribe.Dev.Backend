@@ -21,13 +21,13 @@ virtualClassroomRouter.get('/:id', async (req: Request, res: Response) => {
 
     const classroom = await VirtualClassroomDAO.get({ id: classroomId });
     if (!classroom) {
-      res.status(404).json({ message: 'Classroom not found' });
+      res.status(HTTP_STATUS_NOT_FOUND).json({ message: 'Classroom not found' });
     }
 
-    res.status(200).json(classroom);
+    res.status(HTTP_STATUS_NOT_FOUND).json(classroom);
   } catch (error) {
     console.error('Error fetching classroom:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -36,7 +36,7 @@ virtualClassroomRouter.get('/eligible-students/:id', async (req: Request, res: R
     await virtualClassroomController.getEligibleStudents(req, res);
   } catch (error) {
     logger.error('Error in route handler for eligible students:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -45,7 +45,7 @@ virtualClassroomRouter.get('/enrolled-students/:id', async (req: Request, res: R
     await virtualClassroomController.getEnrolledStudents(req, res);
   } catch (error) {
     logger.error('Error in route handler for eligible students:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
   }
 });
 

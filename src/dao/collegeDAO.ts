@@ -5,67 +5,73 @@ const prisma = new PrismaClient();
 
 const CollegeDAO = {
   createCollege: async (name: string): Promise<College> => {
+    logger.info('[CollegeDAO] Creating a new college with name:', name);
     try {
-      logger.info('Creating a new college with data:', name);
       const college = await prisma.college.create({
         data: {
           name: name,
         },
       });
-      logger.info('College created successfully:', college);
+      logger.info('[CollegeDAO] College created successfully:', college);
       return college;
     } catch (error) {
-      logger.error('Error creating college:', error);
+      logger.error('[CollegeDAO] Error creating college:', error);
       throw error;
     }
   },
 
   getColleges: async (filterOptions: Partial<College> = {}): Promise<College[]> => {
+    logger.info('[CollegeDAO] Fetching colleges with filter:', filterOptions);
     try {
-      logger.info('Fetching colleges with filter:', filterOptions);
       const colleges = await prisma.college.findMany({ where: filterOptions });
-      logger.info(`Fetched ${colleges.length} colleges`);
+      logger.info(`[CollegeDAO] Fetched ${colleges.length} colleges`);
       return colleges;
     } catch (error) {
-      logger.error('Error fetching colleges:', error);
+      logger.error('[CollegeDAO] Error fetching colleges:', error);
       throw error;
     }
   },
 
   updateCollege: async (id: string, updateFields: Partial<College>): Promise<College | null> => {
+    logger.info(`[CollegeDAO] Updating college with ID=${id} and data:`, updateFields);
     try {
-      logger.info(`Updating college id=${id} with data:`, updateFields);
       const updatedCollege = await prisma.college.update({
         where: { id },
         data: updateFields,
       });
-      logger.info('College updated successfully:', updatedCollege);
+      logger.info('[CollegeDAO] College updated successfully:', updatedCollege);
       return updatedCollege;
     } catch (error) {
-      logger.error(`Error updating college id=${id}:`, error);
+      logger.error(`[CollegeDAO] Error updating college ID=${id}:`, error);
       throw error;
     }
   },
 
   deleteCollege: async (id: string): Promise<College | null> => {
+    logger.info(`[CollegeDAO] Deleting college with ID=${id}`);
     try {
-      logger.info(`Deleting college id=${id}`);
       const deletedCollege = await prisma.college.delete({ where: { id } });
-      logger.info('College deleted successfully:', deletedCollege);
+      logger.info('[CollegeDAO] College deleted successfully:', deletedCollege);
       return deletedCollege;
     } catch (error) {
-      logger.error(`Error deleting college id=${id}:`, error);
+      logger.error(`[CollegeDAO] Error deleting college ID=${id}:`, error);
       throw error;
     }
   },
-  findCollegeById:async(collegeId: string)=> {
-    logger.info(`Checking existence of college ID=${collegeId}`);
-    return prisma.college.findUnique({
-      where: { id: collegeId },
-    });
+
+  findCollegeById: async (collegeId: string) => {
+    logger.info(`[CollegeDAO] Checking existence of college with ID=${collegeId}`);
+    try {
+      const college = await prisma.college.findUnique({
+        where: { id: collegeId },
+      });
+      logger.info('[CollegeDAO] College found:', college);
+      return college;
+    } catch (error) {
+      logger.error(`[CollegeDAO] Error finding college with ID=${collegeId}:`, error);
+      throw error;
+    }
   },
 };
-
-  
 
 export default CollegeDAO;
