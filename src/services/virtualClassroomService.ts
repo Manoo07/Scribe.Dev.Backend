@@ -2,8 +2,8 @@ import { logger } from '@services/logService';
 import { PrismaClient, VirtualClassroomStudent } from '@prisma/client';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import { VirtualClassroom } from '@prisma/client';
-import { VirtualClassroomParams } from '@controllers/virtualClassroomController';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
+import { VirtualClassroomParams } from 'types/express';
 
 export class VirtualClassroomService {
   // should be created by faculty
@@ -29,10 +29,10 @@ export class VirtualClassroomService {
     }
   }
 
-  async getAllVirtualClassrooms(filter: any): Promise<VirtualClassroom[]> {
+  async getAllVirtualClassrooms(filter: any, includeFields: any): Promise<VirtualClassroom[]> {
     logger.info('[VirtualClassroomService] :Fetching all virtual classrooms with filter:', filter);
     try {
-      const virtualClassrooms = await VirtualClassroomDAO.getAll(filter);
+      const virtualClassrooms = await VirtualClassroomDAO.getAll({ filter, include: includeFields });
       return virtualClassrooms;
     } catch (error) {
       logger.error('Error fetching all virtual classrooms:', error);

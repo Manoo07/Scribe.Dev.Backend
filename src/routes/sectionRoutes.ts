@@ -61,7 +61,7 @@ sectionRouter.get('/:id', async (req: Request, res: Response): Promise<any> => {
   try {
     const section = await prisma.section.findUnique({
       where: { id },
-      include: { year: true }, // Include related year details
+      include: { year: true },
     });
 
     if (!section) {

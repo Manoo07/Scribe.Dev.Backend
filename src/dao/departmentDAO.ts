@@ -4,8 +4,6 @@ import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 
 const prisma = new PrismaClient();
 
-
-
 const DepartmentDAO = {
   createDepartment: async (data: { name: string; collegeId: string }): Promise<Department> => {
     try {
@@ -18,7 +16,6 @@ const DepartmentDAO = {
       throw error;
     }
   },
-
 
   getDepartmentsByFilters: async (filters: Record<string, any> = {}): Promise<Department[]> => {
     try {
@@ -39,8 +36,6 @@ const DepartmentDAO = {
       throw error;
     }
   },
-
-
 
   getDepartments: async (): Promise<Department[]> => {
     try {

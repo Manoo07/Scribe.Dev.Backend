@@ -33,8 +33,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     return res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
   }
 
-
-
   req.user = { id: decoded.id, role: decoded.role };
   logger.info(
     `[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${JSON.stringify(decoded.id)}`

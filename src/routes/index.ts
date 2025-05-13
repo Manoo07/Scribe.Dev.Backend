@@ -18,22 +18,18 @@ export const routers: Route[] = [
   {
     basePath: '/college',
     router: collegeRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/department',
     router: departmentRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/year',
     router: yearRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/section',
     router: sectionRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
   },
   {
     basePath: '/user',
@@ -48,6 +44,6 @@ export const routers: Route[] = [
   {
     basePath: '/unit',
     router: unitRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY'])],
-  }
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
+  },
 ];

@@ -1,6 +1,8 @@
 import { Request, Response, Router } from 'express';
 import { VirtualClassroomController } from '@controllers/virtualClassroomController';
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND } from '@constants/constants';
+import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
+import { logger } from '@services/logService';
 
 export const virtualClassroomRouter = Router();
 const virtualClassroomController = new VirtualClassroomController();
@@ -10,6 +12,40 @@ virtualClassroomRouter.get('/', async (req: Request, res: Response) => {
     await virtualClassroomController.getClassrooms(req, res);
   } catch (error) {
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while fetching the classrooms.' });
+  }
+});
+
+virtualClassroomRouter.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const classroomId = req.params.id;
+
+    const classroom = await VirtualClassroomDAO.get({ id: classroomId });
+    if (!classroom) {
+      res.status(HTTP_STATUS_NOT_FOUND).json({ message: 'Classroom not found' });
+    }
+
+    res.status(HTTP_STATUS_NOT_FOUND).json(classroom);
+  } catch (error) {
+    console.error('Error fetching classroom:', error);
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
+  }
+});
+
+virtualClassroomRouter.get('/eligible-students/:id', async (req: Request, res: Response) => {
+  try {
+    await virtualClassroomController.getEligibleStudents(req, res);
+  } catch (error) {
+    logger.error('Error in route handler for eligible students:', error);
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
+  }
+});
+
+virtualClassroomRouter.get('/enrolled-students/:id', async (req: Request, res: Response) => {
+  try {
+    await virtualClassroomController.getEnrolledStudents(req, res);
+  } catch (error) {
+    logger.error('Error in route handler for eligible students:', error);
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
   }
 });
 
