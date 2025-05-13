@@ -54,7 +54,7 @@ const UnitDAO = {
             logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
             return await prisma.unit.findUnique({
                 where: { id: UnitId },
-                include: { educationalContents: true, classroom: true },
+                include: { educationalContents: true },
             });
         } catch (error) {
             logger.error(`[UnitDAO] Error fetching unit ID=${UnitId}:`, error);
