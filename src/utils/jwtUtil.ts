@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import { JWT_EXPIRATION, JWT_SECRET } from '@constants/constants';
 import { logger } from '@services/logService';
 
-export const generateToken = (userId: string,role:string) => {
+export const generateToken = (userId: string, role: string) => {
   logger.info('[JWTUtils] Generating token');
-  return jwt.sign({ id: userId,role:role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  return jwt.sign({ id: userId, role: role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 };
 
 export const verifyToken = (token: string) => {

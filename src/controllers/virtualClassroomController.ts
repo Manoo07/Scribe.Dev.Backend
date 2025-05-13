@@ -2,25 +2,25 @@ import { VirtualClassroomService } from '@services/virtualClassroomService';
 import { Request, Response } from 'express';
 import { logger } from '@services/logService';
 import {
-  ALLOWED_FILTER_KEYS,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_OK,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_UNAUTHORIZED,
 } from '@constants/constants';
 import { PrismaClient } from '@prisma/client';
 import studentDAO from '@dao/studentDAO';
 import FacultyDAO from '@dao/facultyDAO';
+import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
+import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
+import { validateFilter } from '@utils/prismaFilters';
+import { classroomIncludeFields, virtualClassroomIncludeFields } from '@utils/prismaIncludes';
+import { studentSelectFields, virtualClassroomStudentSelectFields } from '@utils/prismaSelects';
+import { EnrolledStudents, StudentWithUser, Student, VirtualClassroomParams } from 'types/express';
+import { validateFields } from '@utils/validations/virtualClassroom.schema';
 
-// Initialize Logger
-logger.info('[VirtualClassroomController] Initialized');
-
-export interface VirtualClassroomParams {
-  name: string;
-  facultyId: string;
-  sectionId: string;
-  syllabusUrl?: string;
-}
+const prisma = new PrismaClient();
 
 export class VirtualClassroomController {
   virtualClassroomService: VirtualClassroomService;
@@ -31,39 +31,17 @@ export class VirtualClassroomController {
     this.prisma = new PrismaClient();
   }
 
-
-  // Helper method to validate missing fields
-  private validateFields(fields: { key: string; value: any }[], res: Response): boolean {
-    const missing = fields.filter((field) => !field.value).map((field) => field.key);
-    if (missing.length > 0) {
-      res.status(HTTP_STATUS_BAD_REQUEST).json({
-        message: `${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} required`,
-      });
-      return false;
-    }
-    return true;
-  }
-
-  private validateFilter = (filter: any): string[] => {
-    if (!filter || typeof filter !== 'object' || Array.isArray(filter)) {
-      throw new Error('Filter must be a valid object');
-    }
-    const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
-    return invalidKeys;
-  };
-
-  // Create Virtual Classroom
   createClassroom = async (req: Request, res: Response) => {
-
+    logger.info('[VirtualClassroomController] createClassroom started');
     try {
       if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+        throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
       const { name, syllabusUrl, sectionId }: VirtualClassroomParams = req.body;
 
       if (
-        !this.validateFields(
+        !validateFields(
           [
             { key: 'User ID', value: userId },
             { key: 'Name', value: name },
@@ -92,7 +70,7 @@ export class VirtualClassroomController {
         return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Failed to create virtual classroom' });
       }
 
-      logger.info('[VirtualClassroomController] Virtual classroom created:', classroom.id);
+      logger.info('[VirtualClassroomController] createClassroom completed successfully');
       return res.status(HTTP_STATUS_CREATED).json({ message: 'Virtual classroom created successfully', classroom });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error creating virtual classroom:', error);
@@ -103,26 +81,22 @@ export class VirtualClassroomController {
     }
   };
 
-  //getClassroom
   getClassroom = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] getClassroom started');
     try {
       const { filter } = req.body;
       if (filter) {
-        if (typeof filter !== 'object' || Array.isArray(filter)) {
-          return res.status(HTTP_STATUS_BAD_REQUEST).json({
-            message: 'Filter must be a valid object',
-          });
-        }
-
-        const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
+        const invalidKeys = validateFilter(filter);
         if (invalidKeys.length > 0) {
           return res.status(HTTP_STATUS_BAD_REQUEST).json({
             message: `Invalid filter field(s): ${invalidKeys.join(', ')}`,
           });
         }
       }
-      const classrooms = await this.virtualClassroomService.getVirtualClassroom(filter);
-      return res.status(HTTP_STATUS_OK).json({ classrooms });
+
+      const classroom = await this.virtualClassroomService.getVirtualClassroom(filter);
+      logger.info('[VirtualClassroomController] getClassroom completed successfully');
+      return res.status(HTTP_STATUS_OK).json({ classroom });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error fetching classrooms:', error);
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
@@ -131,24 +105,44 @@ export class VirtualClassroomController {
       });
     }
   };
+
   getClassrooms = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] getClassrooms started');
     try {
-      const { filter } = req.body;
-      if (filter) {
-        if (typeof filter !== 'object' || Array.isArray(filter)) {
-          return res.status(HTTP_STATUS_BAD_REQUEST).json({
-            message: 'Filter must be a valid object',
-          });
+      let { filter } = req.body;
+      if (!filter) {
+        const userId = req.user?.id;
+        if (!userId) {
+          return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: 'User unauthorized' });
         }
+        const faculty = await FacultyDAO.getFacultyByUserId(userId);
+        filter = { facultyId: faculty.id };
+      }
 
-        const invalidKeys = Object.keys(filter).filter((key) => !ALLOWED_FILTER_KEYS.has(key));
+      if (filter) {
+        const invalidKeys = validateFilter(filter);
         if (invalidKeys.length > 0) {
           return res.status(HTTP_STATUS_BAD_REQUEST).json({
             message: `Invalid filter field(s): ${invalidKeys.join(', ')}`,
           });
         }
       }
-      const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(filter);
+
+      const includeFields = {
+        section: {
+          select: {
+            name: true,
+          },
+        },
+        faculty: {
+          select: {
+            specialization: true,
+          },
+        },
+      };
+
+      const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(filter, includeFields);
+      logger.info('[VirtualClassroomController] getClassrooms completed successfully');
       return res.status(HTTP_STATUS_OK).json({ classrooms });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error fetching classrooms:', error);
@@ -159,17 +153,99 @@ export class VirtualClassroomController {
     }
   };
 
-  // Join Virtual Classroom
+  getEligibleStudents = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] getEligibleStudents started');
+    try {
+      const classroomId = req.params.id;
+
+      const classroom = await VirtualClassroomDAO.get({ id: classroomId }, classroomIncludeFields);
+      if (!classroom) {
+        return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Classroom not found' });
+      }
+
+      const sectionId = classroom.sectionId;
+      const enrolledStudents = await VirtualClassroomStudentDAO.getAll({
+        filter: { classroomId },
+        select: virtualClassroomStudentSelectFields,
+      });
+
+      const enrolledStudentIds = enrolledStudents.map((e) => e.studentId);
+
+      const studentFilter = {
+        id: { notIn: enrolledStudentIds },
+        user: {
+          userRole: {
+            sectionId: sectionId,
+          },
+        },
+      };
+
+      const eligibleStudentsRaw = (await studentDAO.getStudentsByFilter({
+        filter: studentFilter,
+        select: studentSelectFields,
+      })) as StudentWithUser[];
+
+      const eligibleStudents = eligibleStudentsRaw.map((student) => ({
+        ...student,
+        firstName: student.user.firstName,
+        lastName: student.user.lastName,
+        email: student.user.email,
+        userId: student.user.id,
+      }));
+
+      logger.info('[VirtualClassroomController] getEligibleStudents completed successfully');
+      res.status(HTTP_STATUS_OK).json(eligibleStudents);
+    } catch (error) {
+      logger.error('[VirtualClassroomController] Error fetching eligible students:', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+    }
+  };
+
+  getEnrolledStudents = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] getEnrolledStudents started');
+    try {
+      const classroomId = req.params.id;
+      logger.info(`GetEnrolledStudents : Fetched ClassroomId ${classroomId}`);
+
+      const enrolledStudents = (await VirtualClassroomDAO.getAll({
+        filter: { id: classroomId },
+        include: virtualClassroomIncludeFields,
+      })) as EnrolledStudents[];
+
+      const flattenedStudents = enrolledStudents.flatMap((vc) =>
+        vc.virtualClassroomStudents.map((vcs: { student: Student }) => ({
+          id: vcs.student.id,
+          enrollmentNo: vcs.student.enrollmentNo,
+          createdAt: vcs.student.createdAt,
+          updatedAt: vcs.student.updatedAt,
+          firstName: vcs.student.user.firstName,
+          lastName: vcs.student.user.lastName,
+          email: vcs.student.user.email,
+          userId: vcs.student.user.id,
+        }))
+      );
+
+      logger.info('[VirtualClassroomController] getEnrolledStudents completed successfully');
+      res.status(HTTP_STATUS_OK).json(flattenedStudents);
+    } catch (error) {
+      logger.error('[VirtualClassroomController] Error fetching enrolled students:', error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+    }
+  };
+
   joinClassroom = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] joinClassroom started');
     try {
       const { classroomId } = await req.body;
-      const userId = req.user?.id; if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+      if (!req.user || !req.user.id) {
+        throw new Error('Unauthorized: User ID missing from request.');
       }
+      const userId = req.user?.id;
       logger.info(`[VirtualClassroomController] User ID: ${userId}`);
       logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
+
       if (
-        !this.validateFields(
+        !validateFields(
           [
             { key: 'User ID', value: userId },
             { key: 'Classroom ID', value: classroomId },
@@ -179,9 +255,7 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-      if (!userId) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'User ID is required' });
-      }
+
       const student = await studentDAO.getStudentByUserId(userId);
       if (!student?.id) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student not found for the given User ID' });
@@ -191,11 +265,9 @@ export class VirtualClassroomController {
       if (isAlreadyEnrolled) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student is already enrolled in the classroom' });
       }
-      logger.info(`[VirtualClassroomController] Student ID: ${student.id}`);
-      logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
-      await this.virtualClassroomService.joinClassroom(student.id, classroomId);
 
-      logger.info('[VirtualClassroomController] Student joined classroom:', classroomId);
+      await this.virtualClassroomService.joinClassroom(student.id, classroomId);
+      logger.info('[VirtualClassroomController] joinClassroom completed successfully');
       return res.status(HTTP_STATUS_OK).json({ message: 'Joined virtual classroom successfully' });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error joining classroom:', error);
@@ -206,19 +278,18 @@ export class VirtualClassroomController {
     }
   };
 
-  // Leave Virtual Classroom
   leaveClassroom = async (req: Request, res: Response) => {
-
+    logger.info('[VirtualClassroomController] leaveClassroom started');
     try {
       const { classroomId } = req.body;
 
       if (!req.user || !req.user.id) {
-        throw new Error("Unauthorized: User ID missing from request.");
+        throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
 
       if (
-        !this.validateFields(
+        !validateFields(
           [
             { key: 'User ID', value: userId },
             { key: 'Classroom ID', value: classroomId },
@@ -228,24 +299,18 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-      logger.info(`[VirtualClassroomController] User ID: ${userId}`);
-      const student = await studentDAO.getStudentByUserId(userId);
-      const studentId = student?.id;
-      logger.info(`[VirtualClassroomController] Student ID: ${studentId}`);
-      logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
 
-      if (!studentId) {
+      const student = await studentDAO.getStudentByUserId(userId);
+      if (!student?.id) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Student not found for the given User ID' });
       }
 
-      const result = await this.virtualClassroomService.leaveClassroom(studentId, classroomId);
-
+      const result = await this.virtualClassroomService.leaveClassroom(student.id, classroomId);
       if (!result) {
-        logger.error('[VirtualClassroomController] Failed to leave virtual classroom');
         return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Failed to leave virtual classroom' });
       }
 
-      logger.info('[VirtualClassroomController] Student left classroom:', classroomId);
+      logger.info('[VirtualClassroomController] leaveClassroom completed successfully');
       return res.status(HTTP_STATUS_OK).json({ message: 'Left virtual classroom successfully' });
     } catch (error) {
       logger.error('[VirtualClassroomController] Error leaving classroom:', error);

@@ -21,13 +21,7 @@ import crypto from 'crypto';
 import { logger } from '@services/logService';
 import { generateUsername } from '@utils/userUtils';
 import { SignupParams } from '@customTypes/user';
-
-export interface ErrorResponse {
-  error: string;
-  status: number;
-}
-
-type SignupResult = any | ErrorResponse;
+import { ErrorResponse, SignupResult } from 'types/express';
 
 class AuthService {
   private prisma: PrismaClient;
@@ -102,8 +96,8 @@ class AuthService {
 
       const userRole = await UserDAO.getUserRole(user.id);
       if (!userRole) {
-        logger.warn("Role not found for the user ${email}");
-        throw new Error('Invalid email or password')
+        logger.warn('Role not found for the user ${email}');
+        throw new Error('Invalid email or password');
       }
 
       return generateToken(user.id, userRole);

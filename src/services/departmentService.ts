@@ -67,7 +67,6 @@ class DepartmentService {
     return DepartmentDAO.getDepartmentsByFilters(filters);
   }
 
-
   public async deleteDepartment(id: string): Promise<void> {
     try {
       logger.info(`[DepartmentService] Deleting department ID=${id}`);
