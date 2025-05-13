@@ -15,9 +15,9 @@ export const updateUnitSchema = z.object({
   educationalContents: z.array(
     z.object({
       id: z.string().optional(),
-      type: z.enum(['video', 'document', 'quiz']),
+      type: z.enum(['NOTE', 'LINK', 'VIDEO', 'DOCUMENT']),
       content: z.string(),
-      version: z.string().optional(),
+      version: z.number().optional(),
     })
   ).optional(),
 }).refine(data => Object.keys(data).length > 0, {

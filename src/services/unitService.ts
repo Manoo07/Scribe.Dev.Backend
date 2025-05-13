@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
 import { logger } from '../services/logService';
+import { updateUnitSchema } from '@utils/validations/unit.schema';
 
 const prisma = new PrismaClient();
 
@@ -63,22 +64,27 @@ class UnitService {
         }
     }
 
+
     public async updateUnit(UnitId: string, updateFields: any) {
         try {
             logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
-            const unit = await UnitDAO.updateUnit(UnitId, updateFields);
+            const validatedFields = updateUnitSchema.parse(updateFields);
+
+            const unit = await UnitDAO.updateUnit(UnitId, validatedFields);
+
             if (unit) {
                 logger.info(`[UnitService] Unit ID=${UnitId} updated successfully`);
                 return unit;
             } else {
                 logger.warn(`[UnitService] Unit ID=${UnitId} not found for update`);
-                throw new Error('Unit not found')
+                throw new Error('Unit not found');
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`[UnitService] Error updating unit ID=${UnitId}:`, error);
-            return { error: 'Update failed' };
+            return { error: error.message || 'Update failed' };
         }
     }
+
 
     public async deleteUnit(id: string) {
         try {

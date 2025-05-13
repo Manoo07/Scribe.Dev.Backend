@@ -62,13 +62,15 @@ const UnitDAO = {
         }
     },
 
-    getUnitByClassroomId:async (classroomId:string)=>{
-        try{
+    getUnitByClassroomId: async (classroomId: string) => {
+        try {
             logger.info(`[UNITDAO] Fetching unit by Virtual Classroom Id : ${classroomId}`);
             return await prisma.unit.findMany({
                 where: { classroomId },
-                include:{educationalContents:true,
-                    classroom:true}
+                include: {
+                    educationalContents: true,
+                    classroom: true
+                }
             })
         }
         catch (error) {
@@ -77,17 +79,41 @@ const UnitDAO = {
         }
     },
 
-    updateUnit: async (id: string, updateFields: { name?: string; classroomId?: string }) => {
+    updateUnit: async (id: string, updateFields: {
+        name?: string; classroomId?: string, educationalContents?: { type: ContentType; content: string; version?: number }[];
+    }) => {
         try {
             logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
-            const result = await prisma.unit.update({
-                where: { id },
-                data: {
-                    name: updateFields.name,
-                    classroomId: updateFields.classroomId,
-                },
-                include: { educationalContents: true },
+
+            const { name, classroomId, educationalContents } = updateFields;
+
+            const result = await prisma.$transaction(async (tx) => {
+                const updatedUnit = await tx.unit.update({
+                    where: { id },
+                    data: { name, classroomId },
+                });
+
+                if (educationalContents) {
+                    await tx.educationalContent.deleteMany({
+                        where: { unitId: id },
+                    });
+
+                    await tx.educationalContent.createMany({
+                        data: educationalContents.map((content) => ({
+                            unitId: id,
+                            type: content.type,
+                            content: content.content,
+                            version: content.version ?? 1,
+                        })),
+                    });
+                }
+
+                return tx.unit.findUnique({
+                    where: { id },
+                    include: { educationalContents: true },
+                });
             });
+
             logger.info(`[UnitDAO] Unit ID=${id} updated successfully`);
             return result;
         } catch (error) {
