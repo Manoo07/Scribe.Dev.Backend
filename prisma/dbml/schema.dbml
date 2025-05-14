@@ -1,0 +1,327 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  firstName String [not null]
+  lastName String [not null]
+  username String [unique, not null]
+  email String [unique, not null]
+  password String [not null]
+  college College
+  collegeId String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  mfaSecret String
+  lastLogin DateTime
+  students Student
+  faculty Faculty
+  threadLikes ThreadLike [not null]
+  threadComments ThreadComment [not null]
+  messages Messages [not null]
+  userRole UserRole
+  resetToken String
+  resetTokenExpiry DateTime
+}
+
+Table Student {
+  id String [pk]
+  user User [not null]
+  userId String [unique, not null]
+  enrollmentNo String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  archivedAt DateTime
+  submissions AssignmentSubmission [not null]
+  virtualClassroomStudents VirtualClassroomStudent [not null]
+  classAttendances ClassAttendance [not null]
+  updatedAt DateTime [not null]
+}
+
+Table Faculty {
+  id String [pk]
+  user User [not null]
+  userId String [unique, not null]
+  specialization String
+  classrooms VirtualClassroom [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table UserRole {
+  id String [pk]
+  userId String [unique, not null]
+  role Role [not null]
+  college College
+  collegeId String
+  department Department
+  departmentId String
+  section Section
+  sectionId String
+  user User [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table College {
+  id String [pk]
+  name String [unique, not null]
+  departments Department [not null]
+  users User [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  userRoles UserRole [not null]
+}
+
+Table Department {
+  id String [pk]
+  name String [not null]
+  college College [not null]
+  collegeId String [not null]
+  years Year [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  UserRole UserRole [not null]
+}
+
+Table Year {
+  id String [pk]
+  name String [not null]
+  department Department [not null]
+  departmentId String [not null]
+  sections Section [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
+}
+
+Table Section {
+  id String [pk]
+  name String [not null]
+  year Year [not null]
+  yearId String [not null]
+  UserRole UserRole [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  VirtualClassroom VirtualClassroom [not null]
+}
+
+Table VirtualClassroom {
+  id String [pk]
+  name String [not null]
+  faculty Faculty [not null]
+  facultyId String [not null]
+  section Section [not null]
+  sectionId String [not null]
+  units Unit [not null]
+  assignments Assignment [not null]
+  syllabusUrl String
+  classAttendances ClassAttendance [not null]
+  virtualClassroomStudents VirtualClassroomStudent [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
+  threads Thread [not null]
+}
+
+Table VirtualClassroomStudent {
+  id String [pk]
+  classroom VirtualClassroom [not null]
+  classroomId String [not null]
+  student Student [not null]
+  studentId String [not null]
+  enrolledAt DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (classroomId, studentId) [unique]
+  }
+}
+
+Table Unit {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  classroom VirtualClassroom [not null]
+  classroomId String [not null]
+  educationalContents EducationalContent [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  threads Thread [not null]
+}
+
+Table EducationalContent {
+  id String [pk]
+  unit Unit [not null]
+  unitId String [not null]
+  type ContentType [not null]
+  content String [not null]
+  version Int [not null, default: 1]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table ClassAttendance {
+  id String [pk]
+  student Student [not null]
+  studentId String [not null]
+  classroom VirtualClassroom [not null]
+  classroomId String [not null]
+  date DateTime [not null]
+  present Boolean [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Assignment {
+  id String [pk]
+  title String [not null]
+  content String [not null]
+  deadline DateTime [not null]
+  classroom VirtualClassroom [not null]
+  classroomId String [not null]
+  assignmentSubmissions AssignmentSubmission [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table AssignmentSubmission {
+  id String [pk]
+  assignment Assignment [not null]
+  assignmentId String [not null]
+  student Student [not null]
+  studentId String [not null]
+  content String [not null]
+  submittedAt DateTime [default: `now()`, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Thread {
+  id String [pk]
+  title String [not null]
+  content String [not null]
+  unit Unit
+  unitId String
+  classroom VirtualClassroom [not null]
+  classroomId String [not null]
+  parent Thread
+  parentId String
+  threadLikes ThreadLike [not null]
+  threadComments ThreadComment [not null]
+  messages Messages [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  replies Thread [not null]
+}
+
+Table ThreadLike {
+  id String [pk]
+  thread Thread [not null]
+  threadId String [not null]
+  user User [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (threadId, userId) [unique]
+  }
+}
+
+Table ThreadComment {
+  id String [pk]
+  thread Thread [not null]
+  threadId String [not null]
+  user User [not null]
+  userId String [not null]
+  content String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Messages {
+  id String [pk]
+  content String [not null]
+  thread Thread [not null]
+  threadId String [not null]
+  user User [not null]
+  userId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Enum Role {
+  PRINCIPAL
+  HOD
+  FACULTY
+  STUDENT
+  CLASS_REPRESENTATIVE
+  SUPER_ADMIN
+}
+
+Enum ContentType {
+  NOTE
+  LINK
+  VIDEO
+  DOCUMENT
+}
+
+Ref: User.collegeId > College.id [delete: Cascade]
+
+Ref: Student.userId - User.id [delete: Cascade]
+
+Ref: Faculty.userId - User.id [delete: Cascade]
+
+Ref: UserRole.collegeId > College.id [delete: Cascade]
+
+Ref: UserRole.departmentId > Department.id [delete: Cascade]
+
+Ref: UserRole.sectionId > Section.id [delete: Cascade]
+
+Ref: UserRole.userId - User.id [delete: Cascade]
+
+Ref: Department.collegeId > College.id [delete: Cascade]
+
+Ref: Year.departmentId > Department.id [delete: Cascade]
+
+Ref: Section.yearId > Year.id [delete: Cascade]
+
+Ref: VirtualClassroom.facultyId > Faculty.id [delete: Cascade]
+
+Ref: VirtualClassroom.sectionId > Section.id [delete: Cascade]
+
+Ref: VirtualClassroomStudent.classroomId > VirtualClassroom.id [delete: Cascade]
+
+Ref: VirtualClassroomStudent.studentId > Student.id [delete: Cascade]
+
+Ref: Unit.classroomId > VirtualClassroom.id [delete: Cascade]
+
+Ref: EducationalContent.unitId > Unit.id [delete: Cascade]
+
+Ref: ClassAttendance.studentId > Student.id [delete: Cascade]
+
+Ref: ClassAttendance.classroomId > VirtualClassroom.id [delete: Cascade]
+
+Ref: Assignment.classroomId > VirtualClassroom.id [delete: Cascade]
+
+Ref: AssignmentSubmission.assignmentId > Assignment.id [delete: Cascade]
+
+Ref: AssignmentSubmission.studentId > Student.id [delete: Cascade]
+
+Ref: Thread.unitId > Unit.id [delete: Cascade]
+
+Ref: Thread.classroomId > VirtualClassroom.id [delete: Cascade]
+
+Ref: Thread.parentId - Thread.id [delete: Cascade]
+
+Ref: ThreadLike.threadId > Thread.id [delete: Cascade]
+
+Ref: ThreadLike.userId > User.id [delete: Cascade]
+
+Ref: ThreadComment.threadId > Thread.id [delete: Cascade]
+
+Ref: ThreadComment.userId > User.id [delete: Cascade]
+
+Ref: Messages.threadId > Thread.id [delete: Cascade]
+
+Ref: Messages.userId > User.id [delete: Cascade]
