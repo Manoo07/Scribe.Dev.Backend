@@ -84,6 +84,21 @@ export class UnitController {
     };
 
 
+    public async filterUnits(req: Request, res: Response): Promise<void> {
+        try {
+            const filters = req.body.filter || {};
+            logger.info('[UnitController] Received filters for unit search (GET body):', filters);
+
+            const units = await this.unitService.filterUnits(filters);
+            res.status(200).json(units);
+        } catch (error) {
+            logger.error('[UnitController] Error filtering units:', error);
+            res.status(500).json({ error: 'Failed to filter units' });
+        }
+    }
+
+
+
 
     public updateUnit = async (req: Request, res: Response): Promise<void> => {
         const { id } = req.params;

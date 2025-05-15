@@ -1,5 +1,6 @@
-import { ContentType, PrismaClient } from '@prisma/client';
+import { ContentType, PrismaClient, Unit } from '@prisma/client';
 import { logger } from '@services/logService';
+import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 
 const prisma = new PrismaClient();
 
@@ -78,6 +79,28 @@ const UnitDAO = {
 
 
     },
+
+
+    getUnitsByFilters: async (filters: Record<string, any> = {}): Promise<Unit[]> => {
+        try {
+            logger.info('[UnitDAO] Fetching units with filters:', filters);
+            const queryFilter = buildWhereClause(filters);
+
+            const units = await prisma.unit.findMany({
+                where: queryFilter,
+                include: {
+                    classroom: true,
+                    educationalContents: true,
+                },
+            });
+
+            return units;
+        } catch (error) {
+            logger.error('[UnitDAO] Error fetching filtered units:', error);
+            throw error;
+        }
+    },
+
 
     updateUnit: async (id: string, updateFields: { name?: string; description?: string }) => {
         try {

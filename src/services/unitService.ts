@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Unit } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
 import { logger } from '../services/logService';
 import { updateUnitSchema } from '@utils/validations/unit.schema';
@@ -61,6 +61,18 @@ class UnitService {
       throw error;
     }
   }
+
+
+  public async filterUnits(filters: Record<string, any>): Promise<Unit[]> {
+    try {
+      logger.info('[UnitService] Filtering units with:', filters);
+      return await UnitDAO.getUnitsByFilters(filters);
+    } catch (error) {
+      logger.error('[UnitService] Error filtering units:', error);
+      throw error;
+    }
+  }
+
 
 
   public async updateUnit(UnitId: string, updateFields: any) {
