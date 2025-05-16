@@ -236,11 +236,10 @@ export class VirtualClassroomController {
   joinClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] joinClassroom started');
     try {
-      const { classroomId } = await req.body;
-      if (!req.user || !req.user.id) {
+      const { classroomId,userId } = await req.body;
+      if (!userId) {
         throw new Error('Unauthorized: User ID missing from request.');
       }
-      const userId = req.user?.id;
       logger.info(`[VirtualClassroomController] User ID: ${userId}`);
       logger.info(`[VirtualClassroomController] Classroom ID: ${classroomId}`);
 
@@ -281,12 +280,11 @@ export class VirtualClassroomController {
   leaveClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] leaveClassroom started');
     try {
-      const { classroomId } = req.body;
+      const { classroomId,userId } = req.body;
 
-      if (!req.user || !req.user.id) {
+      if (!userId) {
         throw new Error('Unauthorized: User ID missing from request.');
       }
-      const userId = req.user.id;
 
       if (
         !validateFields(

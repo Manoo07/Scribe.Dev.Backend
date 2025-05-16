@@ -31,8 +31,8 @@ export const VirtualClassroomDAO = {
     include: Prisma.VirtualClassroomInclude = defaultInclude
   ) => {
     try {
-      logger.info('[VirtualClassroomDAO] Fetching single virtual classroom with filter:', JSON.stringify(filter));
-      logger.info('[VirtualClassroomDAO] Fetching single virtual classroom with include:', JSON.stringify(include));
+      logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with filter: ${JSON.stringify(filter)}` );
+      logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with include: ${JSON.stringify(include)}`);
 
       const virtualClassroom = await prisma.virtualClassroom.findFirst({
         where: filter,
