@@ -22,7 +22,7 @@ Table User {
   messages Messages [not null]
   userRole UserRole
   resetToken String
-  resetTokenExpiry DateTime
+  resetTokenExpiry BigInt
 }
 
 Table Student {

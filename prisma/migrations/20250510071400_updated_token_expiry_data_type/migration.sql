@@ -10,6 +10,4 @@
 ALTER TABLE "User" DROP COLUMN "resetTokenExpiry",
 ADD COLUMN     "resetTokenExpiry" BIGINT;
 
--- AlterTable
-ALTER TABLE "VirtualClassroomStudent" DROP COLUMN "updateAt",
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+
