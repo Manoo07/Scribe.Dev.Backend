@@ -30,15 +30,17 @@ export const VirtualClassroomDAO = {
     filter: Prisma.VirtualClassroomWhereInput = {},
     include: Prisma.VirtualClassroomInclude = defaultInclude
   ) => {
-    logger.info('[VirtualClassroomDAO] Fetching single virtual classroom with filter:', filter);
     try {
+      logger.info('[VirtualClassroomDAO] Fetching single virtual classroom with filter:', JSON.stringify(filter));
+      logger.info('[VirtualClassroomDAO] Fetching single virtual classroom with include:', JSON.stringify(include));
+
       const virtualClassroom = await prisma.virtualClassroom.findFirst({
         where: filter,
         include,
       });
 
       if (!virtualClassroom) {
-        logger.warn('[VirtualClassroomDAO] No virtual classroom found for filter:', filter);
+        logger.warn('[VirtualClassroomDAO] No virtual classroom found for filter:', JSON.stringify(filter));
         throw new Error('Virtual classroom does not exist');
       }
 

@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { VirtualClassroomController } from '@controllers/virtualClassroomController';
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND } from '@constants/constants';
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '@constants/constants';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import { logger } from '@services/logService';
 
@@ -18,13 +18,15 @@ virtualClassroomRouter.get('/', async (req: Request, res: Response) => {
 virtualClassroomRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const classroomId = req.params.id;
+    const filter = { id: classroomId };
 
-    const classroom = await VirtualClassroomDAO.get({ id: classroomId });
+    const classroom = await VirtualClassroomDAO.get(filter);
+
     if (!classroom) {
       res.status(HTTP_STATUS_NOT_FOUND).json({ message: 'Classroom not found' });
     }
 
-    res.status(HTTP_STATUS_NOT_FOUND).json(classroom);
+    res.status(HTTP_STATUS_OK).json(classroom);
   } catch (error) {
     console.error('Error fetching classroom:', error);
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
