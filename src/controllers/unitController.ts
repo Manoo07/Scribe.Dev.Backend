@@ -66,16 +66,16 @@ export class UnitController {
     };
 
 
-    public getUnitByClassroomId = async (req: Request, res: Response): Promise<void> => {
+    public getUnitsByClassroomId = async (req: Request, res: Response): Promise<void> => {
         const { classroomId } = req.params;
         try {
             logger.info(`[UnitController] Fetching unit with ID: ${classroomId}`);
-            const unit = await this.unitService.getUnitByClassroomId(classroomId);
-            if (!unit) {
+            const units = await this.unitService.getUnitsByClassroomId(classroomId);
+            if (!units) {
                 logger.warn(`[UnitController] Unit not found with classroomID: ${classroomId}`);
                 res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Unit not found' });
             } else {
-                res.status(HTTP_STATUS_OK).json(unit);
+                res.status(HTTP_STATUS_OK).json(units);
             }
         } catch (error) {
             logger.error(`[UnitController] Error fetching classroom ID=${classroomId}:`, error);
@@ -90,10 +90,10 @@ export class UnitController {
             logger.info('[UnitController] Received filters for unit search (GET body):', filters);
 
             const units = await this.unitService.filterUnits(filters);
-            res.status(200).json(units);
+            res.status(HTTP_STATUS_OK).json(units);
         } catch (error) {
             logger.error('[UnitController] Error filtering units:', error);
-            res.status(500).json({ error: 'Failed to filter units' });
+            res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to filter units' });
         }
     }
 
@@ -101,25 +101,25 @@ export class UnitController {
 
 
     public updateUnit = async (req: Request, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const { unitId } = req.params;
         const updateFields = req.body;
         try {
             const validatedFields = updateUnitSchema.parse(updateFields);
-            logger.info(`[UnitController] Updating unit ID=${id}`);
-            const result = await this.unitService.updateUnit(id, validatedFields);
+            logger.info(`[UnitController] Updating unit ID=${unitId}`);
+            const result = await this.unitService.updateUnit(unitId, validatedFields);
 
-            logger.info(`[UnitController] Unit ID=${id} updated successfully`);
+            logger.info(`[UnitController] Unit ID=${unitId} updated successfully`);
             res.status(HTTP_STATUS_OK).json(result);
         } catch (error) {
             if (error instanceof Zod.ZodError) {
                 logger.warn(
-                    `[UnitController] Validation failed for unit update ID=${id}: ${error.errors
+                    `[UnitController] Validation failed for unit update ID=${unitId}: ${error.errors
                         .map((e) => e.message)
                         .join(', ')}`
                 );
                 res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Validation error', details: error.errors });
             } else {
-                logger.error(`[UnitController] Error updating unit ID=${id}:`, error);
+                logger.error(`[UnitController] Error updating unit ID=${unitId}:`, error);
                 res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Something went wrong' });
             }
         }

@@ -12,15 +12,7 @@ export const unitSchema = z.object({
 export const updateUnitSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
-  educationalContents: z.array(
-    z.object({
-      id: z.string().optional(),
-      type: z.enum(['NOTE', 'LINK', 'VIDEO', 'DOCUMENT']),
-      content: z.string(),
-      version: z.number().optional(),
-    })
-  ).optional(),
 }).refine(data => Object.keys(data).length > 0, {
   message: "At least one field must be provided for update",
 });
-export const unitUpdateSchema = unitSchema.partial();
+// export const unitUpdateSchema = unitSchema.partial();

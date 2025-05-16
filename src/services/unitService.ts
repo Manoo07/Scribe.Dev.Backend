@@ -1,7 +1,7 @@
 import { PrismaClient, Unit } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
 import { logger } from '../services/logService';
-import { updateUnitSchema } from '@utils/validations/unit.schema';
+import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ class UnitService {
   public async createUnit(params: { name: string; description: string; classroomId: string; educationalContents?: any[] }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
-      const classroom = await UnitDAO.getClassroomById(params.classroomId);
+      const classroom = await VirtualClassroomDAO.get({ id: params.classroomId });
       if (!classroom) {
         logger.warn(`[UnitService] Invalid classroomId: ${params.classroomId}`);
         throw new Error('Invalid classroomId');
@@ -49,12 +49,12 @@ class UnitService {
     }
   }
 
-  public async getUnitByClassroomId(classroomId: string) {
+  public async getUnitsByClassroomId(classroomId: string) {
     try {
       logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
-      const unit = await UnitDAO.getUnitByClassroomId(classroomId);
+      const units = await UnitDAO.getUnitsByClassroomId(classroomId);
       logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
-      return unit;
+      return units;
     }
     catch (error) {
       logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
@@ -75,7 +75,7 @@ class UnitService {
 
 
 
-  public async updateUnit(UnitId: string, updateFields: any) {
+  public async updateUnit(UnitId: string, updateFields: { name?: string; description?: string }) {
     try {
       logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
       const unit = await UnitDAO.updateUnit(UnitId, updateFields);

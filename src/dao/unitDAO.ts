@@ -12,11 +12,6 @@ interface CreateUnitInput {
 }
 
 const UnitDAO = {
-    async getClassroomById(classroomId: string) {
-        return await prisma.virtualClassroom.findUnique({
-            where: { id: classroomId },
-        });
-    },
     createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
         try {
             logger.info('[UnitDAO] Creating unit with educational content');
@@ -65,7 +60,7 @@ const UnitDAO = {
         }
     },
 
-    getUnitByClassroomId: async (classroomId: string) => {
+    getUnitsByClassroomId: async (classroomId: string) => {
         try {
             logger.info(`[UnitDAO] Fetching unit by ID: ${classroomId}`);
             return await prisma.unit.findMany({
