@@ -5,128 +5,143 @@ import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 const prisma = new PrismaClient();
 
 interface CreateUnitInput {
-    name: string;
-    description: string;
-    classroomId: string;
-    educationalContents?: { contentType: string; url: string }[];
+  name: string;
+  description: string;
+  classroomId: string;
+  educationalContents?: { contentType: string; url: string }[];
 }
 
 const UnitDAO = {
-    createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
-        try {
-            logger.info('[UnitDAO] Creating unit with educational content');
-            const result = await prisma.unit.create({
-                data: {
-                    name,
-                    classroomId,
-                    description,
-                    educationalContents: {
-                        create: educationalContents.map((ec) => ({
-                            type: ec.contentType.toUpperCase() as ContentType,
-                            content: ec.url,
-                        })),
-                    },
-                },
-                include: { educationalContents: true },
-            });
-            logger.info('[UnitDAO] Unit created successfully');
-            return result;
-        } catch (error) {
-            logger.error('[UnitDAO] Error creating unit:', error);
-            throw new Error('Failed to create unit');
+  createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
+    try {
+      logger.info('[UnitDAO] Creating unit with educational content');
+      const result = await prisma.unit.create({
+        data: {
+          name,
+          classroomId,
+          description,
+          educationalContents: {
+            create: educationalContents.map((ec) => ({
+              type: ec.contentType.toUpperCase() as ContentType,
+              content: ec.url,
+            })),
+          },
+        },
+        include: { educationalContents: true },
+      });
+      logger.info('[UnitDAO] Unit created successfully');
+      return result;
+    } catch (error) {
+      logger.error('[UnitDAO] Error creating unit:', error);
+      throw new Error('Failed to create unit');
+    }
+  },
+
+
+  getUnits: async () => {
+    try {
+      logger.info('[UnitDAO] Fetching all units');
+      return await prisma.unit.findMany({ include: { educationalContents: true, classroom: true } });
+    } catch (error) {
+      logger.error('[UnitDAO] Error fetching units:', error);
+      throw new Error('Failed to fetch units');
+    }
+  },
+
+  getUnitByUnitId: async (UnitId: string) => {
+    try {
+      logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
+      return await prisma.unit.findUnique({
+        where: { id: UnitId },
+        include: { educationalContents: true, classroom: true },
+      });
+    } catch (error) {
+      logger.error(`[UnitDAO] Error fetching unit ID=${UnitId}:`, error);
+      throw new Error('Failed to fetch unit by ID');
+    }
+  },
+
+  getUnitsByClassroomId: async (classroomId: string) => {
+    try {
+      logger.info(`[UnitDAO] Fetching unit by ID: ${classroomId}`);
+      return await prisma.unit.findMany({
+        where: { classroomId: classroomId },
+        include: { educationalContents: true, classroom: true },
+      });
+    } catch (error) {
+      logger.error(`[UnitDAO] Error fetching unit ID=${classroomId}:`, error);
+      throw new Error('Failed to fetch unit by Classroom ID');
+    }
+  },
+  getUnitByClassroomId: async (classroomId: string) => {
+    try {
+      logger.info(`[UNITDAO] Fetching unit by Virtual Classroom Id : ${classroomId}`);
+      return await prisma.unit.findMany({
+        where: { classroomId },
+        include: {
+          educationalContents: true,
+          classroom: true
         }
-    },
-
-    getUnits: async () => {
-        try {
-            logger.info('[UnitDAO] Fetching all units');
-            return await prisma.unit.findMany({ include: { educationalContents: true, classroom: true } });
-        } catch (error) {
-            logger.error('[UnitDAO] Error fetching units:', error);
-            throw new Error('Failed to fetch units');
-        }
-    },
-
-    getUnitByUnitId: async (UnitId: string) => {
-        try {
-            logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
-            return await prisma.unit.findUnique({
-                where: { id: UnitId },
-                include: { educationalContents: true, classroom: true },
-            });
-        } catch (error) {
-            logger.error(`[UnitDAO] Error fetching unit ID=${UnitId}:`, error);
-            throw new Error('Failed to fetch unit by ID');
-        }
-    },
-
-    getUnitsByClassroomId: async (classroomId: string) => {
-        try {
-            logger.info(`[UnitDAO] Fetching unit by ID: ${classroomId}`);
-            return await prisma.unit.findMany({
-                where: { classroomId: classroomId },
-                include: { educationalContents: true, classroom: true },
-            });
-        } catch (error) {
-            logger.error(`[UnitDAO] Error fetching unit ID=${classroomId}:`, error);
-            throw new Error('Failed to fetch unit by Classroom ID');
-        }
+      })
+    }
+    catch (error) {
+      logger.error(`[UnitDAO] Error fetching classroom ID=${classroomId}:`, error);
+      throw new Error('Failed to fetch unit by Classroom ID');
+    }
+  },
 
 
-    },
+  getUnitsByFilters: async (filters: Record<string, any> = {}): Promise<Unit[]> => {
+    try {
+      logger.info('[UnitDAO] Fetching units with filters:', filters);
+      const queryFilter = buildWhereClause(filters);
+
+      const units = await prisma.unit.findMany({
+        where: queryFilter,
+        include: {
+          classroom: true,
+          educationalContents: true,
+        },
+      });
+
+      return units;
+    } catch (error) {
+      logger.error('[UnitDAO] Error fetching filtered units:', error);
+      throw error;
+    }
+  },
 
 
-    getUnitsByFilters: async (filters: Record<string, any> = {}): Promise<Unit[]> => {
-        try {
-            logger.info('[UnitDAO] Fetching units with filters:', filters);
-            const queryFilter = buildWhereClause(filters);
+  updateUnit: async (id: string, updateFields: { name?: string; description?: string }) => {
+    try {
+      logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
+      const result = await prisma.unit.update({
+        where: { id },
+        data: {
+          name: updateFields.name,
+          description: updateFields.description
+        },
+        include: { educationalContents: true },
+      });
+      logger.info(`[UnitDAO] Unit ID=${id} updated successfully`);
+      return result;
+    } catch (error) {
+      logger.error(`[UnitDAO] Error updating unit ID=${id}:`, error);
+      throw new Error('Failed to update unit');
+    }
+  },
 
-            const units = await prisma.unit.findMany({
-                where: queryFilter,
-                include: {
-                    classroom: true,
-                    educationalContents: true,
-                },
-            });
-
-            return units;
-        } catch (error) {
-            logger.error('[UnitDAO] Error fetching filtered units:', error);
-            throw error;
-        }
-    },
-
-
-    updateUnit: async (id: string, updateFields: { name?: string; description?: string }) => {
-        try {
-            logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
-            const result = await prisma.unit.update({
-                where: { id },
-                data: {
-                    name: updateFields.name,
-                    description: updateFields.description
-                },
-                include: { educationalContents: true },
-            });
-            logger.info(`[UnitDAO] Unit ID=${id} updated successfully`);
-            return result;
-        } catch (error) {
-            logger.error(`[UnitDAO] Error updating unit ID=${id}:`, error);
-            throw new Error('Failed to update unit');
-        }
-    },
-
-    deleteUnitByUnitId: async (UnitId: string) => {
-        try {
-            logger.info(`[UnitDAO] Deleting unit ID=${UnitId}`);
-            const result = await prisma.unit.delete({ where: { id: UnitId } });
-            logger.info(`[UnitDAO] Unit ID=${UnitId} deleted successfully`);
-            return result;
-        } catch (error) {
-            logger.error(`[UnitDAO] Error deleting unit ID=${UnitId}:`, error);
-            throw new Error('Failed to delete unit');
-        }
-    },
-};
+  deleteUnitByUnitId: async (UnitId: string) => {
+    try {
+      logger.info(`[UnitDAO] Deleting unit ID=${UnitId}`);
+      const result = await prisma.unit.delete({ where: { id: UnitId } });
+      logger.info(`[UnitDAO] Unit ID=${UnitId} deleted successfully`);
+      return result;
+    } catch (error) {
+      logger.error(`[UnitDAO] Error deleting unit ID=${UnitId}:`, error);
+      throw new Error('Failed to delete unit');
+    }
+  },
+}
 
 export default UnitDAO;

@@ -18,11 +18,13 @@ export class UnitController {
     public createUnit = async (req: Request, res: Response): Promise<void> => {
         try {
             const { name, description, classroomId, educationalContents } = req.body;
+
             logger.info('[UnitController] Validating unit creation request');
             unitSchema.parse({ name, classroomId });
 
             logger.info('[UnitController] Creating unit');
             const result = await this.unitService.createUnit({ name, description, classroomId, educationalContents });
+
             logger.info('[UnitController] Unit created successfully');
             res.status(HTTP_STATUS_CREATED).json(result);
         } catch (error) {
@@ -68,18 +70,22 @@ export class UnitController {
 
     public getUnitsByClassroomId = async (req: Request, res: Response): Promise<void> => {
         const { classroomId } = req.params;
+
         try {
-            logger.info(`[UnitController] Fetching unit with ID: ${classroomId}`);
+            logger.info(`[UnitController] Fetching units for classroomId: ${classroomId}`);
             const units = await this.unitService.getUnitsByClassroomId(classroomId);
-            if (!units) {
-                logger.warn(`[UnitController] Unit not found with classroomID: ${classroomId}`);
-                res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Unit not found' });
+
+            if (!units || units.length === 0) {
+                logger.warn(`[UnitController] No units found for classroomId: ${classroomId}`);
+                res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'No units found for the given classroom' });
             } else {
                 res.status(HTTP_STATUS_OK).json(units);
             }
         } catch (error) {
             logger.error(`[UnitController] Error fetching classroom ID=${classroomId}:`, error);
             res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch unit' });
+            logger.error(`[UnitController] Error fetching units for classroomId=${classroomId}:`, error);
+            res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch units for classroom' });
         }
     };
 
