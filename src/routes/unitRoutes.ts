@@ -5,7 +5,9 @@ const unitController = new UnitController();
 export const unitRouter = Router();
 
 unitRouter.post('/', unitController.createUnit);
-unitRouter.get('/', unitController.getUnits);
+// unitRouter.get('/', unitController.getUnits);
+unitRouter.get('/', unitController.filterUnits.bind(unitController));
 unitRouter.get('/:id', unitController.getUnitByUnitId);
-unitRouter.put('/:id', unitController.updateUnit);
-unitRouter.delete('/:id', unitController.deleteUnitByUnitId);
+unitRouter.get('/classroom/:classroomId', unitController.getUnitsByClassroomId);
+unitRouter.put('/:unitId', unitController.updateUnit);
+unitRouter.delete('/:unitId', unitController.deleteUnitByUnitId);

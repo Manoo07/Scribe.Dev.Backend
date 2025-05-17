@@ -1,14 +1,18 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Unit } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
 import { logger } from '../services/logService';
+import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 
 const prisma = new PrismaClient();
 
 class UnitService {
-  public async createUnit(params: { name: string; classroomId: string; educationalContents?: any[] }) {
+
+  public async createUnit(params: {
+    name: string; description: string; classroomId: string; educationalContents?: { contentType: string; url: string }[];
+  }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
-      const classroom = await UnitDAO.getClassroomById(params.classroomId);
+      const classroom = await VirtualClassroomDAO.get({ id: params.classroomId });
       if (!classroom) {
         logger.warn(`[UnitService] Invalid classroomId: ${params.classroomId}`);
         throw new Error('Invalid classroomId');
@@ -47,7 +51,33 @@ class UnitService {
     }
   }
 
-  public async updateUnit(UnitId: string, updateFields: any) {
+  public async getUnitsByClassroomId(classroomId: string) {
+    try {
+      logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
+      const units = await UnitDAO.getUnitsByClassroomId(classroomId);
+      logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
+      return units;
+    }
+    catch (error) {
+      logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
+      throw error;
+    }
+  }
+
+
+  public async filterUnits(filters: Record<string, any>): Promise<Unit[]> {
+    try {
+      logger.info('[UnitService] Filtering units with:', filters);
+      return await UnitDAO.getUnitsByFilters(filters);
+    } catch (error) {
+      logger.error('[UnitService] Error filtering units:', error);
+      throw error;
+    }
+  }
+
+
+
+  public async updateUnit(UnitId: string, updateFields: { name?: string; description?: string }) {
     try {
       logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
       const unit = await UnitDAO.updateUnit(UnitId, updateFields);

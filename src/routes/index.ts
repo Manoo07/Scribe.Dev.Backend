@@ -10,6 +10,7 @@ import { userRouter } from '@routes/userRoutes';
 import { yearRouter } from './yearRoutes';
 import { virtualClassroomRouter } from './virtualClassroomRoutes';
 import { unitRouter } from './unitRoutes';
+import { educationalContentRouter } from './educationalContentRoutes';
 export const routers: Route[] = [
   {
     basePath: '/auth',
@@ -46,4 +47,9 @@ export const routers: Route[] = [
     router: unitRouter,
     middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
   },
+  {
+    basePath: '/educationalContent',
+    router: educationalContentRouter,
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
+  }
 ];
