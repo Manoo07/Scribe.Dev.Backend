@@ -47,37 +47,37 @@ class UnitService {
     }
   }
 
- 
-    public async getUnitByClassroomId(id: string) {
-        try {
-            logger.info(`[UNITService] Unit fetched successfully for ID=${id}`);
-            const unit = await UnitDAO.getUnitByClassroomId(id);
-            logger.info(`[UnitService] Unit fetched successfully for ID=${id}`);
-            return unit;
-        }
-        catch (error) {
-            logger.error(`[UnitService] Error while fetching Classroom ID=${id}`, error);
-            throw error;
-        }
-    }
 
-    public async updateUnit(UnitId: string, updateFields: any) {
-        try {
-            logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
-            const unit = await UnitDAO.updateUnit(UnitId, updateFields);
-            if (unit) {
-                logger.info(`[UnitService] Unit ID=${UnitId} updated successfully`);
-                return unit;
-            } else {
-                logger.warn(`[UnitService] Unit ID=${UnitId} not found for update`);
-                throw new Error('Unit not found')
-            }
-        } catch (error) {
-            logger.error(`[UnitService] Error updating unit ID=${UnitId}:`, error);
-            return { error: 'Update failed' };
-        }
+  public async getUnitByClassroomId(classroomId: string) {
+    try {
+      logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
+      const unit = await UnitDAO.getUnitByClassroomId(classroomId);
+      logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
+      return unit;
     }
-  
+    catch (error) {
+      logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
+      throw error;
+    }
+  }
+
+  public async updateUnit(UnitId: string, updateFields: any) {
+    try {
+      logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
+      const unit = await UnitDAO.updateUnit(UnitId, updateFields);
+      if (unit) {
+        logger.info(`[UnitService] Unit ID=${UnitId} updated successfully`);
+        return unit;
+      } else {
+        logger.warn(`[UnitService] Unit ID=${UnitId} not found for update`);
+        throw new Error('Unit not found')
+      }
+    } catch (error) {
+      logger.error(`[UnitService] Error updating unit ID=${UnitId}:`, error);
+      return { error: 'Update failed' };
+    }
+  }
+
 
   public async deleteUnit(id: string) {
     try {
