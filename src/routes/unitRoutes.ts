@@ -7,5 +7,6 @@ export const unitRouter = Router();
 unitRouter.post('/', unitController.createUnit);
 unitRouter.get('/', unitController.getUnits);
 unitRouter.get('/:id', unitController.getUnitByUnitId);
+unitRouter.get('/classroom/:classroomId', unitController.getUnitByClassroomId);
 unitRouter.put('/:id', unitController.updateUnit);
 unitRouter.delete('/:id', unitController.deleteUnitByUnitId);

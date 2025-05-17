@@ -65,6 +65,28 @@ export class UnitController {
         }
     };
 
+
+
+    public getUnitByClassroomId = async (req: Request, res: Response): Promise<void> => {
+        const { classroomId } = req.params;
+        try {
+            logger.info(`[UnitController] Fetching units for classroomId: ${classroomId}`);
+            const units = await this.unitService.getUnitByClassroomId(classroomId);
+
+            if (!units || units.length === 0) {
+                logger.warn(`[UnitController] No units found for classroomId: ${classroomId}`);
+                res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'No units found for the given classroom' });
+            } else {
+                res.status(HTTP_STATUS_OK).json(units);
+            }
+        } catch (error) {
+            logger.error(`[UnitController] Error fetching units for classroomId=${classroomId}:`, error);
+            res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch units for classroom' });
+        }
+    };
+
+
+
     public updateUnit = async (req: Request, res: Response): Promise<void> => {
         const { id } = req.params;
         const updateFields = req.body;
