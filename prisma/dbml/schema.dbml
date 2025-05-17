@@ -22,11 +22,7 @@ Table User {
   messages Messages [not null]
   userRole UserRole
   resetToken String
-<<<<<<< HEAD
   resetTokenExpiry BigInt
-=======
-  resetTokenExpiry DateTime
->>>>>>> 086264d ((chore) : change get unit by classroomID)
 }
 
 Table Student {
@@ -144,10 +140,7 @@ Table VirtualClassroomStudent {
 Table Unit {
   id String [pk]
   name String [not null]
-<<<<<<< HEAD
-=======
   description String [not null]
->>>>>>> 086264d ((chore) : change get unit by classroomID)
   classroom VirtualClassroom [not null]
   classroomId String [not null]
   educationalContents EducationalContent [not null]
