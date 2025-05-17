@@ -4,7 +4,7 @@ import { ContentType, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const EducationalContentDAO = {
-    createEducationalContent: async (unitId: string, data: { content: string, type: string}) => {
+    createEducationalContent: async (unitId: string, data: { content: string, type: string }) => {
         logger.info(`[EducationalContentDAO] Creating content for unitId: ${unitId} with data: ${JSON.stringify(data)}`);
         try {
             const createdContent = await prisma.educationalContent.create({

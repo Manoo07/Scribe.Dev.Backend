@@ -1,6 +1,3 @@
-
-
-
 import EducationalContentDAO from "@dao/educationalContentDAO";
 import { logger } from "./logService";
 import { ContentType } from "@prisma/client";
@@ -45,14 +42,14 @@ class EducationalContentService {
     }
   }
 
-  async deleteEducationalContent(id: string) {
-    logger.info(`[EducationalContentService] Deleting content with ID: ${id}`);
+  async deleteEducationalContentById(educationalContentId: string) {
+    logger.info(`[EducationalContentService] Deleting content with ID: ${educationalContentId}`);
     try {
-      const deletedContent = await EducationalContentDAO.deleteEducationalContent(id);
-      logger.info(`[EducationalContentService] Successfully deleted content with ID: ${id}`);
+      const deletedContent = await EducationalContentDAO.deleteEducationalContent(educationalContentId);
+      logger.info(`[EducationalContentService] Successfully deleted content with ID: ${educationalContentId}`);
       return deletedContent;
     } catch (error) {
-      logger.error(`[EducationalContentService] Error deleting content with ID: ${id}`, error);
+      logger.error(`[EducationalContentService] Error deleting content with ID: ${educationalContentId}`, error);
       throw error;
     }
   }
