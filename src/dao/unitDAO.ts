@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 interface CreateUnitInput {
     name: string;
+    description: string;
     classroomId: string;
     educationalContents?: { contentType: string; url: string }[];
 }
@@ -15,13 +16,14 @@ const UnitDAO = {
             where: { id: classroomId },
         });
     },
-    createUnit: async ({ name, classroomId, educationalContents = [] }: CreateUnitInput) => {
+    createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
         try {
             logger.info('[UnitDAO] Creating unit with educational content');
             const result = await prisma.unit.create({
                 data: {
                     name,
                     classroomId,
+                    description,
                     educationalContents: {
                         create: educationalContents.map((ec) => ({
                             type: ec.contentType.toUpperCase() as ContentType,
@@ -54,7 +56,7 @@ const UnitDAO = {
             logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
             return await prisma.unit.findUnique({
                 where: { id: UnitId },
-                include: { educationalContents: true },
+                include: { educationalContents: true, classroom: true },
             });
         } catch (error) {
             logger.error(`[UnitDAO] Error fetching unit ID=${UnitId}:`, error);
@@ -64,56 +66,30 @@ const UnitDAO = {
 
     getUnitByClassroomId: async (classroomId: string) => {
         try {
-            logger.info(`[UNITDAO] Fetching unit by Virtual Classroom Id : ${classroomId}`);
+            logger.info(`[UnitDAO] Fetching unit by ID: ${classroomId}`);
             return await prisma.unit.findMany({
-                where: { classroomId },
-                include: {
-                    educationalContents: true,
-                    classroom: true
-                }
-            })
-        }
-        catch (error) {
-            logger.error(`[UnitDAO] Error fetching classroom ID=${classroomId}:`, error);
+                where: { classroomId: classroomId },
+                include: { educationalContents: true, classroom: true },
+            });
+        } catch (error) {
+            logger.error(`[UnitDAO] Error fetching unit ID=${classroomId}:`, error);
             throw new Error('Failed to fetch unit by Classroom ID');
         }
+
+
     },
 
-    updateUnit: async (id: string, updateFields: {
-        name?: string; classroomId?: string, educationalContents?: { type: ContentType; content: string; version?: number }[];
-    }) => {
+    updateUnit: async (id: string, updateFields: { name?: string; description?: string }) => {
         try {
             logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
-
-            const { name, classroomId, educationalContents } = updateFields;
-
-            const result = await prisma.$transaction(async (tx) => {
-                const updatedUnit = await tx.unit.update({
-                    where: { id },
-                    data: { name, classroomId },
-                });
-
-                if (educationalContents) {
-                    await tx.educationalContent.deleteMany({
-                        where: { unitId: id },
-                    });
-
-                    await tx.educationalContent.createMany({
-                        data: educationalContents.map((content) => ({
-                            unitId: id,
-                            type: content.type,
-                            content: content.content,
-                            version: content.version ?? 1,
-                        })),
-                    });
-                }
-
-                return tx.unit.findUnique({
-                    where: { id },
-                    include: { educationalContents: true },
-                });
+            const result = await prisma.unit.update({
+                where: { id },
+                data: {
+                    name: updateFields.name,
+                    description: updateFields.description
+                },
+                include: { educationalContents: true },
             });
-
             logger.info(`[UnitDAO] Unit ID=${id} updated successfully`);
             return result;
         } catch (error) {

@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
 import { logger } from '../services/logService';
-import { updateUnitSchema } from '@utils/validations/unit.schema';
 
 const prisma = new PrismaClient();
 
 class UnitService {
-  public async createUnit(params: { name: string; classroomId: string; educationalContents?: any[] }) {
+  public async createUnit(params: { name: string; description: string; classroomId: string; educationalContents?: any[] }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
       const classroom = await UnitDAO.getClassroomById(params.classroomId);
@@ -47,37 +46,6 @@ class UnitService {
       throw error;
     }
   }
-
-
-    public async getUnitByClassroomId(classroomId: string) {
-        try {
-            logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
-            const unit = await UnitDAO.getUnitByClassroomId(classroomId);
-            logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
-            return unit;
-        }
-        catch (error) {
-            logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
-            throw error;
-        }
-    }
-
-    public async updateUnit(UnitId: string, updateFields: any) {
-        try {
-            logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
-            const unit = await UnitDAO.updateUnit(UnitId, updateFields);
-            if (unit) {
-                logger.info(`[UnitService] Unit ID=${UnitId} updated successfully`);
-                return unit;
-            } else {
-                logger.warn(`[UnitService] Unit ID=${UnitId} not found for update`);
-                throw new Error('Unit not found')
-            }
-        } catch (error) {
-            logger.error(`[UnitService] Error updating unit ID=${UnitId}:`, error);
-            return { error: 'Update failed' };
-        }
-    }
 
   public async deleteUnit(id: string) {
     try {
