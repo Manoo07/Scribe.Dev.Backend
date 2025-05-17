@@ -6,7 +6,10 @@ import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 const prisma = new PrismaClient();
 
 class UnitService {
-  public async createUnit(params: { name: string; description: string; classroomId: string; educationalContents?: any[] }) {
+
+  public async createUnit(params: {
+    name: string; description: string; classroomId: string; educationalContents?: { contentType: string; url: string }[];
+  }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
       const classroom = await VirtualClassroomDAO.get({ id: params.classroomId });

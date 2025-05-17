@@ -1,9 +1,8 @@
-import { ContentType, PrismaClient, Unit } from '@prisma/client';
+import { ContentType, Prisma, PrismaClient, Unit } from '@prisma/client';
 import { logger } from '@services/logService';
 import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 
 const prisma = new PrismaClient();
-
 interface CreateUnitInput {
     name: string;
     description: string;
@@ -15,20 +14,28 @@ const UnitDAO = {
     createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
         try {
             logger.info('[UnitDAO] Creating unit with educational content');
-            const result = await prisma.unit.create({
-                data: {
-                    name,
-                    classroomId,
-                    description,
+
+            const data: Prisma.UnitCreateInput = {
+                name,
+                description,
+                classroom: {
+                    connect: { id: classroomId },
+                },
+                ...(educationalContents.length > 0 && {
                     educationalContents: {
                         create: educationalContents.map((ec) => ({
                             type: ec.contentType.toUpperCase() as ContentType,
                             content: ec.url,
                         })),
                     },
-                },
+                }),
+            };
+
+            const result = await prisma.unit.create({
+                data,
                 include: { educationalContents: true },
             });
+
             logger.info('[UnitDAO] Unit created successfully');
             return result;
         } catch (error) {
