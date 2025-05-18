@@ -94,30 +94,34 @@ class AuthService {
     }
   }
 
-  public async signin(email: string, password: string): Promise<string | null> {
+  public async signin(email: string, password: string): Promise<{ token: string; role: string } | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-
+  
     if (user && (await comparePasswords(password, user.password))) {
       logger.info(`User ${email} successfully signed in.`);
-
+  
       const userRole = await this.prisma.userRole.findFirst({
         where: { userId: user.id },
         select: { role: true },
       });
-
+  
       if (!userRole) {
         logger.warn(`[AuthService] Role not found for user ${email}`);
         throw new Error('Invalid email or password');
       }
-
-      return generateToken(user.id, userRole.role);
+  
+      const role = userRole.role;
+      const token = generateToken(user.id, role);
+  
+      return { token, role };
     }
-
+  
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
-    throw new Error('Failed to sign in');
+    return null;
   }
+  
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });

@@ -78,37 +78,21 @@ class AuthController {
     logger.info(`[AuthController] Signin request received for email: ${email}`);
 
     try {
-      const token = await this.authService.signin(email, password);
+      const result = await this.authService.signin(email, password);
 
-      if (!token) {
+      if (!result) {
         logger.warn(`[AuthController] Invalid credentials for email: ${email}`);
         res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Invalid credentials' });
         return;
       }
 
-      const user = await UserDAO.get({
-        filter: { email },
-        include: { userRole: true },
-      });
+      const { token, role } = result;
 
-      if (!user) {
-        logger.error(`[AuthController] User not found after successful token generation: ${email}`);
-        res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'User not found' });
-        return;
-      }
-
-      await UserDAO.update(user.id, { lastLogin: new Date() });
-
-      const role = user.userRole?.role ?? null;
-
-      logger.info(`[AuthController] Signin successful for user: ${user.email}, role: ${role}`);
-
+      logger.info(`[AuthController] Signin successful for email: ${email}, role: ${role}`);
       res.status(HTTP_STATUS_OK).json({ token, role });
-      return;
     } catch (error: any) {
       logger.error(`[AuthController] Signin error for email: ${email}`, error);
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message || 'Signin failed' });
-      return;
     }
   };
 
