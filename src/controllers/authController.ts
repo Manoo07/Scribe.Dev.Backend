@@ -13,8 +13,8 @@ import {
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
-import UserDAO from '@dao/userDAO';
 import { checkMissingFields } from '@utils/authUtil';
+import UserDAO from '@dao/userDAO';
 
 const prisma = new PrismaClient();
 
@@ -25,83 +25,101 @@ class AuthController {
     this.authService = new AuthService();
   }
 
-  signup = async (req: Request, res: Response): Promise<any> => {
+  signup = async (req: Request, res: Response) => {
     const params = req.body;
     const missingFields = checkMissingFields(params);
 
     if (missingFields && missingFields.length > 0) {
       const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
       logger.error(`[AuthController] ${errorMessage}`);
-      return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: errorMessage });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: errorMessage });
+      return;
     }
 
-    logger.info('[AuthController] Signup request received for email:', params.email);
+    logger.info(`[AuthController] Signup request received for email: ${params.email}`);
 
     try {
       const result = await this.authService.signup(params);
 
       if (result.error) {
         logger.error('[AuthController] Signup failed:', result.error);
-        return res
-          .status(result.status || HTTP_STATUS_BAD_REQUEST)
-          .json({ error: result.error, message: result.message });
+        res.status(result.status || HTTP_STATUS_BAD_REQUEST).json({ error: result.error, message: result.message });
+        return;
       }
 
       logger.info('[AuthController] Signup successful for email:', params.email);
-      return res.status(HTTP_STATUS_CREATED).json(result);
+      res.status(HTTP_STATUS_CREATED).json(result);
+      return;
     } catch (error: any) {
       logger.error('[AuthController] Signup error:', error);
 
       if (error.code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION && error.meta?.target?.includes('username')) {
-        return res.status(HTTP_STATUS_CONFLICT).json({ error: 'Username already taken' });
+        res.status(HTTP_STATUS_CONFLICT).json({ error: 'Username already taken' });
+        return;
       }
 
       if (error.message?.includes('Invalid collegeId')) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+        return;
       }
 
       if (error.message?.toLowerCase().includes('missing required fields')) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+        return;
       }
 
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'An unknown error occurred' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'An unknown error occurred' });
+      return;
     }
   };
-
-  signin = async (req: Request, res: Response): Promise<void> => {
+  signin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    logger.info('[AuthController] Signin request received for email:', email);
+    logger.info(`[AuthController] Signin request received for email: ${email}`);
 
     try {
       const token = await this.authService.signin(email, password);
 
-      if (token) {
-        logger.info('[AuthController] Signin successful for email:', email);
-        res.status(HTTP_STATUS_OK).json({ token });
-
-        const user = await UserDAO.findByEmail(email);
-        if (user) {
-          await UserDAO.updateLastLogin(user.id);
-        }
-      } else {
-        logger.warn('[AuthController] Invalid credentials for email:', email);
+      if (!token) {
+        logger.warn(`[AuthController] Invalid credentials for email: ${email}`);
         res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Invalid credentials' });
+        return;
       }
+
+      const user = await UserDAO.get({
+        filter: { email },
+        include: { userRole: true },
+      });
+
+      if (!user) {
+        logger.error(`[AuthController] User not found after successful token generation: ${email}`);
+        res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'User not found' });
+        return;
+      }
+
+      await UserDAO.update(user.id, { lastLogin: new Date() });
+
+      const role = user.userRole?.role ?? null;
+
+      logger.info(`[AuthController] Signin successful for user: ${user.email}, role: ${role}`);
+
+      res.status(HTTP_STATUS_OK).json({ token, role });
+      return;
     } catch (error: any) {
-      logger.error('[AuthController] Signin error for email:', email, error);
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+      logger.error(`[AuthController] Signin error for email: ${email}`, error);
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message || 'Signin failed' });
+      return;
     }
   };
 
-  forgotPassword = async (req: Request, res: Response): Promise<any> => {
+  forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
 
     logger.info('[AuthController] Forgot password request received for email:', email);
 
     if (!email) {
       logger.warn('[AuthController] Email is missing in forgot password request');
-      return res.status(HTTP_STATUS_NOT_FOUND).json({
+      res.status(HTTP_STATUS_NOT_FOUND).json({
         message: 'Email is required',
       });
     }
@@ -115,7 +133,7 @@ class AuthController {
     } catch (error: any) {
       if (error.message === USER_NOT_FOUND_ERROR) {
         logger.error('[AuthController] User not found for email:', email);
-        return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
+        res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
       }
 
       logger.error('[AuthController] Forgot password error for email:', email, error);
@@ -123,7 +141,7 @@ class AuthController {
     }
   };
 
-  resetPassword = async (req: Request, res: Response): Promise<any> => {
+  resetPassword = async (req: Request, res: Response) => {
     const token = req.query.token as string;
     const { newPassword } = req.body;
 
@@ -131,7 +149,7 @@ class AuthController {
 
     if (!token || !newPassword) {
       logger.warn('[AuthController] Missing token or new password in reset password request');
-      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+      res.status(HTTP_STATUS_BAD_REQUEST).json({
         message: 'Token and new password are required.',
       });
     }

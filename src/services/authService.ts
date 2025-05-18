@@ -10,7 +10,6 @@ import {
   PRISMA_RECORD_NOT_FOUND,
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   RESET_TOKEN_EXPIRY_TIME,
-  Roles,
   USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
@@ -31,8 +30,18 @@ class AuthService {
   }
 
   public async signup(params: SignupParams): Promise<SignupResult> {
-    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
-      params;
+    const {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      collegeId,
+      role,
+      departmentId,
+      sectionId,
+      specialization,
+    } = params;
 
     try {
       const validationError = await validateSignupParams(params);
@@ -42,8 +51,9 @@ class AuthService {
       }
 
       logger.info(`[AuthService] Signing up user: ${email}`);
+
       let finalUsername = username;
-      if (!username) {
+      if (!finalUsername) {
         finalUsername = generateUsername(username, firstName, lastName);
       } else {
         const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
@@ -55,16 +65,15 @@ class AuthService {
         }
       }
 
-      const existingUserWithUsername = await UserDAO.findByUsername(finalUsername);
-
-      if (existingUserWithUsername) {
+      const existingUsers = await UserDAO.get({ filter: { username: finalUsername } });
+      if (existingUsers) {
         return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
       }
 
       const hashedPassword = await hashPassword(password);
 
-      // Create a user
-      const result = await UserDAO.createUser({
+      // Call refactored DAO method
+      const newUser = await UserDAO.create({
         firstName,
         lastName,
         username: finalUsername,
@@ -77,11 +86,10 @@ class AuthService {
         specialization,
       });
 
-      logger.info(`User ${email} successfully signed up.`);
-      return result;
+      logger.info(`[AuthService] User ${email} successfully signed up.`);
+      return newUser;
     } catch (err: any) {
       logger.error(`Error during signup for user ${email}: ${err.message}`);
-      logger.error('Error during signup:', err);
       return this.handleSignupError(err);
     }
   }
@@ -94,13 +102,17 @@ class AuthService {
     if (user && (await comparePasswords(password, user.password))) {
       logger.info(`User ${email} successfully signed in.`);
 
-      const userRole = await UserDAO.getUserRole(user.id);
+      const userRole = await this.prisma.userRole.findFirst({
+        where: { userId: user.id },
+        select: { role: true },
+      });
+
       if (!userRole) {
-        logger.warn('Role not found for the user ${email}');
+        logger.warn(`[AuthService] Role not found for user ${email}`);
         throw new Error('Invalid email or password');
       }
 
-      return generateToken(user.id, userRole);
+      return generateToken(user.id, userRole.role);
     }
 
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
@@ -108,7 +120,7 @@ class AuthService {
   }
 
   public async forgotPassword(email: string): Promise<void> {
-    const user = await UserDAO.findByEmail(email);
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       logger.error(`User ${email} not found during password reset.`);
@@ -116,14 +128,23 @@ class AuthService {
     }
 
     const { token, hashed } = generateResetToken();
-    await UserDAO.updateResetToken(email, hashed, BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME));
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        resetToken: hashed,
+        resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME),
+      },
+    });
+
     await sendResetEmail(email, token);
     logger.info(`Password reset token sent to user ${email}.`);
   }
 
   public async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
-    const user = await UserDAO.findByResetToken(hashedToken);
+    const user = await this.prisma.user.findFirst({
+      where: { resetToken: hashedToken },
+    });
 
     if (!user) {
       logger.error(`Invalid or expired token during password reset.`);
@@ -131,7 +152,16 @@ class AuthService {
     }
 
     const hashedPassword = await hashPassword(newPassword);
-    await UserDAO.updatePasswordAndClearToken(user.id, hashedPassword);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
     logger.info(`User ${user.email} successfully reset their password.`);
   }
 
@@ -143,7 +173,6 @@ class AuthService {
       return { error: 'Email address is already in use.', status: HTTP_STATUS_CONFLICT };
     } else if (error.code === PRISMA_RECORD_NOT_FOUND || error.message === 'College Not found') {
       logger.warn('Invalid College, Department, or Section ID.');
-
       return { error: 'Invalid College, Department, or Section ID.', status: HTTP_STATUS_BAD_REQUEST };
     } else if (error.message === 'Specialization is required for faculty.') {
       logger.warn('Specialization is required for faculty.');
@@ -154,4 +183,5 @@ class AuthService {
     }
   }
 }
+
 export default AuthService;
