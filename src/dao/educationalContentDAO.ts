@@ -1,10 +1,11 @@
 import { logger } from "@services/logService";
-import { ContentType, PrismaClient } from "@prisma/client";
+import { ContentType, EducationalContent, PrismaClient } from "@prisma/client";
+import { buildWhereClause } from "@utils/DBPipelines/filterObjectBuilder";
 
 const prisma = new PrismaClient();
 
 const EducationalContentDAO = {
-    createEducationalContent: async (unitId: string, data: { content: string, type: string }) => {
+    create: async (unitId: string, data: { content: string, type: string }) => {
         logger.info(`[EducationalContentDAO] Creating content for unitId: ${unitId} with data: ${JSON.stringify(data)}`);
         try {
             const createdContent = await prisma.educationalContent.create({
@@ -22,7 +23,7 @@ const EducationalContentDAO = {
         }
     },
 
-    findByUnitId: async (unitId: string) => {
+    get: async (unitId: string) => {
         logger.info(`[EducationalContentDAO] Fetching content for unitId: ${unitId}`);
         try {
             const contents = await prisma.educationalContent.findMany({
@@ -36,34 +37,56 @@ const EducationalContentDAO = {
         }
     },
 
-    updateEducationalContent: async (id: string, data: {
-        type?: ContentType;
-        content?: string;
-    }) => {
-        logger.info(`[EducationalContentDAO] Updating content with ID: ${id} using data: ${JSON.stringify(data)}`);
+    getAll: async (filters: Record<string, any> = {}): Promise<EducationalContent[]> => {
         try {
-            const updatedContent = await prisma.educationalContent.update({
-                where: { id },
-                data,
+            logger.info('[EducationalContentDAO] Fetching educational contents with filters:', filters);
+            const queryFilter = buildWhereClause(filters);
+
+            const educationalContents = await prisma.educationalContent.findMany({
+                where: queryFilter,
+                include: {
+                    unit: true
+                }
             });
-            logger.info(`[EducationalContentDAO] Successfully updated content with ID: ${id}`);
-            return updatedContent;
+            logger.info(`[EducationalContentDAO] Fetched ${educationalContents.length} contents`);
+            return educationalContents;
         } catch (error) {
-            logger.error(`[EducationalContentDAO] Error updating content with ID: ${id}`, error);
+            logger.error('[EducationalContentDAO] Error fetching educational Contents with filters:', error);
             throw error;
         }
     },
 
-    deleteEducationalContent: async (id: string) => {
-        logger.info(`[EducationalContentDAO] Deleting content with ID: ${id}`);
+
+
+
+    update: async (educationalContentId: string, data: {
+        type?: ContentType;
+        content?: string;
+    }) => {
+        logger.info(`[EducationalContentDAO] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(data)}`);
+        try {
+            const updatedContent = await prisma.educationalContent.update({
+                where: { id: educationalContentId },
+                data,
+            });
+            logger.info(`[EducationalContentDAO] Successfully updated content with ID: ${educationalContentId}`);
+            return updatedContent;
+        } catch (error) {
+            logger.error(`[EducationalContentDAO] Error updating content with ID: ${educationalContentId}`, error);
+            throw error;
+        }
+    },
+
+    delete: async (educationalContentId: string) => {
+        logger.info(`[EducationalContentDAO] Deleting content with ID: ${educationalContentId}`);
         try {
             const deletedContent = await prisma.educationalContent.delete({
-                where: { id },
+                where: { id: educationalContentId },
             });
-            logger.info(`[EducationalContentDAO] Successfully deleted content with ID: ${id}`);
+            logger.info(`[EducationalContentDAO] Successfully deleted content with ID: ${educationalContentId}`);
             return deletedContent;
         } catch (error) {
-            logger.error(`[EducationalContentDAO] Error deleting content with ID: ${id}`, error);
+            logger.error(`[EducationalContentDAO] Error deleting content with ID: ${educationalContentId}`, error);
             throw error;
         }
     },

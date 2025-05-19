@@ -1,13 +1,14 @@
 import { UnitController } from '@controllers/unitController';
+import UnitService from '@services/unitService';
+
 import { Router } from 'express';
 
-const unitController = new UnitController();
+const unitService = new UnitService();
+const unitController = new UnitController(unitService);
 export const unitRouter = Router();
 
-unitRouter.post('/', unitController.createUnit);
-// unitRouter.get('/', unitController.getUnits);
-unitRouter.get('/', unitController.filterUnits.bind(unitController));
-unitRouter.get('/:id', unitController.getUnitByUnitId);
-unitRouter.get('/classroom/:classroomId', unitController.getUnitsByClassroomId);
-unitRouter.put('/:unitId', unitController.updateUnit);
-unitRouter.delete('/:unitId', unitController.deleteUnitByUnitId);
+unitRouter.post('/', unitController.create);
+unitRouter.get('/', unitController.getAll.bind(unitController));
+unitRouter.get('/:unitId', unitController.get);
+unitRouter.put('/:unitId', unitController.update);
+unitRouter.delete('/:unitId', unitController.delete);

@@ -48,7 +48,7 @@ export const routers: Route[] = [
     middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
   },
   {
-    basePath: '/educationalContent',
+    basePath: '/educational-content',
     router: educationalContentRouter,
     middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
   }

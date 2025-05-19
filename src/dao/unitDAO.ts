@@ -11,7 +11,7 @@ interface CreateUnitInput {
 }
 
 const UnitDAO = {
-    createUnit: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
+    create: async ({ name, classroomId, description, educationalContents = [] }: CreateUnitInput) => {
         try {
             logger.info('[UnitDAO] Creating unit with educational content');
 
@@ -44,17 +44,7 @@ const UnitDAO = {
         }
     },
 
-    getUnits: async () => {
-        try {
-            logger.info('[UnitDAO] Fetching all units');
-            return await prisma.unit.findMany({ include: { educationalContents: true, classroom: true } });
-        } catch (error) {
-            logger.error('[UnitDAO] Error fetching units:', error);
-            throw new Error('Failed to fetch units');
-        }
-    },
-
-    getUnitByUnitId: async (UnitId: string) => {
+    get: async (UnitId: string) => {
         try {
             logger.info(`[UnitDAO] Fetching unit by ID: ${UnitId}`);
             return await prisma.unit.findUnique({
@@ -67,23 +57,9 @@ const UnitDAO = {
         }
     },
 
-    getUnitsByClassroomId: async (classroomId: string) => {
-        try {
-            logger.info(`[UnitDAO] Fetching unit by ID: ${classroomId}`);
-            return await prisma.unit.findMany({
-                where: { classroomId: classroomId },
-                include: { educationalContents: true, classroom: true },
-            });
-        } catch (error) {
-            logger.error(`[UnitDAO] Error fetching unit ID=${classroomId}:`, error);
-            throw new Error('Failed to fetch unit by Classroom ID');
-        }
 
 
-    },
-
-
-    getUnitsByFilters: async (filters: Record<string, any> = {}): Promise<Unit[]> => {
+    getAll: async (filters: Record<string, any> = {}): Promise<Unit[]> => {
         try {
             logger.info('[UnitDAO] Fetching units with filters:', filters);
             const queryFilter = buildWhereClause(filters);
@@ -104,7 +80,7 @@ const UnitDAO = {
     },
 
 
-    updateUnit: async (id: string, updateFields: { name?: string; description?: string }) => {
+    update: async (id: string, updateFields: { name: string; description: string }) => {
         try {
             logger.info(`[UnitDAO] Updating unit ID=${id} with fields:`, updateFields);
             const result = await prisma.unit.update({
@@ -123,7 +99,7 @@ const UnitDAO = {
         }
     },
 
-    deleteUnitByUnitId: async (UnitId: string) => {
+    delete: async (UnitId: string) => {
         try {
             logger.info(`[UnitDAO] Deleting unit ID=${UnitId}`);
             const result = await prisma.unit.delete({ where: { id: UnitId } });

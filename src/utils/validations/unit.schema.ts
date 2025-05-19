@@ -13,8 +13,8 @@ export const unitSchema = z.object({
 });
 
 export const updateUnitSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
+  name: z.string().min(1),
+  description: z.string(),
   educationalContents: z.array(
     z.object({
       id: z.string().optional(),

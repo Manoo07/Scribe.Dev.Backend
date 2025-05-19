@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 class UnitService {
 
-  public async createUnit(params: {
+  public async create(params: {
     name: string; description: string; classroomId: string; educationalContents?: { contentType: string; url: string }[];
   }) {
     try {
@@ -18,7 +18,7 @@ class UnitService {
         throw new Error('Invalid classroomId');
       }
 
-      const unit = await UnitDAO.createUnit(params);
+      const unit = await UnitDAO.create(params);
       logger.info('[UnitService] Unit created successfully:', unit);
       return unit;
     } catch (error) {
@@ -27,60 +27,36 @@ class UnitService {
     }
   }
 
-  public async getUnits() {
+  public async get(UnitId: string) {
     try {
-      logger.info('[UnitService] Fetching all units');
-      const units = await UnitDAO.getUnits();
-      logger.info('[UnitService] Fetched units successfully');
-      return units;
-    } catch (error) {
-      logger.error('[UnitService] Error fetching units:', error);
-      throw error;
-    }
-  }
-
-  public async getUnitByUnitId(id: string) {
-    try {
-      logger.info(`[UnitService] Fetching unit with ID: ${id}`);
-      const unit = await UnitDAO.getUnitByUnitId(id);
-      logger.info(`[UnitService] Unit fetched successfully for ID=${id}`);
+      logger.info(`[UnitService] Fetching unit with ID: ${UnitId}`);
+      const unit = await UnitDAO.get(UnitId);
+      logger.info('[UnitService] Fetched unit successfully');
       return unit;
     } catch (error) {
-      logger.error(`[UnitService] Error fetching unit ID=${id}:`, error);
+      logger.error('[UnitService] Error fetching unit:', error);
       throw error;
     }
   }
 
-  public async getUnitsByClassroomId(classroomId: string) {
+  public async getAll(filters?: any): Promise<Unit[]> {
     try {
-      logger.info(`[UNITService] Fetching unit for Classroom ID=${classroomId} `);
-      const units = await UnitDAO.getUnitsByClassroomId(classroomId);
-      logger.info(`[UnitService] Unit fetched successfully for ID=${classroomId}`);
+      logger.info(`[UnitService] Fetching unit with filter: ${filters}`);
+      const units = await UnitDAO.getAll(filters);
+      logger.info(`[UnitService] Units fetched successfully for filter=${filters}`);
       return units;
-    }
-    catch (error) {
-      logger.error(`[UnitService] Error while fetching Classroom ID=${classroomId}`, error);
-      throw error;
-    }
-  }
-
-
-  public async filterUnits(filters: Record<string, any>): Promise<Unit[]> {
-    try {
-      logger.info('[UnitService] Filtering units with:', filters);
-      return await UnitDAO.getUnitsByFilters(filters);
     } catch (error) {
-      logger.error('[UnitService] Error filtering units:', error);
+      logger.error(`[UnitService] Error fetching units for filter=${filters}:`, error);
       throw error;
     }
   }
 
 
 
-  public async updateUnit(UnitId: string, updateFields: { name?: string; description?: string }) {
+  public async update(UnitId: string, updateFields: { name: string; description: string }) {
     try {
       logger.info(`[UnitService] Updating unit ID=${UnitId} with fields:`, updateFields);
-      const unit = await UnitDAO.updateUnit(UnitId, updateFields);
+      const unit = await UnitDAO.update(UnitId, updateFields);
       if (unit) {
         logger.info(`[UnitService] Unit ID=${UnitId} updated successfully`);
         return unit;
@@ -94,13 +70,13 @@ class UnitService {
     }
   }
 
-  public async deleteUnit(id: string) {
+  public async delete(unitId: string) {
     try {
-      logger.info(`[UnitService] Deleting unit with ID: ${id}`);
-      await UnitDAO.deleteUnitByUnitId(id);
-      logger.info(`[UnitService] Unit ID=${id} deleted successfully`);
+      logger.info(`[UnitService] Deleting unit with ID: ${unitId}`);
+      await UnitDAO.delete(unitId);
+      logger.info(`[UnitService] Unit ID=${unitId} deleted successfully`);
     } catch (error) {
-      logger.error(`[UnitService] Error deleting unit ID=${id}:`, error);
+      logger.error(`[UnitService] Error deleting unit ID=${unitId}:`, error);
       throw error;
     }
   }
