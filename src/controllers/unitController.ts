@@ -13,11 +13,7 @@ import Zod, { ZodError } from 'zod';
 import { unitSchema, updateUnitSchema } from '@utils/validations/unit.schema';
 
 export class UnitController {
-    private unitService: UnitService;
-
-    constructor(unitService: UnitService) {
-        this.unitService = unitService;
-    }
+    private unitService = new UnitService();
 
     public create = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -54,7 +50,7 @@ export class UnitController {
     };
 
 
-    public async getAll(req: Request, res: Response): Promise<void> {
+    public getAll = async (req: Request, res: Response): Promise<void> => {
         try {
             const filters = req.body.filter || {};
             logger.info('[UnitController] Received filters for unit search (GET body):', filters);

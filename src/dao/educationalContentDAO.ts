@@ -65,6 +65,13 @@ const EducationalContentDAO = {
     }) => {
         logger.info(`[EducationalContentDAO] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(data)}`);
         try {
+            const existingContent = await prisma.educationalContent.findUnique({
+                where: { id: educationalContentId },
+            });
+            if (!existingContent) {
+                logger.warn(`[EducationalContentDAO] No content found with ID: ${educationalContentId}`);
+                throw new Error(`Educational content with ID ${educationalContentId} not found`);
+            }
             const updatedContent = await prisma.educationalContent.update({
                 where: { id: educationalContentId },
                 data,

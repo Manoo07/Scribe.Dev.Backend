@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 class UnitService {
 
   public async create(params: {
-    name: string; description: string; classroomId: string; educationalContents?: { contentType: string; url: string }[];
+    name: string; description: string; classroomId: string; educationalContents?: { type: string; content: string }[];
   }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);

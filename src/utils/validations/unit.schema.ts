@@ -19,7 +19,7 @@ export const updateUnitSchema = z.object({
     z.object({
       id: z.string().optional(),
       type: z.enum(['video', 'document', 'quiz']),
-      content: z.string(),
+      content: z.string().url(),
       version: z.string().optional(),
     })
   ).optional(),

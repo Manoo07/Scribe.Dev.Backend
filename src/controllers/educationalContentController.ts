@@ -5,26 +5,33 @@ import {
   HTTP_STATUS_NO_CONTENT,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
+  VALID_CONTENT_TYPES,
 } from '@constants/constants';
 import unitDAO from '@dao/unitDAO';
 import educationalContentService from '@services/educationalContentService';
 import { logger } from '@services/logService';
 import unitService from '@services/unitService';
+import { educationalContentSchema } from '@utils/validations/educationalContent.schema';
 import { Request, Response } from 'express';
 
 export class EducationalContentController {
   async create(req: Request, res: Response): Promise<void> {
     const { unitId } = req.params;
-    const { content, type } = req.body;
+    const validationResult = educationalContentSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Validation failed', details: errors });
+      return;
+    }
+    const { content, type } = validationResult.data;
 
     logger.info(`[EducationalContentController] Creating content for unitId: ${unitId} with data: ${JSON.stringify({ content, type })}`);
-    const validTypes = ['NOTE', 'LINK', 'VIDEO', 'DOCUMENT'];
     if (!content || typeof content !== 'string' || content.trim() === '') {
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Content must be a non-empty string' });
       return;
     }
-    if (!validTypes.includes(type)) {
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: `Type must be one of: ${validTypes.join(', ')}` });
+    if (!VALID_CONTENT_TYPES.includes(type)) {
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: `Type must be one of: ${VALID_CONTENT_TYPES.join(', ')}` });
       return;
     }
 
@@ -76,6 +83,20 @@ export class EducationalContentController {
   async update(req: Request, res: Response): Promise<void> {
     const { educationalContentId } = req.params;
     const updateEducationalContent = req.body;
+
+    if (!educationalContentId) {
+      logger.warn(`[EducationalContentController] Invalid educationalContentId: ${educationalContentId}`);
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid educationalContentId' });
+      return;
+    }
+
+    const validation = educationalContentSchema.safeParse(updateEducationalContent);
+    if (!validation.success) {
+      logger.warn(`[EducationalContentController] Validation failed: ${JSON.stringify(validation.error.issues)}`);
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid update data', details: validation.error.issues });
+      return;
+    }
+
 
     logger.info(`[EducationalContentController] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(updateEducationalContent)}`);
     try {

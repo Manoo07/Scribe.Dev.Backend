@@ -1,14 +1,12 @@
 import { UnitController } from '@controllers/unitController';
-import UnitService from '@services/unitService';
 
 import { Router } from 'express';
 
-const unitService = new UnitService();
-const unitController = new UnitController(unitService);
+const unitController = new UnitController();
 export const unitRouter = Router();
 
 unitRouter.post('/', unitController.create);
-unitRouter.get('/', unitController.getAll.bind(unitController));
+unitRouter.get('/', unitController.getAll);
 unitRouter.get('/:unitId', unitController.get);
 unitRouter.put('/:unitId', unitController.update);
 unitRouter.delete('/:unitId', unitController.delete);

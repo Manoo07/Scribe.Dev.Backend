@@ -7,7 +7,7 @@ interface CreateUnitInput {
     name: string;
     description: string;
     classroomId: string;
-    educationalContents?: { contentType: string; url: string }[];
+    educationalContents?: { type: string; content: string }[];
 }
 
 const UnitDAO = {
@@ -24,8 +24,8 @@ const UnitDAO = {
                 ...(educationalContents.length > 0 && {
                     educationalContents: {
                         create: educationalContents.map((ec) => ({
-                            type: ec.contentType.toUpperCase() as ContentType,
-                            content: ec.url,
+                            type: ec.type.toUpperCase() as ContentType,
+                            content: ec.content,
                         })),
                     },
                 }),
