@@ -15,6 +15,8 @@ import DepartmentDAO from '@dao/departmentDAO';
 import SectionDAO from '@dao/sectionDAO';
 import CollegeDAO from '@dao/collegeDAO';
 
+const prisma = new PrismaClient();
+
 export function generateResetToken() {
   logger.info('[AuthUtils] Generating reset token');
   const token = crypto.randomBytes(RANDOM_BYTES_LENGTH).toString(DIGEST_FORMAT);
@@ -42,8 +44,6 @@ export function checkMissingFields(params: SignupParams): string[] | null {
   return missing.length > 0 ? missing : null;
 }
 
-const prisma = new PrismaClient();
-
 export async function validateSignupParams(params: SignupParams): Promise<ErrorResponse | null> {
   const { role, departmentId, sectionId, collegeId } = params;
 
@@ -57,7 +57,7 @@ export async function validateSignupParams(params: SignupParams): Promise<ErrorR
     return { error: 'College does not exist.', status: HTTP_STATUS_BAD_REQUEST };
   }
 
-  if ((role === 'STUDENT' || role === 'FACULTY')) {
+  if (role === Role.STUDENT || role === Role.FACULTY) {
     if (!departmentId) {
       logger.warn('Department ID is required for Student and Faculty roles.');
       return { error: 'Department ID is required.', status: HTTP_STATUS_BAD_REQUEST };
@@ -77,9 +77,6 @@ export async function validateSignupParams(params: SignupParams): Promise<ErrorR
       return { error: 'Section does not exist.', status: HTTP_STATUS_BAD_REQUEST };
     }
   }
-
-
-
 
   return null;
 }
