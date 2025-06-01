@@ -45,3 +45,17 @@ export const defaultInclude: Prisma.VirtualClassroomInclude = {
     },
   },
 };
+
+
+export const virtualClassroomsIncludeFields = {
+  section: {
+    select: {
+      name: true,
+    },
+  },
+  faculty: {
+    select: {
+      specialization: true,
+    },
+  },
+};

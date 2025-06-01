@@ -1,4 +1,5 @@
 import { PrismaClient, Role } from '@prisma/client';
+import { logger } from '@services/logService';
 import { hashPassword } from '../src/utils/hashUtil';
 
 const prisma = new PrismaClient();
@@ -69,7 +70,7 @@ async function main() {
 
   const specificFaculty = [
     { email: 'manoharboinapalli@gmail.com', firstName: 'Manohar', lastName: 'Boinapally' },
-    { email: 'bandirs2003@gmail.com', firstName: 'Bandir', lastName: 'S' },
+    { email: 'bandirs2003@gmail.com', firstName: 'Bandi', lastName: 'Rajashree' },
   ];
 
   for (const faculty of specificFaculty) {
@@ -272,7 +273,7 @@ async function main() {
         const student = await prisma.student.create({
           data: {
             userId: user.id,
-            enrollmentNo: `ENR-MANOHAR-${i}${j}`,
+            enrollmentNo: `ENR-${i}${j}`,
           },
         });
 
@@ -286,12 +287,12 @@ async function main() {
     }
   }
 
-  console.log('Seeding completed successfully.');
+  logger.info('Seeding completed successfully.');
 }
 
 main()
   .catch((e) => {
-    console.error('Error seeding database:', e);
+    logger.error('Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

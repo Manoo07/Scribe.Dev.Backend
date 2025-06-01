@@ -88,7 +88,7 @@ const UserDAO = {
           },
         },
       });
-      logger.debug(`User created: ${email}`);
+      logger.info(`User created: ${email}`);
 
       // Ensure section ID
       const sectionId = await getOrFallbackSectionId(tx, inputSectionId);
@@ -109,7 +109,7 @@ const UserDAO = {
             enrollmentNo: 'TEMP' + user.id,
           },
         });
-        logger.debug(`Created student profile for user ${user.id}`);
+        logger.info(`Created student profile for user ${user.id}`);
       } else if (role === Role.FACULTY) {
         if (!departmentId) {
           throw new Error('Department ID is required for faculty.');
@@ -121,7 +121,7 @@ const UserDAO = {
             user: { connect: { id: user.id } },
           },
         });
-        logger.debug(`Created faculty profile for user ${user.id}`);
+        logger.info(`Created faculty profile for user ${user.id}`);
       }
 
       return user;

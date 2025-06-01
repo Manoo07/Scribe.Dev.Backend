@@ -5,9 +5,15 @@ import { VirtualClassroom } from '@prisma/client';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
 import { VirtualClassroomParams } from 'types/express';
 
+export interface CreateVirtualClassroomParams {
+  name: string;
+  facultyId: string;
+  syllabusUrl: string | undefined;
+  sectionId: string;
+}
 export class VirtualClassroomService {
   // should be created by faculty
-  async createVirtualClassroom(data: VirtualClassroomParams): Promise<VirtualClassroom> {
+  async createVirtualClassroom(data: CreateVirtualClassroomParams): Promise<VirtualClassroom> {
     logger.info('[VirtualClassroomService] : Creating virtual classroom with data:', data);
     try {
       const virtualClassroom = await VirtualClassroomDAO.create(data);

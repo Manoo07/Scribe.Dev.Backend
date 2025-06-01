@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient, VirtualClassroom } from '@prisma/client';
 import { logger } from '@services/logService';
+import { CreateVirtualClassroomParams } from '@services/virtualClassroomService';
 import { defaultInclude } from '@utils/prismaIncludes';
 import { VirtualClassroomParams } from 'types/express';
 import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
@@ -7,7 +8,7 @@ import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
 const prisma = new PrismaClient();
 
 export const VirtualClassroomDAO = {
-  create: async (data: VirtualClassroomParams) => {
+  create: async (data: CreateVirtualClassroomParams) => {
     logger.info('[VirtualClassroomDAO] Creating virtual classroom:', data);
     try {
       const virtualClassroom = await prisma.virtualClassroom.create({

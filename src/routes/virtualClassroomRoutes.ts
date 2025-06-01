@@ -74,3 +74,11 @@ virtualClassroomRouter.post('/leave', async (req, res) => {
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while leaving the classroom.' });
   }
 });
+
+virtualClassroomRouter.delete('/:id',async(req,res)=>{
+  try {
+    await virtualClassroomController.deleteClassroom(req,res);
+  } catch (error) {
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while deleting the classroom.' });
+  }
+})

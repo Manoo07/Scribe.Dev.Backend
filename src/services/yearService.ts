@@ -22,9 +22,9 @@ class YearService {
     }
   }
 
-  async getYears(): Promise<Year[]> {
+  async getYears(departmentId:string): Promise<Year[]> {
     logger.info('[YearService] Fetching all years');
-    return YearDAO.getYears();
+    return YearDAO.getYearsByDepartmentId(departmentId);
   }
 
   async getYearById(id: string): Promise<Year | null> {

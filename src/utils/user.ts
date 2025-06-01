@@ -33,5 +33,5 @@ export async function createUserRole(
     },
   });
 
-  logger.debug(`Assigned role ${role} to user ${userId}`);
+  logger.info(`Assigned role ${role} to user ${userId}`);
 }
