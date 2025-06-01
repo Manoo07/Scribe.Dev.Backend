@@ -2,7 +2,6 @@ import { Prisma, PrismaClient, VirtualClassroom } from '@prisma/client';
 import { logger } from '@services/logService';
 import { CreateVirtualClassroomParams } from '@services/virtualClassroomService';
 import { defaultInclude } from '@utils/prismaIncludes';
-import { VirtualClassroomParams } from 'types/express';
 import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
 
 const prisma = new PrismaClient();
