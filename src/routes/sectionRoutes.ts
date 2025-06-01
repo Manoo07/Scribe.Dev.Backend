@@ -44,7 +44,7 @@ sectionRouter.get('/', async (req: Request, res: Response): Promise<any> => {
   try {
     const sections = await prisma.section.findMany({
       include: {
-        year: true, // Include year details if needed
+        year: true,
       },
     });
 

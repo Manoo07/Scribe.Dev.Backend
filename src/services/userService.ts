@@ -1,4 +1,4 @@
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient, User, Role } from '@prisma/client';
 import UserDAO from '@dao/userDAO';
 import { logger } from '@services/logService';
 import {
@@ -12,7 +12,7 @@ class UserService {
   private prisma = new PrismaClient();
 
   async getUserById(id: string) {
-    const user = await UserDAO.findById(id);
+    const user = await UserDAO.get({ filter: { id } });
     if (!user) {
       logger.warn(`[UserService] User not found with ID: ${id}`);
       throw { status: HTTP_STATUS_NOT_FOUND, message: 'User not found' };
@@ -22,7 +22,7 @@ class UserService {
 
   async getAllUsers() {
     try {
-      const users = await UserDAO.findAll();
+      const users = await UserDAO.getAll({});
       logger.info(`[UserService] Fetched ${users.length} users`);
       return users;
     } catch (error) {
@@ -42,14 +42,15 @@ class UserService {
       }
 
       if (data.username) {
-        const existingUser = await UserDAO.findByUsernameExcludingId(data.username, id);
-        if (existingUser) {
+        const existingUser = await UserDAO.get({ filter: { username: data.username } });
+        if (existingUser && existingUser.id !== id) {
           logger.warn(`[UserService] Username already taken: ${data.username}`);
           throw { status: HTTP_STATUS_BAD_REQUEST, message: 'Username already taken' };
         }
       }
 
-      const user = await UserDAO.updateById(id, data);
+      // Use update with new UserDAO method signature
+      const user = await UserDAO.update({ id }, data);
       logger.info(`[UserService] Updated user with ID: ${id}`);
       return user;
     } catch (error: any) {
@@ -57,13 +58,14 @@ class UserService {
       throw error.status ? error : { status: HTTP_STATUS_INTERNAL_SERVER_ERROR, message: 'Failed to update user' };
     }
   }
-  async deleteUser(id: string) {
+
+  async deleteUser(userId: string) {
     try {
-      const user = await UserDAO.deleteById(id);
-      logger.info(`[UserService] Deleted user with ID: ${id}`);
+      const user = await UserDAO.delete(userId);
+      logger.info(`[UserService] Deleted user with ID: ${userId}`);
       return user;
     } catch (error) {
-      logger.error(`[UserService] Error deleting user ${id}: ${error}`);
+      logger.error(`[UserService] Error deleting user ${userId}: ${error}`);
       throw { status: HTTP_STATUS_INTERNAL_SERVER_ERROR, message: 'Failed to delete user' };
     }
   }

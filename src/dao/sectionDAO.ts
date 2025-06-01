@@ -27,19 +27,34 @@ const SectionDAO = {
       throw new Error('Failed to fetch sections');
     }
   },
-
-  getSectionById: async (id: string): Promise<Section | null> => {
+  getSectionById: async (id: string): Promise<string | null> => {
     logger.info(`[SectionDAO] Fetching section ID ${id}`);
     try {
-      const section = await prisma.section.findUnique({ where: { id }, include: { year: true } });
+      const section = await prisma.section.findFirst({ where: { id }, select: { id: true } });
       if (!section) {
         logger.warn(`[SectionDAO] Section not found with ID ${id}`);
         return null;
       }
       logger.info('[SectionDAO] Section found:', section);
-      return section;
+      return section.id;
     } catch (error) {
       logger.error(`[SectionDAO] Error fetching section ID ${id}:`, error);
+      throw new Error('Failed to fetch section by ID');
+    }
+  },
+
+  getSectionByYearId: async (yearId: string): Promise<string | null> => {
+    logger.info(`[SectionDAO] Fetching section ID ${yearId}`);
+    try {
+      const section = await prisma.section.findFirst({ where: { yearId }, select: { id: true } });
+      if (!section) {
+        logger.warn(`[SectionDAO] Section not found with ID ${yearId}`);
+        return null;
+      }
+      logger.info('[SectionDAO] Section found:', section);
+      return section.id;
+    } catch (error) {
+      logger.error(`[SectionDAO] Error fetching section ID ${yearId}:`, error);
       throw new Error('Failed to fetch section by ID');
     }
   },

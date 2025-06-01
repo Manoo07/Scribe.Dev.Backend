@@ -1,13 +1,13 @@
 import { Prisma, PrismaClient, VirtualClassroom } from '@prisma/client';
 import { logger } from '@services/logService';
+import { CreateVirtualClassroomParams } from '@services/virtualClassroomService';
 import { defaultInclude } from '@utils/prismaIncludes';
-import { VirtualClassroomParams } from 'types/express';
 import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
 
 const prisma = new PrismaClient();
 
 export const VirtualClassroomDAO = {
-  create: async (data: VirtualClassroomParams) => {
+  create: async (data: CreateVirtualClassroomParams) => {
     logger.info('[VirtualClassroomDAO] Creating virtual classroom:', data);
     try {
       const virtualClassroom = await prisma.virtualClassroom.create({
@@ -31,7 +31,7 @@ export const VirtualClassroomDAO = {
     include: Prisma.VirtualClassroomInclude = defaultInclude
   ) => {
     try {
-      logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with filter: ${JSON.stringify(filter)}` );
+      logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with filter: ${JSON.stringify(filter)}`);
       logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with include: ${JSON.stringify(include)}`);
 
       const virtualClassroom = await prisma.virtualClassroom.findFirst({
@@ -79,14 +79,14 @@ export const VirtualClassroomDAO = {
     }
   },
 
-  update: async (id: string, data: Prisma.VirtualClassroomUpdateInput) => {
-    logger.info(`[VirtualClassroomDAO] Updating virtual classroom: ${id}`);
+  update: async (classroomId: string, data: Prisma.VirtualClassroomUpdateInput) => {
+    logger.info(`[VirtualClassroomDAO] Updating virtual classroom: ${classroomId}`);
     try {
       const virtualClassroom = await prisma.virtualClassroom.update({
-        where: { id },
+        where: { id: classroomId },
         data,
       });
-      logger.info('[VirtualClassroomDAO] Virtual classroom updated:', id);
+      logger.info('[VirtualClassroomDAO] Virtual classroom updated:', classroomId);
       return virtualClassroom;
     } catch (error) {
       logger.error('[VirtualClassroomDAO] Error updating virtual classroom:', error);
@@ -94,13 +94,13 @@ export const VirtualClassroomDAO = {
     }
   },
 
-  delete: async (id: string) => {
-    logger.info(`[VirtualClassroomDAO] Deleting virtual classroom: ${id}`);
+  delete: async (classroomId: string) => {
+    logger.info(`[VirtualClassroomDAO] Deleting virtual classroom: ${classroomId}`);
     try {
       const virtualClassroom = await prisma.virtualClassroom.delete({
-        where: { id },
+        where: { id: classroomId },
       });
-      logger.info('[VirtualClassroomDAO] Virtual classroom deleted:', id);
+      logger.info('[VirtualClassroomDAO] Virtual classroom deleted:', classroomId);
       return virtualClassroom;
     } catch (error) {
       logger.error('[VirtualClassroomDAO] Error deleting virtual classroom:', error);

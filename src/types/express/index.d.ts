@@ -61,8 +61,10 @@ type Student = {
 export interface VirtualClassroomParams {
   name: string;
   facultyId: string;
-  sectionId: string;
+  sectionId?: string;
   syllabusUrl?: string;
+  departmentId?:string;
+  yearId:string
 }
 
 export type GetStudentsByFilterParams = {

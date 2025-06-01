@@ -16,10 +16,15 @@ const YearDAO = {
     }
   },
 
-  async getYears(): Promise<Year[]> {
+  async getYearsByDepartmentId(departmentId: string): Promise<Year[]> {
     logger.info('[YearDAO] Fetching all years');
     try {
-      const years = await prisma.year.findMany({ include: { department: true } });
+      const years = await prisma.year.findMany({
+        where: {
+          departmentId,
+        },
+        include: { department: true },
+      });
       logger.info('[YearDAO] Years fetched successfully');
       return years;
     } catch (error) {

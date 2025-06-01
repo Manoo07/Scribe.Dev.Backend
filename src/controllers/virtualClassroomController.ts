@@ -15,10 +15,15 @@ import FacultyDAO from '@dao/facultyDAO';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
 import { validateFilter } from '@utils/prismaFilters';
-import { classroomIncludeFields, virtualClassroomIncludeFields } from '@utils/prismaIncludes';
+import {
+  classroomIncludeFields,
+  virtualClassroomIncludeFields,
+  virtualClassroomsIncludeFields,
+} from '@utils/prismaIncludes';
 import { studentSelectFields, virtualClassroomStudentSelectFields } from '@utils/prismaSelects';
 import { EnrolledStudents, StudentWithUser, Student, VirtualClassroomParams } from 'types/express';
 import { validateFields } from '@utils/validations/virtualClassroom.schema';
+import SectionDAO from '@dao/sectionDAO';
 
 const prisma = new PrismaClient();
 
@@ -38,21 +43,26 @@ export class VirtualClassroomController {
         throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
-      const { name, syllabusUrl, sectionId }: VirtualClassroomParams = req.body;
-
+      const { name, syllabusUrl, departmentId, yearId }: VirtualClassroomParams = req.body;
       if (
         !validateFields(
           [
             { key: 'User ID', value: userId },
             { key: 'Name', value: name },
-            { key: 'Section ID', value: sectionId },
+            { key: 'Year ID', value: yearId },
           ],
           res
         )
       ) {
         return;
       }
-
+      // get the sectionId using yearId
+      const sectionId = await SectionDAO.getSectionByYearId(yearId);
+      if (!sectionId) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({
+          message: 'Year Invalid',
+        });
+      }
       const faculty = await FacultyDAO.getFacultyByUserId(userId);
       if (!faculty?.id) {
         return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Faculty not found for the given User ID' });
@@ -128,20 +138,10 @@ export class VirtualClassroomController {
         }
       }
 
-      const includeFields = {
-        section: {
-          select: {
-            name: true,
-          },
-        },
-        faculty: {
-          select: {
-            specialization: true,
-          },
-        },
-      };
-
-      const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(filter, includeFields);
+      const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(
+        filter,
+        virtualClassroomsIncludeFields
+      );
       logger.info('[VirtualClassroomController] getClassrooms completed successfully');
       return res.status(HTTP_STATUS_OK).json({ classrooms });
     } catch (error) {
@@ -153,6 +153,7 @@ export class VirtualClassroomController {
     }
   };
 
+  // TODO Need to make this logic optimze
   getEligibleStudents = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] getEligibleStudents started');
     try {
@@ -236,7 +237,7 @@ export class VirtualClassroomController {
   joinClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] joinClassroom started');
     try {
-      const { classroomId,userId } = await req.body;
+      const { classroomId, userId } = await req.body;
       if (!userId) {
         throw new Error('Unauthorized: User ID missing from request.');
       }
@@ -280,7 +281,7 @@ export class VirtualClassroomController {
   leaveClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] leaveClassroom started');
     try {
-      const { classroomId,userId } = req.body;
+      const { classroomId, userId } = req.body;
 
       if (!userId) {
         throw new Error('Unauthorized: User ID missing from request.');
@@ -315,6 +316,41 @@ export class VirtualClassroomController {
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
         message: 'Failed to leave virtual classroom',
         error: (error as Error).message,
+      });
+    }
+  };
+
+  deleteClassroom = async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] Delete classroom');
+
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({
+          message: 'Classroom ID is missing',
+        });
+      }
+
+      const classroom = await VirtualClassroomDAO.get({ id });
+      if (!classroom) {
+        return res.status(HTTP_STATUS_NOT_FOUND).json({
+          message: 'Classroom not found',
+        });
+      }
+
+      await this.virtualClassroomService.deleteVirtualClassroom(id);
+
+      logger.info(`[VirtualClassroomController] Classroom ${id} deleted successfully`);
+
+      return res.status(HTTP_STATUS_OK).json({
+        message: 'Classroom deleted successfully',
+      });
+    } catch (error) {
+      logger.error('[VirtualClassroomController] Error deleting classroom:', error);
+
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to delete classroom',
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   };

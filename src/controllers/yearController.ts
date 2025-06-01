@@ -35,7 +35,28 @@ export class YearController {
   public async getYears(req: Request, res: Response): Promise<void> {
     try {
       logger.info('[YearController] Fetching all years');
-      const years = await yearService.getYears();
+
+      let departmentId: string | undefined;
+      const queryParam = req.query.departmentId;
+
+      // Handle different possible types (array, object, or string)
+      if (Array.isArray(queryParam)) {
+        departmentId = String(queryParam[0]);
+      } else if (typeof queryParam === 'object' && queryParam !== null) {
+        // In case it's ParsedQs (unlikely, but safe to handle)
+        departmentId = (queryParam as Record<string, any>).toString();
+      } else if (typeof queryParam === 'string') {
+        departmentId = queryParam;
+      }
+
+      // Validate
+      if (!departmentId) {
+        res.status(400).json({ error: 'Missing departmentId query parameter' });
+        return;
+      }
+
+      const years = await yearService.getYears(departmentId);
+
       res.status(HTTP_STATUS_OK).json(years);
     } catch (error) {
       logger.error('[YearController] Error fetching years:', error);

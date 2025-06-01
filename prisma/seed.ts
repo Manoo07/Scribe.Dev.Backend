@@ -1,64 +1,46 @@
 import { PrismaClient, Role } from '@prisma/client';
+import { logger } from '@services/logService';
 import { hashPassword } from '../src/utils/hashUtil';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create College
   const college = await prisma.college.create({
-    data: {
-      name: 'OSMANIA UNIVERSITY',
-    },
+    data: { name: 'OSMANIA UNIVERSITY' },
   });
 
-  // Departments to create
   const departmentNames = ['CSE', 'ECE', 'BME', 'CE', 'ME', 'EEE', 'AIML'];
+  const departments = [];
 
-  // Create Departments
-  const departments: any[] = [];
-  for (const deptName of departmentNames) {
+  for (const name of departmentNames) {
     const dept = await prisma.department.create({
-      data: {
-        name: deptName,
-        collegeId: college.id,
-      },
+      data: { name, collegeId: college.id },
     });
     departments.push(dept);
   }
 
-  // Years to create
   const yearNames = ['I', 'II', 'III', 'IV'];
+  const years: { id: string; name: string; createdAt: Date; updatedAt: Date; departmentId: string }[] = [];
 
-  // Create Years for each department
-  const years = [];
   for (const dept of departments) {
-    for (const yearName of yearNames) {
+    for (const name of yearNames) {
       const year = await prisma.year.create({
-        data: {
-          name: yearName,
-          departmentId: dept.id,
-        },
+        data: { name, departmentId: dept.id },
       });
       years.push(year);
     }
   }
 
-  // Create Section "ALPHA" for each year
-  const sections = [];
+  const sections: { id: string; createdAt: Date; updatedAt: Date; name: string; yearId: string }[] = [];
   for (const year of years) {
     const section = await prisma.section.create({
-      data: {
-        name: 'ALPHA',
-        yearId: year.id,
-      },
+      data: { name: 'ALPHA', yearId: year.id },
     });
     sections.push(section);
   }
 
-  // Create Users (Faculty and Students) with hashed passwords
   const passwordHash = await hashPassword('Password123');
 
-  // Create a Principal User
   const principalUser = await prisma.user.create({
     data: {
       firstName: 'John',
@@ -70,7 +52,6 @@ async function main() {
     },
   });
 
-  // Assign Principal Role
   await prisma.userRole.create({
     data: {
       userId: principalUser.id,
@@ -79,10 +60,94 @@ async function main() {
     },
   });
 
-  // Create Faculty Users and assign them to departments and sections
+  const cseDepartment = departments.find((d) => d.name === 'CSE');
+  if (!cseDepartment) throw new Error('CSE Department not found');
+
+  const getSectionForDepartment = (deptId: string) => {
+    const year = years.find((y) => y.departmentId === deptId);
+    return sections.find((s) => s.yearId === year?.id);
+  };
+
+  const specificFaculty = [
+    { email: 'manoharboinapalli@gmail.com', firstName: 'Manohar', lastName: 'Boinapally' },
+    { email: 'bandirs2003@gmail.com', firstName: 'Bandi', lastName: 'Rajashree' },
+  ];
+
+  for (const faculty of specificFaculty) {
+    const user = await prisma.user.create({
+      data: {
+        firstName: faculty.firstName,
+        lastName: faculty.lastName,
+        username: faculty.email.split('@')[0],
+        email: faculty.email,
+        password: passwordHash,
+        collegeId: college.id,
+      },
+    });
+
+    const section = getSectionForDepartment(cseDepartment.id);
+
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        role: Role.FACULTY,
+        collegeId: college.id,
+        departmentId: cseDepartment.id,
+        sectionId: section?.id,
+      },
+    });
+
+    await prisma.faculty.create({
+      data: {
+        userId: user.id,
+        specialization: cseDepartment.name,
+      },
+    });
+  }
+
+  const specificStudents = [
+    { email: 'manoharboinapalli2003@gmail.com', firstName: 'Manohar', lastName: 'Boinapally' },
+    { email: 'bandirajashree744@gmail.com', firstName: 'Bandi', lastName: 'Rajashree' },
+  ];
+
+  for (let i = 0; i < specificStudents.length; i++) {
+    const info = specificStudents[i];
+    const user = await prisma.user.create({
+      data: {
+        firstName: info.firstName,
+        lastName: info.lastName,
+        username: info.email.split('@')[0],
+        email: info.email,
+        password: passwordHash,
+        collegeId: college.id,
+      },
+    });
+
+    const section = getSectionForDepartment(cseDepartment.id);
+
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        role: Role.STUDENT,
+        collegeId: college.id,
+        departmentId: cseDepartment.id,
+        sectionId: section?.id,
+      },
+    });
+
+    await prisma.student.create({
+      data: {
+        userId: user.id,
+        enrollmentNo: `ENR2025_SPEC${i + 1}`,
+      },
+    });
+  }
+
   const facultyUsers = [];
   for (let i = 0; i < 5; i++) {
-    const facultyUser = await prisma.user.create({
+    const dept = departments[i % departments.length];
+    const section = getSectionForDepartment(dept.id);
+    const user = await prisma.user.create({
       data: {
         firstName: `FacultyFirst${i + 1}`,
         lastName: `FacultyLast${i + 1}`,
@@ -93,35 +158,31 @@ async function main() {
       },
     });
 
-    // Assign Faculty Role with random department and section
-    const department = departments[i % departments.length];
-    const yearForSection = years.find((y) => y.departmentId === department.id);
-    const section = sections.find((s) => s.yearId === yearForSection?.id);
-
     await prisma.userRole.create({
       data: {
-        userId: facultyUser.id,
+        userId: user.id,
         role: Role.FACULTY,
         collegeId: college.id,
-        departmentId: department.id,
+        departmentId: dept.id,
         sectionId: section?.id,
       },
     });
 
-    // Create Faculty profile
-    const facultyProfile = await prisma.faculty.create({
+    const profile = await prisma.faculty.create({
       data: {
-        userId: facultyUser.id,
-        specialization: department.name,
+        userId: user.id,
+        specialization: dept.name,
       },
     });
 
-    facultyUsers.push({ user: facultyUser, facultyProfile });
+    facultyUsers.push({ user, facultyProfile: profile });
   }
 
-  // Create Student Users and assign them to departments and sections
   for (let i = 0; i < 10; i++) {
-    const studentUser = await prisma.user.create({
+    const dept = departments[i % departments.length];
+    const section = getSectionForDepartment(dept.id);
+
+    const user = await prisma.user.create({
       data: {
         firstName: `StudentFirst${i + 1}`,
         lastName: `StudentLast${i + 1}`,
@@ -132,56 +193,150 @@ async function main() {
       },
     });
 
-    // Assign Student Role with random department and section
-    const department = departments[i % departments.length];
-    const yearForSection = years.find((y) => y.departmentId === department.id);
-    const section = sections.find((s) => s.yearId === yearForSection?.id);
-
     await prisma.userRole.create({
       data: {
-        userId: studentUser.id,
+        userId: user.id,
         role: Role.STUDENT,
         collegeId: college.id,
-        departmentId: department.id,
+        departmentId: dept.id,
         sectionId: section?.id,
       },
     });
 
-    // Create Student profile with enrollment number
     await prisma.student.create({
       data: {
-        userId: studentUser.id,
+        userId: user.id,
         enrollmentNo: `ENR2025${i + 1}`,
       },
     });
   }
 
-  // Create Virtual Classrooms for each section and assign to a faculty
   for (const section of sections) {
-    // Pick a faculty from the same department as the section's year
     const year = years.find((y) => y.id === section.yearId);
-    const facultyForDept = facultyUsers.find(
-      (fu) => fu.facultyProfile.specialization === departments.find((d) => d.id === year?.departmentId)?.name
-    );
+    const dept = departments.find((d) => d.id === year?.departmentId);
+    const faculty = facultyUsers.find((f) => f.facultyProfile.specialization === dept?.name);
 
-    if (facultyForDept) {
+    if (faculty) {
       await prisma.virtualClassroom.create({
         data: {
           name: `Classroom for ${section.name} - ${year?.name}`,
-          facultyId: facultyForDept.facultyProfile.id,
-          syllabusUrl: 'http://example.com/syllabus.pdf',
+          facultyId: faculty.facultyProfile.id,
           sectionId: section.id,
+          syllabusUrl: 'http://example.com/syllabus.pdf',
         },
       });
     }
   }
 
-  console.log('Seeding completed successfully.');
+  const manoharUser = await prisma.user.findUnique({
+    where: { email: 'manoharboinapalli@gmail.com' },
+    include: { faculty: true },
+  });
+
+  if (manoharUser?.faculty) {
+    const section = getSectionForDepartment(cseDepartment.id);
+
+    for (let i = 1; i <= 4; i++) {
+      const vc = await prisma.virtualClassroom.create({
+        data: {
+          name: `Special VC ${i} for Manohar`,
+          facultyId: manoharUser.faculty.id,
+          sectionId: section!.id,
+          syllabusUrl: 'http://example.com/special_syllabus.pdf',
+        },
+      });
+
+      const numStudents = i === 4 ? 2 : 1;
+
+      for (let j = 1; j <= numStudents; j++) {
+        const user = await prisma.user.create({
+          data: {
+            firstName: `SpecStudent${i}${j}`,
+            lastName: 'CSE',
+            username: `specstudent${i}${j}`,
+            email: `specstudent${i}${j}@osmania.edu`,
+            password: passwordHash,
+            collegeId: college.id,
+          },
+        });
+
+        await prisma.userRole.create({
+          data: {
+            userId: user.id,
+            role: Role.STUDENT,
+            collegeId: college.id,
+            departmentId: cseDepartment.id,
+            sectionId: section!.id,
+          },
+        });
+
+        const student = await prisma.student.create({
+          data: {
+            userId: user.id,
+            enrollmentNo: `ENR-${i}${j}`,
+          },
+        });
+
+        await prisma.virtualClassroomStudent.create({
+          data: {
+            classroomId: vc.id,
+            studentId: student.id,
+          },
+        });
+      }
+    }
+  }
+
+  const allVirtualClassrooms = await prisma.virtualClassroom.findMany();
+
+  for (const classroom of allVirtualClassrooms) {
+    for (let unitIndex = 1; unitIndex <= 5; unitIndex++) {
+      const unit = await prisma.unit.create({
+        data: {
+          name: `Unit ${unitIndex} - ${classroom.name}`,
+          description: `This is the description for Unit ${unitIndex} in ${classroom.name}.`,
+          classroomId: classroom.id,
+        },
+      });
+
+      for (let contentIndex = 1; contentIndex <= 15; contentIndex++) {
+        // Cycle through types evenly: NOTE, VIDEO, DOCUMENT, LINK
+        const types = ['NOTE', 'VIDEO', 'DOCUMENT', 'LINK'];
+        const type = types[(contentIndex - 1) % types.length];
+
+        let contentValue = '';
+        switch (type) {
+          case 'NOTE':
+            contentValue = `This is a NOTE for Unit ${unitIndex}, Content ${contentIndex}.`;
+            break;
+          case 'VIDEO':
+            contentValue = `https://www.example.com/video/unit-${unitIndex}-content-${contentIndex}`;
+            break;
+          case 'DOCUMENT':
+            contentValue = `https://www.example.com/docs/unit-${unitIndex}-content-${contentIndex}.pdf`;
+            break;
+          case 'LINK':
+            contentValue = `https://www.example.com/resources/unit-${unitIndex}-content-${contentIndex}`;
+            break;
+        }
+
+        await prisma.educationalContent.create({
+          data: {
+            unitId: unit.id,
+            type: type as any,
+            content: contentValue,
+          },
+        });
+      }
+    }
+  }
+
+  logger.info('Seeding completed successfully.');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    logger.error('Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {
