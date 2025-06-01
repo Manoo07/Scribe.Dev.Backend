@@ -6,17 +6,14 @@ import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 const prisma = new PrismaClient();
 
 class UnitService {
-
   public async create(params: {
-    name: string; description: string; classroomId: string; educationalContents?: { type: string; content: string }[];
+    name: string;
+    description: string;
+    classroomId: string;
+    educationalContents?: { type: string; content: string }[];
   }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
-      const classroom = await VirtualClassroomDAO.get({ id: params.classroomId });
-      if (!classroom) {
-        logger.warn(`[UnitService] Invalid classroomId: ${params.classroomId}`);
-        throw new Error('Invalid classroomId');
-      }
 
       const unit = await UnitDAO.create(params);
       logger.info('[UnitService] Unit created successfully:', unit);
@@ -50,8 +47,6 @@ class UnitService {
       throw error;
     }
   }
-
-
 
   public async update(UnitId: string, updateFields: { name: string; description: string }) {
     try {

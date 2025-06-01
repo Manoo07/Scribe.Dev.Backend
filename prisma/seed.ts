@@ -20,7 +20,7 @@ async function main() {
   }
 
   const yearNames = ['I', 'II', 'III', 'IV'];
-  const years: { id: string; name: string; createdAt: Date; updatedAt: Date; departmentId: string; }[] = [];
+  const years: { id: string; name: string; createdAt: Date; updatedAt: Date; departmentId: string }[] = [];
 
   for (const dept of departments) {
     for (const name of yearNames) {
@@ -31,7 +31,7 @@ async function main() {
     }
   }
 
-  const sections: { id: string; createdAt: Date; updatedAt: Date; name: string; yearId: string; }[] = [];
+  const sections: { id: string; createdAt: Date; updatedAt: Date; name: string; yearId: string }[] = [];
   for (const year of years) {
     const section = await prisma.section.create({
       data: { name: 'ALPHA', yearId: year.id },
@@ -107,7 +107,7 @@ async function main() {
 
   const specificStudents = [
     { email: 'manoharboinapalli2003@gmail.com', firstName: 'Manohar', lastName: 'Boinapally' },
-    { email: 'bandirajashree744@gmail.com', firstName: 'Bandira', lastName: 'Jashree' },
+    { email: 'bandirajashree744@gmail.com', firstName: 'Bandi', lastName: 'Rajashree' },
   ];
 
   for (let i = 0; i < specificStudents.length; i++) {
@@ -281,6 +281,50 @@ async function main() {
           data: {
             classroomId: vc.id,
             studentId: student.id,
+          },
+        });
+      }
+    }
+  }
+
+  const allVirtualClassrooms = await prisma.virtualClassroom.findMany();
+
+  for (const classroom of allVirtualClassrooms) {
+    for (let unitIndex = 1; unitIndex <= 5; unitIndex++) {
+      const unit = await prisma.unit.create({
+        data: {
+          name: `Unit ${unitIndex} - ${classroom.name}`,
+          description: `This is the description for Unit ${unitIndex} in ${classroom.name}.`,
+          classroomId: classroom.id,
+        },
+      });
+
+      for (let contentIndex = 1; contentIndex <= 15; contentIndex++) {
+        // Cycle through types evenly: NOTE, VIDEO, DOCUMENT, LINK
+        const types = ['NOTE', 'VIDEO', 'DOCUMENT', 'LINK'];
+        const type = types[(contentIndex - 1) % types.length];
+
+        let contentValue = '';
+        switch (type) {
+          case 'NOTE':
+            contentValue = `This is a NOTE for Unit ${unitIndex}, Content ${contentIndex}.`;
+            break;
+          case 'VIDEO':
+            contentValue = `https://www.example.com/video/unit-${unitIndex}-content-${contentIndex}`;
+            break;
+          case 'DOCUMENT':
+            contentValue = `https://www.example.com/docs/unit-${unitIndex}-content-${contentIndex}.pdf`;
+            break;
+          case 'LINK':
+            contentValue = `https://www.example.com/resources/unit-${unitIndex}-content-${contentIndex}`;
+            break;
+        }
+
+        await prisma.educationalContent.create({
+          data: {
+            unitId: unit.id,
+            type: type as any,
+            content: contentValue,
           },
         });
       }

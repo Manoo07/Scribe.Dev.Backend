@@ -3,9 +3,12 @@ import { VirtualClassroomController } from '@controllers/virtualClassroomControl
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '@constants/constants';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import { logger } from '@services/logService';
+import { unitRouter } from './unitRoutes';
+import { UnitController } from '@controllers/unitController';
 
 export const virtualClassroomRouter = Router();
 const virtualClassroomController = new VirtualClassroomController();
+const unitController = new UnitController();
 
 virtualClassroomRouter.get('/', async (req: Request, res: Response) => {
   try {
@@ -75,10 +78,12 @@ virtualClassroomRouter.post('/leave', async (req, res) => {
   }
 });
 
-virtualClassroomRouter.delete('/:id',async(req,res)=>{
+virtualClassroomRouter.delete('/:id', async (req, res) => {
   try {
-    await virtualClassroomController.deleteClassroom(req,res);
+    await virtualClassroomController.deleteClassroom(req, res);
   } catch (error) {
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while deleting the classroom.' });
   }
-})
+});
+
+virtualClassroomRouter.get('/:classroomId/units', unitController.getAll);
