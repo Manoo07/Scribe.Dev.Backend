@@ -43,4 +43,4 @@ export const ALLOWED_FILTER_KEYS = new Set([
   'OR',
   'NOT',
 ]);
-
+export const VALID_CONTENT_TYPES = ['NOTE', 'LINK', 'VIDEO', 'DOCUMENT'];
