@@ -50,7 +50,7 @@ class UserService {
       }
 
       // Use update with new UserDAO method signature
-      const user = await UserDAO.update(id, data);
+      const user = await UserDAO.update({ id }, data);
       logger.info(`[UserService] Updated user with ID: ${id}`);
       return user;
     } catch (error: any) {
@@ -59,13 +59,13 @@ class UserService {
     }
   }
 
-  async deleteUser(id: string) {
+  async deleteUser(userId: string) {
     try {
-      const user = await UserDAO.delete(id);
-      logger.info(`[UserService] Deleted user with ID: ${id}`);
+      const user = await UserDAO.delete(userId);
+      logger.info(`[UserService] Deleted user with ID: ${userId}`);
       return user;
     } catch (error) {
-      logger.error(`[UserService] Error deleting user ${id}: ${error}`);
+      logger.error(`[UserService] Error deleting user ${userId}: ${error}`);
       throw { status: HTTP_STATUS_INTERNAL_SERVER_ERROR, message: 'Failed to delete user' };
     }
   }

@@ -128,25 +128,25 @@ const UserDAO = {
     });
   },
 
-  async update(id: string, data: Partial<User>): Promise<User> {
+  async update(filter: Prisma.UserWhereUniqueInput, data: Partial<User>): Promise<User> {
     try {
-      logger.info(`[UserDAO] Updating user with ID: ${id}`);
+      logger.info(`[UserDAO] Updating user with filter: ${JSON.stringify(filter)}`);
       return await prisma.user.update({
-        where: { id },
+        where: filter,
         data,
       });
     } catch (error) {
-      logger.error(`[UserDAO] Error updating user by ID: ${id}`, error);
+      logger.error(`[UserDAO] Error updating user with filter: ${JSON.stringify(filter)}`, error);
       throw new Error('[UserDAO] Failed to update user');
     }
   },
 
-  async delete(id: string): Promise<User> {
+  async delete(userId: string): Promise<User> {
     try {
-      logger.info(`[UserDAO] Deleting user with ID: ${id}`);
-      return await prisma.user.delete({ where: { id } });
+      logger.info(`[UserDAO] Deleting user with ID: ${userId}`);
+      return await prisma.user.delete({ where: { id: userId } });
     } catch (error) {
-      logger.error(`[UserDAO] Error deleting user by ID: ${id}`, error);
+      logger.error(`[UserDAO] Error deleting user by ID: ${userId}`, error);
       throw new Error('[UserDAO] Failed to delete user');
     }
   },

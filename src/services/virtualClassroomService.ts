@@ -46,10 +46,10 @@ export class VirtualClassroomService {
     }
   }
 
-  async updateVirtualClassroom(id: string, data: Partial<VirtualClassroom>): Promise<VirtualClassroom> {
-    logger.info('[VirtualClassroomService] :Updating virtual classroom with id:', id, 'and data:', data);
+  async updateVirtualClassroom(classroomId: string, data: Partial<VirtualClassroom>): Promise<VirtualClassroom> {
+    logger.info('[VirtualClassroomService] :Updating virtual classroom with id:', classroomId, 'and data:', data);
     try {
-      const virtualClassroom = await VirtualClassroomDAO.update(id, data);
+      const virtualClassroom = await VirtualClassroomDAO.update(classroomId, data);
       return virtualClassroom;
     } catch (error) {
       logger.error('Error updating virtual classroom:', error);
@@ -57,10 +57,10 @@ export class VirtualClassroomService {
     }
   }
 
-  async deleteVirtualClassroom(id: string): Promise<VirtualClassroom> {
-    logger.info('[VirtualClassroomService] :Deleting virtual classroom with id:', id);
+  async deleteVirtualClassroom(classroomId: string): Promise<VirtualClassroom> {
+    logger.info('[VirtualClassroomService] :Deleting virtual classroom with id:', classroomId);
     try {
-      const virtualClassroom = await VirtualClassroomDAO.delete(id);
+      const virtualClassroom = await VirtualClassroomDAO.delete(classroomId);
       return virtualClassroom;
     } catch (error) {
       logger.error('Error deleting virtual classroom:', error);
@@ -68,10 +68,10 @@ export class VirtualClassroomService {
     }
   }
 
-  async getVirtualClassroomById(id: string): Promise<VirtualClassroom | null> {
-    logger.info('[VirtualClassroomService] :Fetching virtual classroom by id:', id);
+  async getVirtualClassroomById(classroomId: string): Promise<VirtualClassroom | null> {
+    logger.info('[VirtualClassroomService] :Fetching virtual classroom by id:', classroomId);
     try {
-      const virtualClassroom = await VirtualClassroomDAO.get({ id });
+      const virtualClassroom = await VirtualClassroomDAO.get({ id: classroomId });
       return virtualClassroom;
     } catch (error) {
       logger.error('Error fetching virtual classroom by id:', error);

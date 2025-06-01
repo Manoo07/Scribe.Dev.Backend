@@ -153,6 +153,7 @@ export class VirtualClassroomController {
     }
   };
 
+  // TODO Need to make this logic optimze
   getEligibleStudents = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] getEligibleStudents started');
     try {

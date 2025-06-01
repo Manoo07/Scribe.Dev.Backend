@@ -21,6 +21,7 @@ import { logger } from '@services/logService';
 import { generateUsername } from '@utils/userUtils';
 import { SignupParams } from '@customTypes/user';
 import { ErrorResponse, SignupResult } from 'types/express';
+import { userRoleDAO } from '@dao/userRole';
 
 class AuthService {
   private prisma: PrismaClient;
@@ -30,18 +31,8 @@ class AuthService {
   }
 
   public async signup(params: SignupParams): Promise<SignupResult> {
-    const {
-      firstName,
-      lastName,
-      username,
-      email,
-      password,
-      collegeId,
-      role,
-      departmentId,
-      sectionId,
-      specialization,
-    } = params;
+    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
+      params;
 
     try {
       const validationError = await validateSignupParams(params);
@@ -89,42 +80,36 @@ class AuthService {
       logger.info(`[AuthService] User ${email} successfully signed up.`);
       return newUser;
     } catch (err: any) {
-      logger.error(`Error during signup for user ${email}: ${err.message}`);
+      logger.error(`[AuthService] Error during signup for user ${email}: ${err.message}`);
       return this.handleSignupError(err);
     }
   }
 
   public async signin(email: string, password: string): Promise<{ token: string; role: string } | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-  
+    const user = await UserDAO.get({ filter: { email } });
+
     if (user && (await comparePasswords(password, user.password))) {
       logger.info(`User ${email} successfully signed in.`);
-  
-      const userRole = await this.prisma.userRole.findFirst({
-        where: { userId: user.id },
-        select: { role: true },
-      });
-  
+
+      const userRole = await userRoleDAO.getUserRole(user.id);
+
       if (!userRole) {
         logger.warn(`[AuthService] Role not found for user ${email}`);
         throw new Error('Invalid email or password');
       }
-  
+
       const role = userRole.role;
       const token = generateToken(user.id, role);
-  
+
       return { token, role };
     }
-  
+
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
     return null;
   }
-  
 
   public async forgotPassword(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await UserDAO.get({ filter: { email }, select: { id: true } });
 
     if (!user) {
       logger.error(`User ${email} not found during password reset.`);
@@ -132,13 +117,10 @@ class AuthService {
     }
 
     const { token, hashed } = generateResetToken();
-    await this.prisma.user.update({
-      where: { email },
-      data: {
-        resetToken: hashed,
-        resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME),
-      },
-    });
+    await UserDAO.update(
+      { email },
+      { resetToken: hashed, resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME) }
+    );
 
     await sendResetEmail(email, token);
     logger.info(`Password reset token sent to user ${email}.`);
@@ -146,9 +128,7 @@ class AuthService {
 
   public async resetPassword(token: string, newPassword: string): Promise<void> {
     const hashedToken = crypto.createHash(HASH_ALGORITHM).update(token).digest(DIGEST_FORMAT);
-    const user = await this.prisma.user.findFirst({
-      where: { resetToken: hashedToken },
-    });
+    const user = await UserDAO.get({ filter: { resetToken: hashedToken }, select: { id: true } });
 
     if (!user) {
       logger.error(`Invalid or expired token during password reset.`);
@@ -156,15 +136,18 @@ class AuthService {
     }
 
     const hashedPassword = await hashPassword(newPassword);
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
+    if (!hashedPassword) {
+      logger.error(`Failed to hash new password for user ${user.id}.`);
+      throw new Error('Failed to reset password');
+    }
+    await UserDAO.update(
+      { id: user.id },
+      {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      },
-    });
+      }
+    );
 
     logger.info(`User ${user.email} successfully reset their password.`);
   }
