@@ -95,6 +95,29 @@ class AuthController {
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message || 'Signin failed' });
     }
   };
+  logout = async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user?.id;
+
+    logger.info(`[AuthController] Logout request received for userId: ${userId}`);
+
+    try {
+      if (!userId) {
+        logger.warn('[AuthController] Unauthorized logout attempt');
+        res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await this.authService.logout(userId);
+
+      logger.info(`[AuthController] Logout successful for userId: ${userId}`);
+      res.status(HTTP_STATUS_OK).json({ message: 'Successfully logged out' });
+    } catch (error: any) {
+      logger.error(`[AuthController] Logout error for userId: ${userId}`, error);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: error.message || 'Logout failed' });
+    }
+  };
+
+
 
   forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
