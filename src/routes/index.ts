@@ -11,6 +11,7 @@ import { yearRouter } from './yearRoutes';
 import { virtualClassroomRouter } from './virtualClassroomRoutes';
 import { unitRouter } from './unitRoutes';
 import { educationalContentRouter } from './educationalContentRoutes';
+import {uploadMiddleware} from '@middleware/upload';
 export const routers: Route[] = [
   {
     basePath: '/auth',
@@ -50,6 +51,6 @@ export const routers: Route[] = [
   {
     basePath: '/educational-content',
     router: educationalContentRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
-  }
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT']), uploadMiddleware],
+  },
 ];
