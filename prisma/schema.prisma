@@ -32,10 +32,13 @@ model User {
   userRole         UserRole?       @relation("UserToUserRole")
   resetToken       String?
   resetTokenExpiry BigInt?
+  activeToken      String?
 
   @@index([email])
   @@index([collegeId])
 }
+
+
 
 model Student {
   id                       String                    @id @default(uuid()) @db.Uuid

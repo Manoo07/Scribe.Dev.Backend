@@ -100,6 +100,10 @@ class AuthService {
 
       const role = userRole.role;
       const token = generateToken(user.id, role);
+      await UserDAO.update({ id: user.id }, {
+        activeToken: token,
+      });
+
 
       return { token, role };
     }
@@ -107,6 +111,16 @@ class AuthService {
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
     return null;
   }
+
+  public async logout(userId: string): Promise<void> {
+    await UserDAO.update({ id: userId }, {
+      activeToken: null,
+    });
+
+    logger.info(`[AuthService] User ${userId} logged out.`);
+  }
+
+
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await UserDAO.get({ filter: { email }, select: { id: true } });

@@ -23,6 +23,7 @@ Table User {
   userRole UserRole
   resetToken String
   resetTokenExpiry BigInt
+  activeToken String
 }
 
 Table Student {
