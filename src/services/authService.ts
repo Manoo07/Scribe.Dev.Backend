@@ -100,10 +100,8 @@ class AuthService {
 
       const role = userRole.role;
       const token = generateToken(user.id, role);
-      const tokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24);
       await UserDAO.update({ id: user.id }, {
         activeToken: token,
-        tokenExpiry
       });
 
 
@@ -117,7 +115,6 @@ class AuthService {
   public async logout(userId: string): Promise<void> {
     await UserDAO.update({ id: userId }, {
       activeToken: null,
-      tokenExpiry: null
     });
 
     logger.info(`[AuthService] User ${userId} logged out.`);

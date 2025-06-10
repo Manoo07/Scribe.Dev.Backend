@@ -24,7 +24,6 @@ Table User {
   resetToken String
   resetTokenExpiry BigInt
   activeToken String
-  tokenExpiry DateTime
 }
 
 Table Student {

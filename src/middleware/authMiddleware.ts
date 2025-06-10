@@ -29,13 +29,22 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
     return;
   }
-  const decoded: any = verifyToken(token);
+
+  let decoded: any;
+  try {
+    decoded = verifyToken(token);
+  } catch (error) {
+    logger.warn(`[AUTH] Invalid/Expired JWT │ IP=${req.ip} │ URL=${req.originalUrl}`);
+    res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
+    return;
+  }
 
   if (!decoded || typeof decoded !== 'object' || !decoded.id || !decoded.role) {
     logger.warn(`[AUTH] Invalid / expired token │ IP=${req.ip} │ URL=${req.originalUrl}`);
     res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
     return;
   }
+
   try {
     const user = await UserDAO.get({ filter: { id: decoded.id } });
 
@@ -45,11 +54,6 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    if (user.tokenExpiry && new Date() > new Date(user.tokenExpiry)) {
-      logger.warn(`[AUTH] Token expired │ UserID=${decoded.id} │ IP=${req.ip}`);
-      res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Token expired' });
-      return;
-    }
 
     req.user = { id: decoded.id, role: decoded.role };
 

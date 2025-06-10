@@ -33,7 +33,6 @@ model User {
   resetToken       String?
   resetTokenExpiry BigInt?
   activeToken      String?
-  tokenExpiry      DateTime?
 
   @@index([email])
   @@index([collegeId])
