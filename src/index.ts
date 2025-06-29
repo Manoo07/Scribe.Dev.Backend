@@ -1,19 +1,46 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
+import passport from 'passport';
+import session from 'express-session';
+import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_UNAUTHORIZED } from '@constants/constants';
 import { logger } from '@services/logService';
 import { routers } from '@routes/index';
-
+import './auth/google';
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(cors({ origin: '*', credentials: true }));
 
-// Define routes
+
+app.use(express.json());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default_secret',
+  resave: false,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email']
+}));
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/auth/failure' }),
+  (req: any, res: express.Response) => {
+    const { token, user } = req.user;
+    const redirectUrl = `${process.env.FRONTEND_URL}/dashboard/overview?token=${token}&name=${encodeURIComponent(user.name)}`;
+    res.redirect(redirectUrl);
+  }
+);
+
+app.get('/auth/failure', (_req, res) => {
+  res.status(HTTP_STATUS_UNAUTHORIZED).send('Google Authentication Failed');
+});
+
 routers.forEach(({ basePath, router, middleware = [] }) => {
   app.use(`${BASE_URL}${basePath}`, ...middleware, router);
 });
