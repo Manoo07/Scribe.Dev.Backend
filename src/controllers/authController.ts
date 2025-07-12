@@ -117,8 +117,6 @@ class AuthController {
     }
   };
 
-
-
   forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
 

@@ -100,10 +100,12 @@ class AuthService {
 
       const role = userRole.role;
       const token = generateToken(user.id, role);
-      await UserDAO.update({ id: user.id }, {
-        activeToken: token,
-      });
-
+      await UserDAO.update(
+        { id: user.id },
+        {
+          activeToken: token,
+        },
+      );
 
       return { token, role };
     }
@@ -113,14 +115,15 @@ class AuthService {
   }
 
   public async logout(userId: string): Promise<void> {
-    await UserDAO.update({ id: userId }, {
-      activeToken: null,
-    });
+    await UserDAO.update(
+      { id: userId },
+      {
+        activeToken: null,
+      },
+    );
 
     logger.info(`[AuthService] User ${userId} logged out.`);
   }
-
-
 
   public async forgotPassword(email: string): Promise<void> {
     const user = await UserDAO.get({ filter: { email }, select: { id: true } });
@@ -133,7 +136,7 @@ class AuthService {
     const { token, hashed } = generateResetToken();
     await UserDAO.update(
       { email },
-      { resetToken: hashed, resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME) }
+      { resetToken: hashed, resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME) },
     );
 
     await sendResetEmail(email, token);
@@ -160,7 +163,7 @@ class AuthService {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      }
+      },
     );
 
     logger.info(`User ${user.email} successfully reset their password.`);

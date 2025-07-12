@@ -51,5 +51,5 @@ export const routers: Route[] = [
     basePath: '/educational-content',
     router: educationalContentRouter,
     middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
-  }
+  },
 ];

@@ -15,7 +15,7 @@ const FacultyDAO = {
       throw error;
     }
   },
-// use filters for this 
+  // use filters for this
   getFacultyByUserId: async (userId: string) => {
     logger.info('[FacultyDAO] Fetching faculty by user ID:', userId);
     try {

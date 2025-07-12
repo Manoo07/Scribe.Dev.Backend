@@ -54,12 +54,9 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-
     req.user = { id: decoded.id, role: decoded.role };
 
-    logger.info(
-      `[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${decoded.id}`
-    );
+    logger.info(`[AUTH] User authenticated │ IP=${req.ip} │ URL=${req.originalUrl} │ UserID=${decoded.id}`);
     next();
   } catch (error) {
     logger.error(`[AUTH] Middleware error while verifying user │ IP=${req.ip}`, error);

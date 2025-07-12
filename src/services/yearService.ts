@@ -22,7 +22,7 @@ class YearService {
     }
   }
 
-  async getYears(departmentId:string): Promise<Year[]> {
+  async getYears(departmentId: string): Promise<Year[]> {
     logger.info('[YearService] Fetching all years');
     return YearDAO.getYearsByDepartmentId(departmentId);
   }
@@ -34,7 +34,7 @@ class YearService {
 
   async updateYear(
     id: string,
-    data: { name?: string; departmentId?: string }
+    data: { name?: string; departmentId?: string },
   ): Promise<{ year?: Year; error?: string }> {
     try {
       const yearExists = await YearDAO.getYearById(id);

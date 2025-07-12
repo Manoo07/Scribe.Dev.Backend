@@ -28,7 +28,7 @@ export const VirtualClassroomDAO = {
 
   get: async (
     filter: Prisma.VirtualClassroomWhereInput = {},
-    include: Prisma.VirtualClassroomInclude = defaultInclude
+    include: Prisma.VirtualClassroomInclude = defaultInclude,
   ) => {
     try {
       logger.info(`[VirtualClassroomDAO] Fetching single virtual classroom with filter: ${JSON.stringify(filter)}`);

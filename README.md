@@ -91,6 +91,7 @@ npx prisma migrate deploy
 ```bash
 npx prisma generate
 ```
+
 ---
 
 ### 7. Seeding the Database
@@ -113,6 +114,7 @@ Inspect the Seeded Data:
 ```bash
 npx prisma studio
 ```
+
 ---
 
 ## Additional Notes
@@ -137,4 +139,3 @@ npx prisma studio
 - PostgreSQL
 
 ---
-
