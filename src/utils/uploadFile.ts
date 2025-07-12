@@ -11,7 +11,7 @@ import { logger } from '@services/logService'; // Make sure this import is corre
 export const uploadFileToCloudinary = async (
   filePath: string,
   fileType: 'pdf' | 'ppt' | 'docx' | 'other' = 'other'
-): Promise<{ url: string; public_id: string }> => {
+): Promise<{ url: string; downloadUrl: string; public_id: string }> => {
   try {
     const resourceType = fileType === 'pdf' ? 'raw' : 'auto';
 
@@ -31,7 +31,12 @@ export const uploadFileToCloudinary = async (
     fs.unlinkSync(filePath);
     logger.info(`[CloudinaryService] Local file deleted │ filePath=${filePath}`);
 
-    return { url: result.secure_url, public_id: result.public_id };
+    const version = result.version;
+
+    const previewUrl = `https://res.cloudinary.com/dn4qqegmm/upload/v${version}/${result.public_id}`;
+    const downloadUrl = `https://res.cloudinary.com/dn4qqegmm/upload/fl_attachment/v${version}/${result.public_id}`;
+
+    return { url: previewUrl, downloadUrl, public_id: result.public_id };
   } catch (error: any) {
     logger.error(`[CloudinaryService] Upload failed │ filePath=${filePath} │ error=${error.message}`);
     throw new Error(`Cloudinary upload failed: ${error.message}`);
