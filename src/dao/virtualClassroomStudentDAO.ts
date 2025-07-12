@@ -20,7 +20,7 @@ const VirtualClassroomStudentDAO = {
       });
       logger.info(
         '[VirtualClassroomStudentDAO] Created virtual classroom student with ID:',
-        virtualClassroomStudentId.id
+        virtualClassroomStudentId.id,
       );
       return virtualClassroomStudentId;
     } catch (error) {

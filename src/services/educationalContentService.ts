@@ -1,10 +1,12 @@
-import EducationalContentDAO from "@dao/educationalContentDAO";
-import { logger } from "./logService";
-import { ContentType } from "@prisma/client";
+import EducationalContentDAO from '@dao/educationalContentDAO';
+import { logger } from './logService';
+import { ContentType } from '@prisma/client';
 
 class EducationalContentService {
   async create(unitId: string, data: { content: string; type: string }) {
-    logger.info(`[EducationalContentService] Creating content for unitId: ${unitId} with data: ${JSON.stringify(data)}`);
+    logger.info(
+      `[EducationalContentService] Creating content for unitId: ${unitId} with data: ${JSON.stringify(data)}`,
+    );
     try {
       const createdContent = await EducationalContentDAO.create(unitId, data);
       logger.info(`[EducationalContentService] Successfully created content with ID: ${createdContent.id}`);
@@ -39,11 +41,16 @@ class EducationalContentService {
     }
   }
 
-  async update(educationalContentId: string, updateData: {
-    type?: ContentType;
-    content?: string;
-  }) {
-    logger.info(`[EducationalContentService] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(updateData)}`);
+  async update(
+    educationalContentId: string,
+    updateData: {
+      type?: ContentType;
+      content?: string;
+    },
+  ) {
+    logger.info(
+      `[EducationalContentService] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(updateData)}`,
+    );
     try {
       const updatedContent = await EducationalContentDAO.update(educationalContentId, updateData);
       logger.info(`[EducationalContentService] Successfully updated content with ID: ${educationalContentId}`);
@@ -68,5 +75,3 @@ class EducationalContentService {
 }
 
 export default new EducationalContentService();
-
-
