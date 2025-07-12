@@ -1,13 +1,22 @@
-export function generateUsername(username: string | undefined, firstName: string, lastName: string): string {
+import UserDAO from '@dao/userDAO';
+
+export async function generateUsername(
+  username: string | undefined,
+  firstName: string,
+  lastName: string,
+): Promise<string> {
   if (username?.trim()) {
     return username.trim();
   }
 
-  if (firstName && lastName) {
-    const formattedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-    const formattedLastInitial = lastName.charAt(0).toUpperCase();
-    return `${formattedFirstName} ${formattedLastInitial}`;
+  // Generate a username: firstName_lastName, all lowercase, remove spaces, allow numbers/underscores
+  let base = `${firstName}_${lastName}`.replace(/\s+/g, '').toLowerCase();
+  let candidate = base;
+  let suffix = 1;
+  // Ensure uniqueness
+  while (await UserDAO.get({ filter: { username: candidate } })) {
+    candidate = `${base}_${suffix}`;
+    suffix++;
   }
-
-  return '';
+  return candidate;
 }
