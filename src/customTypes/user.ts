@@ -11,4 +11,5 @@ export interface SignupParams {
   departmentId: string;
   sectionId: string;
   specialization?: string;
+  enrollmentNo?: string;
 }
