@@ -19,7 +19,7 @@ export async function createUserRole(
     collegeId?: string;
     departmentId?: string;
     sectionId?: string;
-  }
+  },
 ) {
   const { userId, role, collegeId, departmentId, sectionId } = data;
 

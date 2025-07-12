@@ -44,7 +44,7 @@ class DepartmentService {
 
   public async updateDepartment(
     id: string,
-    updateFields: { name?: string; collegeId?: string }
+    updateFields: { name?: string; collegeId?: string },
   ): Promise<{ department?: Department; error?: string }> {
     try {
       if (updateFields.name) {

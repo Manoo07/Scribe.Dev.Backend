@@ -25,7 +25,9 @@ export class EducationalContentController {
     }
     const { content, type } = validationResult.data;
 
-    logger.info(`[EducationalContentController] Creating content for unitId: ${unitId} with data: ${JSON.stringify({ content, type })}`);
+    logger.info(
+      `[EducationalContentController] Creating content for unitId: ${unitId} with data: ${JSON.stringify({ content, type })}`,
+    );
     if (!content || typeof content !== 'string' || content.trim() === '') {
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Content must be a non-empty string' });
       return;
@@ -58,7 +60,9 @@ export class EducationalContentController {
     logger.info(`[EducationalContentController] Fetching contents for unitId: ${unitId}`);
     try {
       const educationalContents = await educationalContentService.get(unitId);
-      logger.info(`[EducationalContentController] Retrieved ${educationalContents.length} content item(s) for unitId: ${unitId}`);
+      logger.info(
+        `[EducationalContentController] Retrieved ${educationalContents.length} content item(s) for unitId: ${unitId}`,
+      );
       res.status(HTTP_STATUS_OK).json(educationalContents);
     } catch (error) {
       logger.error('[EducationalContentController] Error fetching contents:', error);
@@ -79,7 +83,6 @@ export class EducationalContentController {
     }
   }
 
-
   async update(req: Request, res: Response): Promise<void> {
     const { educationalContentId } = req.params;
     const updateEducationalContent = req.body;
@@ -97,8 +100,9 @@ export class EducationalContentController {
       return;
     }
 
-
-    logger.info(`[EducationalContentController] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(updateEducationalContent)}`);
+    logger.info(
+      `[EducationalContentController] Updating content with ID: ${educationalContentId} using data: ${JSON.stringify(updateEducationalContent)}`,
+    );
     try {
       const updatedContent = await educationalContentService.update(educationalContentId, updateEducationalContent);
       logger.info(`[EducationalContentController] Successfully updated content with ID: ${updatedContent.id}`);

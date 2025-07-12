@@ -38,7 +38,8 @@
   },
   "scripts": {
     "dev": "nodemon",
-    "start": "ts-node --transpile-only prisma/seed.ts"
+    "start": "ts-node --transpile-only prisma/seed.ts",
+    "format": "prettier . --write"
   },
   "prisma": {
     "seed": "ts-node -r tsconfig-paths/register --transpile-only prisma/seed.ts"

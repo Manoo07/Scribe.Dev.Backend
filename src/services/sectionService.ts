@@ -34,7 +34,7 @@ class SectionService {
 
   async updateSection(
     id: string,
-    updateFields: { name?: string; yearId?: string }
+    updateFields: { name?: string; yearId?: string },
   ): Promise<{ section?: Section; error?: string }> {
     try {
       const section = await SectionDAO.updateSection(id, updateFields);

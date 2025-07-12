@@ -91,7 +91,7 @@ export class UnitController {
         logger.warn(
           `[UnitController] Validation failed for unit update ID=${unitId}: ${error.errors
             .map((e) => e.message)
-            .join(', ')}`
+            .join(', ')}`,
         );
         res.status(HTTP_STATUS_BAD_REQUEST).json({ message: 'Validation error', details: error.errors });
       } else {
