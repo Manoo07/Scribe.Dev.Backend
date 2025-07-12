@@ -31,8 +31,19 @@ class AuthService {
   }
 
   public async signup(params: SignupParams): Promise<SignupResult> {
-    const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =
-      params;
+    const {
+      firstName,
+      lastName,
+      username,
+      email,
+      password,
+      collegeId,
+      role,
+      departmentId,
+      sectionId,
+      specialization,
+      enrollmentNo,
+    } = params;
 
     try {
       const validationError = await validateSignupParams(params);
@@ -42,6 +53,13 @@ class AuthService {
       }
 
       logger.info(`[AuthService] Signing up user: ${email}`);
+
+      if (role === Role.STUDENT && !enrollmentNo) {
+        return {
+          error: 'Enrollment number is required for students.',
+          status: HTTP_STATUS_BAD_REQUEST,
+        };
+      }
 
       let finalUsername = username;
       if (!finalUsername) {
@@ -75,6 +93,7 @@ class AuthService {
         departmentId,
         sectionId,
         specialization,
+        enrollmentNo,
       });
 
       logger.info(`[AuthService] User ${email} successfully signed up.`);
@@ -164,6 +183,9 @@ class AuthService {
     } else if (error.message === 'Specialization is required for faculty.') {
       logger.warn('Specialization is required for faculty.');
       return { error: error.message, status: HTTP_STATUS_BAD_REQUEST };
+    } else if (error.message === 'Enrollment number is already in use.') {
+      logger.warn(error.message);
+      return { error: error.message, status: HTTP_STATUS_CONFLICT };
     } else {
       logger.error(`Failed to create user: ${error.message}`);
       return { error: 'Failed to create user.', status: HTTP_STATUS_INTERNAL_SERVER_ERROR };

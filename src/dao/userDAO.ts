@@ -55,6 +55,7 @@ const UserDAO = {
     departmentId?: string;
     sectionId?: string;
     specialization?: string;
+    enrollmentNo?: string;
   }) {
     const {
       firstName,
@@ -67,6 +68,7 @@ const UserDAO = {
       departmentId,
       sectionId: inputSectionId,
       specialization,
+      enrollmentNo,
     } = params;
     logger.info(`Signup params is : ${JSON.stringify(params)}`);
     return await prisma.$transaction(async (tx) => {
@@ -103,10 +105,21 @@ const UserDAO = {
       });
 
       if (role === Role.STUDENT) {
+        if (!enrollmentNo) {
+          throw new Error('Enrollment number is required for students.');
+        }
+
+        const existingStudent = await tx.student.findUnique({
+          where: { enrollmentNo },
+        });
+
+        if (existingStudent) {
+          throw new Error('Enrollment number is already in use.');
+        }
         await tx.student.create({
           data: {
             userId: user.id,
-            enrollmentNo: 'TEMP' + user.id,
+            enrollmentNo,
           },
         });
         logger.info(`Created student profile for user ${user.id}`);
