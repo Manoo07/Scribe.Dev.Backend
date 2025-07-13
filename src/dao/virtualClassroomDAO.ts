@@ -52,24 +52,63 @@ export const VirtualClassroomDAO = {
     }
   },
 
+  /**
+   * Fetch all virtual classrooms for a user (faculty or student).
+   * If filter contains facultyId, fetch by facultyId (existing behavior).
+   * If filter contains studentId, fetch all classrooms the student is enrolled in.
+   * Otherwise, fallback to generic filter.
+   *
+   * @param {Object} params
+   * @param {Prisma.VirtualClassroomWhereInput} params.filter
+   * @param {Prisma.VirtualClassroomInclude} params.include
+   * @param {Prisma.VirtualClassroomSelect} params.select
+   * @returns {Promise<VirtualClassroom[]>}
+   */
   getAll: async ({
     filter = {},
     include,
     select,
   }: {
-    filter?: Prisma.VirtualClassroomWhereInput;
+    filter?: Prisma.VirtualClassroomWhereInput & { studentId?: string };
     include?: Prisma.VirtualClassroomInclude;
     select?: Prisma.VirtualClassroomSelect;
   }) => {
     logger.info('[VirtualClassroomDAO] Fetching all virtual classrooms with filter:', filter);
     try {
+      // If studentId is present, fetch classrooms the student is enrolled in
+      if (filter && 'studentId' in filter && filter.studentId) {
+        const studentId = filter.studentId;
+        // Remove studentId from filter to avoid Prisma error
+        const { studentId: _studentId, ...restFilter } = filter;
+        // Find all classroom IDs the student is enrolled in
+        const classroomLinks = await prisma.virtualClassroomStudent.findMany({
+          where: { studentId },
+          select: { classroomId: true },
+        });
+        const classroomIds = classroomLinks.map((link) => link.classroomId);
+        if (classroomIds.length === 0) {
+          logger.info(`[VirtualClassroomDAO] Student ${studentId} is not enrolled in any classrooms.`);
+          return [];
+        }
+        const query: Prisma.VirtualClassroomFindManyArgs = {
+          where: {
+            ...restFilter,
+            id: { in: classroomIds },
+          },
+        };
+        if (include) query.include = include;
+        if (select) query.select = select;
+        const virtualClassrooms = await prisma.virtualClassroom.findMany(query);
+        logger.info(`[VirtualClassroomDAO] Fetched ${virtualClassrooms.length} classrooms for student ${studentId}`);
+        return virtualClassrooms ?? [];
+      }
+
+      // Default: faculty or generic filter
       const query: Prisma.VirtualClassroomFindManyArgs = {
         where: filter,
       };
-
       if (include) query.include = include;
       if (select) query.select = select;
-
       const virtualClassrooms = await prisma.virtualClassroom.findMany(query);
       logger.info(`[VirtualClassroomDAO] Fetched ${virtualClassrooms.length} classrooms`);
       return virtualClassrooms ?? [];
