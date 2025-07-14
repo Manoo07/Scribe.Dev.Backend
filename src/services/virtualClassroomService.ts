@@ -81,7 +81,7 @@ export class VirtualClassroomService {
 
   async joinClassroom(studentId: string, classroomId: string): Promise<void> {
     logger.info(
-      `[VirtualClassroomService] : Joining virtual classroom with id: ${classroomId} for student with id: ${studentId}`
+      `[VirtualClassroomService] : Joining virtual classroom with id: ${classroomId} for student with id: ${studentId}`,
     );
     try {
       const virtualClassroom = await VirtualClassroomDAO.join(classroomId, studentId);

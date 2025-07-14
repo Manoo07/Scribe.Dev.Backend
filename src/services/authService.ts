@@ -119,12 +119,29 @@ class AuthService {
 
       const role = userRole.role;
       const token = generateToken(user.id, role);
+      await UserDAO.update(
+        { id: user.id },
+        {
+          activeToken: token,
+        },
+      );
 
       return { token, role };
     }
 
     logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
     return null;
+  }
+
+  public async logout(userId: string): Promise<void> {
+    await UserDAO.update(
+      { id: userId },
+      {
+        activeToken: null,
+      },
+    );
+
+    logger.info(`[AuthService] User ${userId} logged out.`);
   }
 
   public async forgotPassword(email: string): Promise<void> {
@@ -138,7 +155,7 @@ class AuthService {
     const { token, hashed } = generateResetToken();
     await UserDAO.update(
       { email },
-      { resetToken: hashed, resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME) }
+      { resetToken: hashed, resetTokenExpiry: BigInt(Date.now() + RESET_TOKEN_EXPIRY_TIME) },
     );
 
     await sendResetEmail(email, token);
@@ -165,7 +182,7 @@ class AuthService {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      }
+      },
     );
 
     logger.info(`User ${user.email} successfully reset their password.`);

@@ -51,7 +51,7 @@ export class VirtualClassroomController {
             { key: 'Name', value: name },
             { key: 'Year ID', value: yearId },
           ],
-          res
+          res,
         )
       ) {
         return;
@@ -140,7 +140,7 @@ export class VirtualClassroomController {
 
       const classrooms = await this.virtualClassroomService.getAllVirtualClassrooms(
         filter,
-        virtualClassroomsIncludeFields
+        virtualClassroomsIncludeFields,
       );
       logger.info('[VirtualClassroomController] getClassrooms completed successfully');
       return res.status(HTTP_STATUS_OK).json({ classrooms });
@@ -223,7 +223,7 @@ export class VirtualClassroomController {
           lastName: vcs.student.user.lastName,
           email: vcs.student.user.email,
           userId: vcs.student.user.id,
-        }))
+        })),
       );
 
       logger.info('[VirtualClassroomController] getEnrolledStudents completed successfully');
@@ -250,7 +250,7 @@ export class VirtualClassroomController {
             { key: 'User ID', value: userId },
             { key: 'Classroom ID', value: classroomId },
           ],
-          res
+          res,
         )
       ) {
         return;
@@ -293,7 +293,7 @@ export class VirtualClassroomController {
             { key: 'User ID', value: userId },
             { key: 'Classroom ID', value: classroomId },
           ],
-          res
+          res,
         )
       ) {
         return;

@@ -63,8 +63,8 @@ export interface VirtualClassroomParams {
   facultyId: string;
   sectionId?: string;
   syllabusUrl?: string;
-  departmentId?:string;
-  yearId:string
+  departmentId?: string;
+  yearId: string;
 }
 
 export type GetStudentsByFilterParams = {

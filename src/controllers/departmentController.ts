@@ -77,7 +77,6 @@ export class DepartmentController {
     }
   };
 
-
   public getDepartmentsByFilter = async (req: Request, res: Response): Promise<void> => {
     try {
       const filter = req.body.filter || {};
@@ -91,13 +90,12 @@ export class DepartmentController {
     }
   };
 
-
   public updateDepartment = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const updateFields = req.body;
 
     logger.info(
-      `[DepartmentController] Updating department ID=${id} with name: ${updateFields.name} and collegeId: ${updateFields.collegeId}`
+      `[DepartmentController] Updating department ID=${id} with name: ${updateFields.name} and collegeId: ${updateFields.collegeId}`,
     );
     try {
       // validations
