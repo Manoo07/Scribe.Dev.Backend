@@ -173,7 +173,9 @@ export class VirtualClassroomController {
         if (!classrooms || classrooms.length === 0) {
           logger.info(`[VirtualClassroomController] Student ${filter.studentId} is not enrolled in any classrooms.`);
         } else {
-          logger.info(`[VirtualClassroomController] Found ${classrooms.length} classrooms for student ${filter.studentId}`);
+          logger.info(
+            `[VirtualClassroomController] Found ${classrooms.length} classrooms for student ${filter.studentId}`,
+          );
         }
       }
       logger.info('[VirtualClassroomController] getClassrooms completed successfully');
@@ -283,7 +285,9 @@ export class VirtualClassroomController {
       // Only allow FACULTY or ADMIN/PRINCIPAL to add students
       const userRole = actingUser.role;
       if (!userRole || (userRole !== 'FACULTY' && userRole !== 'ADMIN' && userRole !== 'PRINCIPAL')) {
-        return res.status(HTTP_STATUS_FORBIDDEN).json({ message: 'Only faculty or admin/principal can add students to a classroom.' });
+        return res
+          .status(HTTP_STATUS_FORBIDDEN)
+          .json({ message: 'Only faculty or admin/principal can add students to a classroom.' });
       }
 
       // Validate input fields
@@ -338,7 +342,9 @@ export class VirtualClassroomController {
       // Only allow FACULTY or ADMIN/PRINCIPAL to remove students
       const userRole = actingUser.role;
       if (!userRole || (userRole !== 'FACULTY' && userRole !== 'ADMIN' && userRole !== 'PRINCIPAL')) {
-        return res.status(HTTP_STATUS_FORBIDDEN).json({ message: 'Only faculty or admin/principal can remove students from a classroom.' });
+        return res
+          .status(HTTP_STATUS_FORBIDDEN)
+          .json({ message: 'Only faculty or admin/principal can remove students from a classroom.' });
       }
 
       if (
@@ -362,7 +368,9 @@ export class VirtualClassroomController {
 
       const result = await this.virtualClassroomService.leaveClassroom(student.id, classroomId);
       if (!result) {
-        return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Failed to remove student from virtual classroom' });
+        return res
+          .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+          .json({ message: 'Failed to remove student from virtual classroom' });
       }
 
       logger.info('[VirtualClassroomController] leaveClassroom completed successfully');
@@ -426,7 +434,9 @@ export class VirtualClassroomController {
       // Only allow FACULTY or ADMIN/PRINCIPAL to add students
       const userRole = actingUser.role;
       if (!userRole || (userRole !== 'FACULTY' && userRole !== 'ADMIN' && userRole !== 'PRINCIPAL')) {
-        return res.status(HTTP_STATUS_FORBIDDEN).json({ message: 'Only faculty or admin/principal can add students to a classroom.' });
+        return res
+          .status(HTTP_STATUS_FORBIDDEN)
+          .json({ message: 'Only faculty or admin/principal can add students to a classroom.' });
       }
 
       // Validate input fields
@@ -442,7 +452,6 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-
 
       // Map userIds to studentIds
       const studentIdMap = new Map();
@@ -500,7 +509,9 @@ export class VirtualClassroomController {
       // Only allow FACULTY or ADMIN/PRINCIPAL to remove students
       const userRole = actingUser.role;
       if (!userRole || (userRole !== 'FACULTY' && userRole !== 'ADMIN' && userRole !== 'PRINCIPAL')) {
-        return res.status(HTTP_STATUS_FORBIDDEN).json({ message: 'Only faculty or admin/principal can remove students from a classroom.' });
+        return res
+          .status(HTTP_STATUS_FORBIDDEN)
+          .json({ message: 'Only faculty or admin/principal can remove students from a classroom.' });
       }
 
       if (
@@ -515,7 +526,6 @@ export class VirtualClassroomController {
       ) {
         return;
       }
-
 
       // Map userIds to studentIds
       const studentIdMap = new Map();
