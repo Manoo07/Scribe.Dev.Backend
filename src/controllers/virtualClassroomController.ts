@@ -1,20 +1,20 @@
-import { VirtualClassroomService } from '@services/virtualClassroomService';
-import { Request, Response } from 'express';
-import { logger } from '@services/logService';
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CREATED,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  HTTP_STATUS_OK,
-  HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_UNAUTHORIZED,
   HTTP_STATUS_FORBIDDEN,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+  HTTP_STATUS_UNAUTHORIZED,
 } from '@constants/constants';
-import { PrismaClient } from '@prisma/client';
-import studentDAO from '@dao/studentDAO';
 import FacultyDAO from '@dao/facultyDAO';
+import SectionDAO from '@dao/sectionDAO';
+import studentDAO from '@dao/studentDAO';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
+import { PrismaClient } from '@prisma/client';
+import { logger } from '@services/logService';
+import { VirtualClassroomService } from '@services/virtualClassroomService';
 import { validateFilter } from '@utils/prismaFilters';
 import {
   classroomIncludeFields,
@@ -22,9 +22,9 @@ import {
   virtualClassroomsIncludeFields,
 } from '@utils/prismaIncludes';
 import { studentSelectFields, virtualClassroomStudentSelectFields } from '@utils/prismaSelects';
-import { EnrolledStudents, StudentWithUser, Student, VirtualClassroomParams } from 'types/express';
 import { validateFields } from '@utils/validations/virtualClassroom.schema';
-import SectionDAO from '@dao/sectionDAO';
+import { Request, Response } from 'express';
+import { EnrolledStudents, Student, StudentWithUser, VirtualClassroomParams } from 'types/express';
 
 const prisma = new PrismaClient();
 
@@ -83,11 +83,13 @@ export class VirtualClassroomController {
 
       logger.info('[VirtualClassroomController] createClassroom completed successfully');
       return res.status(HTTP_STATUS_CREATED).json({ message: 'Virtual classroom created successfully', classroom });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error creating virtual classroom:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to create virtual classroom',
-        error: (error as Error).message,
+      if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: error.message });
+      }
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to create virtual classroom',
       });
     }
   };
@@ -108,11 +110,10 @@ export class VirtualClassroomController {
       const classroom = await this.virtualClassroomService.getVirtualClassroom(filter);
       logger.info('[VirtualClassroomController] getClassroom completed successfully');
       return res.status(HTTP_STATUS_OK).json({ classroom });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error fetching classrooms:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to fetch virtual classrooms',
-        error: (error as Error).message,
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to fetch virtual classrooms',
       });
     }
   };
@@ -180,11 +181,10 @@ export class VirtualClassroomController {
       }
       logger.info('[VirtualClassroomController] getClassrooms completed successfully');
       return res.status(HTTP_STATUS_OK).json({ classrooms });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error fetching classrooms:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to fetch virtual classrooms',
-        error: (error as Error).message,
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to fetch virtual classrooms',
       });
     }
   };
@@ -232,9 +232,9 @@ export class VirtualClassroomController {
 
       logger.info('[VirtualClassroomController] getEligibleStudents completed successfully');
       res.status(HTTP_STATUS_OK).json(eligibleStudents);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error fetching eligible students:', error);
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message || 'Failed to fetch eligible students' });
     }
   };
 
@@ -264,9 +264,9 @@ export class VirtualClassroomController {
 
       logger.info('[VirtualClassroomController] getEnrolledStudents completed successfully');
       res.status(HTTP_STATUS_OK).json(flattenedStudents);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error fetching enrolled students:', error);
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message || 'Failed to fetch enrolled students' });
     }
   };
 
@@ -318,11 +318,13 @@ export class VirtualClassroomController {
       await this.virtualClassroomService.joinClassroom(student.id, classroomId);
       logger.info('[VirtualClassroomController] joinClassroom completed successfully');
       return res.status(HTTP_STATUS_OK).json({ message: 'Student added to virtual classroom successfully' });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error joining classroom:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to add student to virtual classroom',
-        error: (error as Error).message,
+      if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: error.message });
+      }
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to add student to virtual classroom',
       });
     }
   };
@@ -375,11 +377,13 @@ export class VirtualClassroomController {
 
       logger.info('[VirtualClassroomController] leaveClassroom completed successfully');
       return res.status(HTTP_STATUS_OK).json({ message: 'Student removed from virtual classroom successfully' });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error leaving classroom:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to remove student from virtual classroom',
-        error: (error as Error).message,
+      if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: error.message });
+      }
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to remove student from virtual classroom',
       });
     }
   };
@@ -409,12 +413,10 @@ export class VirtualClassroomController {
       return res.status(HTTP_STATUS_OK).json({
         message: 'Classroom deleted successfully',
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error deleting classroom:', error);
-
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to delete classroom',
-        error: error instanceof Error ? error.message : String(error),
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to delete classroom',
       });
     }
   };
@@ -485,11 +487,13 @@ export class VirtualClassroomController {
         alreadyEnrolled,
         notEnrolled,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error in bulkJoinClassroom:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to process bulk join',
-        error: (error as Error).message,
+      if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: error.message });
+      }
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to process bulk join',
       });
     }
   };
@@ -559,11 +563,13 @@ export class VirtualClassroomController {
         enrolled,
         notEnrolled,
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[VirtualClassroomController] Error in bulkLeaveClassroom:', error);
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-        message: 'Failed to process bulk leave',
-        error: (error as Error).message,
+      if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).json({ message: error.message });
+      }
+      return res.status(HTTP_STATUS_BAD_REQUEST).json({
+        message: error.message || 'Failed to process bulk leave',
       });
     }
   };

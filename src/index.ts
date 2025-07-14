@@ -1,9 +1,9 @@
-import express from 'express';
+import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
+import { routers } from '@routes/index';
+import { logger } from '@services/logService';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { BASE_URL, HTTP_STATUS_INTERNAL_SERVER_ERROR } from '@constants/constants';
-import { logger } from '@services/logService';
-import { routers } from '@routes/index';
+import express from 'express';
 
 dotenv.config();
 
@@ -20,10 +20,12 @@ routers.forEach(({ basePath, router, middleware = [] }) => {
 
 // Global error handler middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error(`Unhandled Error: ${err.message}`, { stack: err.stack });
-  res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
-    message: 'Something went wrong!',
-    error: err.message,
+  const status = err.status || HTTP_STATUS_INTERNAL_SERVER_ERROR;
+  const message = err.message || 'Something went wrong!';
+  logger.error(`Error: ${message}`, { stack: err.stack });
+  res.status(status).json({
+    message,
+    error: err.error || message,
   });
 });
 
