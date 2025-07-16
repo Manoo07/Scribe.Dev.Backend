@@ -14,27 +14,32 @@ const port = process.env.PORT || 3000;
 
 app.use(cors({ origin: '*', credentials: true }));
 
-
 app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'default_secret',
-  resave: false,
-  saveUninitialized: true
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'default_secret',
+    resave: false,
+    saveUninitialized: true,
+  }),
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/auth/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
+app.get(
+  '/auth/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+  }),
+);
 
-app.get('/auth/google/callback',
+app.get(
+  '/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/auth/failure' }),
   (req: any, res: express.Response) => {
     const { token, user } = req.user;
-    const redirectUrl = `${process.env.FRONTEND_URL}/dashboard/overview?token=${token}&name=${encodeURIComponent(user.name)}`;
+    const redirectUrl = `${process.env.UI_BASE_URL}/dashboard/overview?token=${token}&name=${encodeURIComponent(user.name)}`;
     res.redirect(redirectUrl);
-  }
+  },
 );
 
 app.get('/auth/failure', (_req, res) => {
