@@ -1,10 +1,9 @@
-import { Request, Response, Router } from 'express';
-import { VirtualClassroomController } from '@controllers/virtualClassroomController';
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '@constants/constants';
+import { UnitController } from '@controllers/unitController';
+import { VirtualClassroomController } from '@controllers/virtualClassroomController';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import { logger } from '@services/logService';
-import { unitRouter } from './unitRoutes';
-import { UnitController } from '@controllers/unitController';
+import { Request, Response, Router } from 'express';
 
 export const virtualClassroomRouter = Router();
 const virtualClassroomController = new VirtualClassroomController();
@@ -70,11 +69,33 @@ virtualClassroomRouter.post('/join', async (req, res) => {
   }
 });
 
+// Bulk join students to a classroom
+virtualClassroomRouter.post('/bulk-join', async (req, res) => {
+  try {
+    await virtualClassroomController.bulkJoinClassroom(req, res);
+  } catch (error) {
+    res
+      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      .send({ error: 'An error occurred while bulk joining students to the classroom.' });
+  }
+});
+
 virtualClassroomRouter.post('/leave', async (req, res) => {
   try {
     await virtualClassroomController.leaveClassroom(req, res);
   } catch (error) {
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while leaving the classroom.' });
+  }
+});
+
+// Bulk remove students from a classroom
+virtualClassroomRouter.post('/bulk-leave', async (req, res) => {
+  try {
+    await virtualClassroomController.bulkLeaveClassroom(req, res);
+  } catch (error) {
+    res
+      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      .send({ error: 'An error occurred while bulk removing students from the classroom.' });
   }
 });
 

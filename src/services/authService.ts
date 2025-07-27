@@ -1,6 +1,3 @@
-import { PrismaClient, Role } from '@prisma/client';
-import { comparePasswords, hashPassword } from '@utils/hashUtil';
-import { generateToken } from '@utils/jwtUtil';
 import {
   DIGEST_FORMAT,
   HASH_ALGORITHM,
@@ -13,15 +10,18 @@ import {
   USER_NAME_REGEX_PATTERN,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
-import UserDAO from '@dao/userDAO';
-import { generateResetToken, validateSignupParams } from '@utils/authUtil';
-import { sendResetEmail } from '@services/emailService';
-import crypto from 'crypto';
-import { logger } from '@services/logService';
-import { generateUsername } from '@utils/userUtils';
 import { SignupParams } from '@customTypes/user';
-import { ErrorResponse, SignupResult } from 'types/express';
+import UserDAO from '@dao/userDAO';
 import { userRoleDAO } from '@dao/userRole';
+import { PrismaClient } from '@prisma/client';
+import { sendResetEmail } from '@services/emailService';
+import { logger } from '@services/logService';
+import { generateResetToken, validateSignupParams } from '@utils/authUtil';
+import { comparePasswords, hashPassword } from '@utils/hashUtil';
+import { generateToken } from '@utils/jwtUtil';
+import { generateUsername } from '@utils/userUtils';
+import crypto from 'crypto';
+import { ErrorResponse, SignupResult } from 'types/express';
 
 class AuthService {
   private prisma: PrismaClient;
@@ -61,22 +61,33 @@ class AuthService {
         };
       }
 
-      let finalUsername = username;
-      if (!finalUsername) {
-        finalUsername = generateUsername(username, firstName, lastName);
+      let finalUsername: string;
+      if (!username || username.trim() === '') {
+        // Auto-generate a unique username if nothing is provided
+        finalUsername = await generateUsername(undefined, firstName, lastName);
       } else {
         const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
         if (!usernameRegex.test(username)) {
           return {
-            error: 'Username must contain only alphabetic characters (a-z, A-Z)',
+            error:
+              'Username must be 3-30 characters, can contain letters, numbers, and underscores, and must include your first and last name.',
             status: HTTP_STATUS_BAD_REQUEST,
           };
         }
-      }
-
-      const existingUsers = await UserDAO.get({ filter: { username: finalUsername } });
-      if (existingUsers) {
-        return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
+        // Ensure username includes first and last name (case-insensitive)
+        const lower = username.toLowerCase();
+        if (!lower.includes(firstName.toLowerCase()) || !lower.includes(lastName.toLowerCase())) {
+          return {
+            error: 'Username must include your first and last name.',
+            status: HTTP_STATUS_BAD_REQUEST,
+          };
+        }
+        // Ensure uniqueness
+        const existingUser = await UserDAO.get({ filter: { username } });
+        if (existingUser) {
+          return { error: 'Username already taken.', status: HTTP_STATUS_BAD_REQUEST };
+        }
+        finalUsername = username;
       }
 
       const hashedPassword = await hashPassword(password);

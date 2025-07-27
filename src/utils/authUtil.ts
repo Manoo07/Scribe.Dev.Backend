@@ -1,5 +1,3 @@
-import crypto from 'crypto';
-import bcrypt from 'bcrypt';
 import {
   BCRYPT_SALT_ROUNDS,
   DIGEST_FORMAT,
@@ -7,13 +5,15 @@ import {
   HTTP_STATUS_BAD_REQUEST,
   RANDOM_BYTES_LENGTH,
 } from '@constants/constants';
-import { logger } from '@services/logService';
 import { SignupParams } from '@customTypes/user';
-import { ErrorResponse } from 'types/express';
-import { Role, PrismaClient } from '@prisma/client';
+import CollegeDAO from '@dao/collegeDAO';
 import DepartmentDAO from '@dao/departmentDAO';
 import SectionDAO from '@dao/sectionDAO';
-import CollegeDAO from '@dao/collegeDAO';
+import { PrismaClient, Role } from '@prisma/client';
+import { logger } from '@services/logService';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { ErrorResponse } from 'types/express';
 
 const prisma = new PrismaClient();
 

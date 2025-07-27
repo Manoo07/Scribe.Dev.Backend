@@ -1,6 +1,6 @@
-import { PrismaClient, Department } from '@prisma/client';
-import { logger } from '../services/logService';
+import { Department, PrismaClient } from '@prisma/client';
 import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
+import { logger } from '../services/logService';
 
 const prisma = new PrismaClient();
 
@@ -21,14 +21,21 @@ const DepartmentDAO = {
     try {
       logger.info('[DepartmentDAO] Fetching departments with filters:', filters);
       const queryFilter = buildWhereClause(filters);
-
-      const departments = await prisma.department.findMany({
-        where: queryFilter,
-        include: {
-          college: true,
-        },
-      });
-
+      let departments = [];
+      try {
+        departments = await prisma.department.findMany({
+          where: queryFilter,
+          include: {
+            college: true,
+          },
+        });
+      } catch (err: any) {
+        if (err.message?.toLowerCase().includes('uuid') || err.message?.includes('invalid group')) {
+          logger.warn('[DepartmentDAO] Invalid UUID in filter, returning empty result.');
+          return [];
+        }
+        throw err;
+      }
       logger.info(`[DepartmentDAO] Fetched ${departments.length} departments`);
       return departments;
     } catch (error) {
