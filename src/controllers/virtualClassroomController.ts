@@ -44,7 +44,7 @@ export class VirtualClassroomController {
         throw new Error('Unauthorized: User ID missing from request.');
       }
       const userId = req.user.id;
-      const { name, syllabusUrl, departmentId, yearId }: VirtualClassroomParams = req.body;
+      const { name, syllabusUrl, departmentId, yearId, description }: VirtualClassroomParams = req.body;
       if (
         !validateFields(
           [
@@ -74,6 +74,7 @@ export class VirtualClassroomController {
         facultyId: faculty.id,
         syllabusUrl,
         sectionId,
+        description,
       });
 
       if (!classroom) {
@@ -387,6 +388,42 @@ export class VirtualClassroomController {
       });
     }
   };
+
+  update=async (req: Request, res: Response) => {
+    logger.info('[VirtualClassroomController] Update classroom started');
+    try {
+      const { id } = req.params;
+      const data = req.body;
+
+      if (!id) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({
+          message: 'Classroom ID is required',
+        });
+      }
+
+      if (!data || Object.keys(data).length === 0) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).json({
+          message: 'No data provided for update',
+        });
+      }
+
+      const classroom = await VirtualClassroomDAO.get({ id });
+      if (!classroom) {
+        return res.status(HTTP_STATUS_NOT_FOUND).json({
+          message: 'Classroom not found',
+        });
+      }
+
+      const updatedClassroom = await this.virtualClassroomService.updateVirtualClassroom(id, data);
+      logger.info('[VirtualClassroomController] Update classroom completed successfully');
+      return res.status(HTTP_STATUS_OK).json(updatedClassroom);
+    } catch (error) {
+      logger.error('[VirtualClassroomController] Error updating classroom:', error);
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to update virtual classroom',
+        error: (error as Error).message,
+      });
+    }}
 
   deleteClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] Delete classroom');

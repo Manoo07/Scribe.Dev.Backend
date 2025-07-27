@@ -142,6 +142,7 @@ model Section {
 model VirtualClassroom {
   id                       String                    @id @default(uuid()) @db.Uuid
   name                     String
+  description              String?
   faculty                  Faculty                   @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   facultyId                String                    @db.Uuid
   section                  Section                   @relation(fields: [sectionId], references: [id], onDelete: Cascade)

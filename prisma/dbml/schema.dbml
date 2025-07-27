@@ -112,6 +112,7 @@ Table Section {
 Table VirtualClassroom {
   id String [pk]
   name String [not null]
+  description String
   faculty Faculty [not null]
   facultyId String [not null]
   section Section [not null]
