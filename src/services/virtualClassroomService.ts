@@ -10,6 +10,7 @@ export interface CreateVirtualClassroomParams {
   facultyId: string;
   syllabusUrl: string | undefined;
   sectionId: string;
+  description?: string;
 }
 export class VirtualClassroomService {
   // should be created by faculty

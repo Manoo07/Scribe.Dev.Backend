@@ -16,6 +16,7 @@ export const VirtualClassroomDAO = {
           facultyId: data.facultyId,
           syllabusUrl: data.syllabusUrl,
           sectionId: data.sectionId,
+          description: data.description ?? undefined,
         },
       });
       logger.info('[VirtualClassroomDAO] Virtual classroom created:', virtualClassroom.id);
@@ -121,9 +122,13 @@ export const VirtualClassroomDAO = {
   update: async (classroomId: string, data: Prisma.VirtualClassroomUpdateInput) => {
     logger.info(`[VirtualClassroomDAO] Updating virtual classroom: ${classroomId}`);
     try {
+      const updateData: Prisma.VirtualClassroomUpdateInput = {
+        ...data,
+        description: data.description ?? undefined,
+      };
       const virtualClassroom = await prisma.virtualClassroom.update({
         where: { id: classroomId },
-        data,
+        data: updateData,
       });
       logger.info('[VirtualClassroomDAO] Virtual classroom updated:', classroomId);
       return virtualClassroom;

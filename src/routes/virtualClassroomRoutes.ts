@@ -88,14 +88,11 @@ virtualClassroomRouter.post('/leave', async (req, res) => {
   }
 });
 
-// Bulk remove students from a classroom
-virtualClassroomRouter.post('/bulk-leave', async (req, res) => {
+virtualClassroomRouter.put('/:id', async (req, res) => {
   try {
-    await virtualClassroomController.bulkLeaveClassroom(req, res);
+    await virtualClassroomController.update(req, res);
   } catch (error) {
-    res
-      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-      .send({ error: 'An error occurred while bulk removing students from the classroom.' });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while updating the classroom.' });
   }
 });
 
