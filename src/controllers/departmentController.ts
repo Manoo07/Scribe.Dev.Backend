@@ -3,8 +3,8 @@ import {
   HTTP_STATUS_CREATED,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NO_CONTENT,
-  HTTP_STATUS_OK,
   HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
 } from '@constants/constants';
 import DepartmentService from '@services/departmentService';
 import { logger } from '@services/logService';
@@ -79,10 +79,16 @@ export class DepartmentController {
 
   public getDepartmentsByFilter = async (req: Request, res: Response): Promise<void> => {
     try {
-      const filter = req.body.filter || {};
+      const filter: Record<string, any> = {};
+      if (req.query.collegeId) {
+        filter.collegeId = req.query.collegeId;
+      }
       logger.info('[DepartmentController] Fetching departments with filters:', filter);
-
       const departments = await this.departmentService.getDepartmentsFilter(filter);
+      if (!departments || departments.length === 0) {
+        res.status(HTTP_STATUS_OK).json({ message: 'No records found', data: [] });
+        return;
+      }
       res.status(HTTP_STATUS_OK).json(departments);
     } catch (error) {
       logger.error('[DepartmentController] Error fetching departments:', error);
