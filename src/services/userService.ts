@@ -1,4 +1,4 @@
-import { PrismaClient, User, Role } from '@prisma/client';
+import { PrismaClient, User, Role, Prisma } from '@prisma/client';
 import UserDAO from '@dao/userDAO';
 import { logger } from '@services/logService';
 import {
@@ -20,9 +20,25 @@ class UserService {
     return user;
   }
 
-  async getAllUsers() {
+  async getAllUsers(filter: Prisma.UserWhereInput) {
     try {
-      const users = await UserDAO.getAll({});
+      const users = await UserDAO.getAll({
+        filter,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          userRole: {
+            select: {
+              collegeId: true,
+              departmentId: true,
+              sectionId: true,
+              yearId: true,
+            },
+          },
+        },
+      });
       logger.info(`[UserService] Fetched ${users.length} users`);
       return users;
     } catch (error) {
