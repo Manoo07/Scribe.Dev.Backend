@@ -60,7 +60,7 @@ class AuthService {
           status: HTTP_STATUS_BAD_REQUEST,
         };
       }
-
+      
       let finalUsername: string;
       if (!username || username.trim() === '') {
         // Auto-generate a unique username if nothing is provided
