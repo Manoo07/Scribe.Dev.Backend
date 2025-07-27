@@ -13,7 +13,7 @@ import {
 import { SignupParams } from '@customTypes/user';
 import UserDAO from '@dao/userDAO';
 import { userRoleDAO } from '@dao/userRole';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { sendResetEmail } from '@services/emailService';
 import { logger } from '@services/logService';
 import { generateResetToken, validateSignupParams } from '@utils/authUtil';
