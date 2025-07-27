@@ -216,6 +216,7 @@ model ClassAttendance {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  @@unique([studentId, classroomId, date])
   @@index([studentId, classroomId])
 }
 

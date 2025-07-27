@@ -174,6 +174,10 @@ Table ClassAttendance {
   present Boolean [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+
+  indexes {
+    (studentId, classroomId, date) [unique]
+  }
 }
 
 Table Assignment {
