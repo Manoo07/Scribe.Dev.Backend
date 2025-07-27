@@ -1,16 +1,17 @@
-import { allowRoles } from './../middleware/roleMiddleware';
 import { Route } from '@customTypes/route';
 import { authMiddleware } from '@middleware/authMiddleware';
+import { allowRoles } from './../middleware/roleMiddleware';
 
 import { authRouter } from '@routes/authRoutes';
 import { collegeRouter } from '@routes/collegeRoutes';
 import { departmentRouter } from '@routes/departmentRoutes';
 import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
-import { yearRouter } from './yearRoutes';
-import { virtualClassroomRouter } from './virtualClassroomRoutes';
-import { unitRouter } from './unitRoutes';
+import classAttendanceRouter from './classAttendanceRoutes';
 import { educationalContentRouter } from './educationalContentRoutes';
+import { unitRouter } from './unitRoutes';
+import { virtualClassroomRouter } from './virtualClassroomRoutes';
+import { yearRouter } from './yearRoutes';
 export const routers: Route[] = [
   {
     basePath: '/auth',
@@ -51,5 +52,10 @@ export const routers: Route[] = [
     basePath: '/educational-content',
     router: educationalContentRouter,
     middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
+  },
+  {
+    basePath: '/class-attendance',
+    router: classAttendanceRouter,
+    middleware: [authMiddleware, allowRoles(['FACULTY'])],
   },
 ];
