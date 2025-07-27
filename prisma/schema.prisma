@@ -73,6 +73,8 @@ model UserRole {
   departmentId String?     @db.Uuid
   section      Section?    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId    String?     @db.Uuid
+  year         Year?       @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  yearId       String?     @db.Uuid
   user         User        @relation("UserToUserRole", fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -116,6 +118,7 @@ model Year {
   department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   departmentId String     @db.Uuid
   sections     Section[]
+  userRoles    UserRole[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @default(now()) @updatedAt
 
@@ -214,6 +217,7 @@ model ClassAttendance {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  @@unique([studentId, classroomId, date])
   @@index([studentId, classroomId])
 }
 

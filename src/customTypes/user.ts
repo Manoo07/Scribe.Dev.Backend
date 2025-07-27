@@ -10,5 +10,6 @@ export interface SignupParams {
   role: Role;
   departmentId: string;
   sectionId: string;
+  yearId?: string;
   specialization?: string;
 }

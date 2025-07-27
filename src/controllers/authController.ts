@@ -1,7 +1,3 @@
-import { PrismaClient } from '@prisma/client';
-import { Request, Response } from 'express';
-import AuthService from '@services/authService';
-import { logger } from '@services/logService';
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CONFLICT,
@@ -13,8 +9,11 @@ import {
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
+import { PrismaClient } from '@prisma/client';
+import AuthService from '@services/authService';
+import { logger } from '@services/logService';
 import { checkMissingFields } from '@utils/authUtil';
-import UserDAO from '@dao/userDAO';
+import { Request, Response } from 'express';
 
 const prisma = new PrismaClient();
 
@@ -32,7 +31,11 @@ class AuthController {
     if (missingFields && missingFields.length > 0) {
       const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
       logger.error(`[AuthController] ${errorMessage}`);
-      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: errorMessage });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({
+        error: 'Missing required fields',
+        message: errorMessage,
+        fields: missingFields,
+      });
       return;
     }
 
@@ -43,7 +46,10 @@ class AuthController {
 
       if (result.error) {
         logger.error('[AuthController] Signup failed:', result.error);
-        res.status(result.status || HTTP_STATUS_BAD_REQUEST).json({ error: result.error, message: result.message });
+        res.status(result.status || HTTP_STATUS_BAD_REQUEST).json({
+          error: result.error,
+          message: result.message || result.error,
+        });
         return;
       }
 
