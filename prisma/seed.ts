@@ -63,9 +63,10 @@ async function main() {
   const cseDepartment = departments.find((d) => d.name === 'CSE');
   if (!cseDepartment) throw new Error('CSE Department not found');
 
-  const getSectionForDepartment = (deptId: string) => {
+  const getSectionAndYearForDepartment = (deptId: string) => {
     const year = years.find((y) => y.departmentId === deptId);
-    return sections.find((s) => s.yearId === year?.id);
+    const section = sections.find((s) => s.yearId === year?.id);
+    return { section, year };
   };
 
   const specificFaculty = [
@@ -85,7 +86,7 @@ async function main() {
       },
     });
 
-    const section = getSectionForDepartment(cseDepartment.id);
+    const { section, year } = getSectionAndYearForDepartment(cseDepartment.id);
 
     await prisma.userRole.create({
       data: {
@@ -94,6 +95,7 @@ async function main() {
         collegeId: college.id,
         departmentId: cseDepartment.id,
         sectionId: section?.id,
+        yearId: year?.id,
       },
     });
 
@@ -123,7 +125,7 @@ async function main() {
       },
     });
 
-    const section = getSectionForDepartment(cseDepartment.id);
+    const { section, year } = getSectionAndYearForDepartment(cseDepartment.id);
 
     await prisma.userRole.create({
       data: {
@@ -132,6 +134,7 @@ async function main() {
         collegeId: college.id,
         departmentId: cseDepartment.id,
         sectionId: section?.id,
+        yearId: year?.id,
       },
     });
 
@@ -146,7 +149,8 @@ async function main() {
   const facultyUsers = [];
   for (let i = 0; i < 5; i++) {
     const dept = departments[i % departments.length];
-    const section = getSectionForDepartment(dept.id);
+    const { section, year } = getSectionAndYearForDepartment(dept.id);
+
     const user = await prisma.user.create({
       data: {
         firstName: `FacultyFirst${i + 1}`,
@@ -165,6 +169,7 @@ async function main() {
         collegeId: college.id,
         departmentId: dept.id,
         sectionId: section?.id,
+        yearId: year?.id,
       },
     });
 
@@ -180,7 +185,7 @@ async function main() {
 
   for (let i = 0; i < 10; i++) {
     const dept = departments[i % departments.length];
-    const section = getSectionForDepartment(dept.id);
+    const { section, year } = getSectionAndYearForDepartment(dept.id);
 
     const user = await prisma.user.create({
       data: {
@@ -200,6 +205,7 @@ async function main() {
         collegeId: college.id,
         departmentId: dept.id,
         sectionId: section?.id,
+        yearId: year?.id,
       },
     });
 
@@ -234,7 +240,7 @@ async function main() {
   });
 
   if (manoharUser?.faculty) {
-    const section = getSectionForDepartment(cseDepartment.id);
+    const { section, year } = getSectionAndYearForDepartment(cseDepartment.id);
 
     for (let i = 1; i <= 4; i++) {
       const vc = await prisma.virtualClassroom.create({
@@ -267,6 +273,7 @@ async function main() {
             collegeId: college.id,
             departmentId: cseDepartment.id,
             sectionId: section!.id,
+            yearId: year?.id,
           },
         });
 

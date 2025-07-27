@@ -21,7 +21,14 @@ class UserController {
   getAllUsers = async (req: Request, res: Response) => {
     logger.info('[UserController] Fetching all users');
     try {
-      const users = await this.userService.getAllUsers();
+      const { collegeId, departmentId, sectionId, yearId } = req.body;
+      const filters: any = {};
+
+      if (collegeId) filters.userRole = { collegeId };
+      if (departmentId) filters.userRole = { ...(filters.userRole || {}), departmentId };
+      if (sectionId) filters.userRole = { ...(filters.userRole || {}), sectionId };
+      if (yearId) filters.userRole = { ...(filters.userRole || {}), yearId };
+      const users = await this.userService.getAllUsers(filters);
       logger.info(`[UserController] Successfully fetched ${users.length} users`);
       return res.status(HTTP_STATUS_OK).json(users);
     } catch (err: any) {

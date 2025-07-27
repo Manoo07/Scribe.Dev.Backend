@@ -19,9 +19,10 @@ export async function createUserRole(
     collegeId?: string;
     departmentId?: string;
     sectionId?: string;
+    yearId?: string;
   },
 ) {
-  const { userId, role, collegeId, departmentId, sectionId } = data;
+  const { userId, role, collegeId, departmentId, sectionId, yearId } = data;
 
   await tx.userRole.create({
     data: {
@@ -30,6 +31,7 @@ export async function createUserRole(
       collegeId,
       departmentId,
       sectionId,
+      yearId,
     },
   });
 
