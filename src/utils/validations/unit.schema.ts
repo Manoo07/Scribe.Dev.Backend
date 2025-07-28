@@ -15,8 +15,8 @@ export const updateUnitSchema = z
       .array(
         z.object({
           id: z.string().optional(),
-          type: z.enum(['NOTE', 'LINK', 'VIDEO', 'DOCUMENT']),
-          content: z.string().url(),
+          contentType: z.enum(['NOTE', 'LINK', 'VIDEO', 'DOCUMENT']),
+          url: z.string().url(),
           version: z.string().optional(),
         }),
       )
