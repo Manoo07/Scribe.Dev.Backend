@@ -10,7 +10,7 @@ class UnitService {
     name: string;
     description: string;
     classroomId: string;
-    educationalContents?: { type: string; content: string }[];
+    educationalContents?: { contentType: string; url: string }[];
   }) {
     try {
       logger.info('[UnitService] Creating unit with params:', params);
