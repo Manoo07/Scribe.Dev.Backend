@@ -1,7 +1,6 @@
 # Scribe.Dev
 
-This is a Node.js backend project powered by [Yarn](https://yarnpkg.com/), [Prisma ORM](https://www.prisma.io/), and [PostgreSQL](https://www.postgresql.org/).
-It includes features for data modeling, database migration, and API server setup.
+Scribe.Dev is a role-based virtual classroom platform for engineering colleges(v1), enabling Students, Faculty, Principals, and Admins to collaborate through classrooms, notes, discussions, file sharing, analytics, and notifications — all in one streamlined system.
 
 ---
 
