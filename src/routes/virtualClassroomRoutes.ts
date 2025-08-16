@@ -1,10 +1,9 @@
-import { Request, Response, Router } from 'express';
-import { VirtualClassroomController } from '@controllers/virtualClassroomController';
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_NOT_FOUND, HTTP_STATUS_OK } from '@constants/constants';
+import { UnitController } from '@controllers/unitController';
+import { VirtualClassroomController } from '@controllers/virtualClassroomController';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import { logger } from '@services/logService';
-import { unitRouter } from './unitRoutes';
-import { UnitController } from '@controllers/unitController';
+import { Request, Response, Router } from 'express';
 
 export const virtualClassroomRouter = Router();
 const virtualClassroomController = new VirtualClassroomController();
@@ -75,6 +74,23 @@ virtualClassroomRouter.post('/leave', async (req, res) => {
     await virtualClassroomController.leaveClassroom(req, res);
   } catch (error) {
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while leaving the classroom.' });
+  }
+});
+
+// Bulk join and leave endpoints
+virtualClassroomRouter.post('/bulk-join', async (req: Request, res: Response) => {
+  try {
+    await virtualClassroomController.bulkJoinClassroom(req, res);
+  } catch (error) {
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while performing bulk join.' });
+  }
+});
+
+virtualClassroomRouter.post('/bulk-leave', async (req: Request, res: Response) => {
+  try {
+    await virtualClassroomController.bulkLeaveClassroom(req, res);
+  } catch (error) {
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: 'An error occurred while performing bulk leave.' });
   }
 });
 
