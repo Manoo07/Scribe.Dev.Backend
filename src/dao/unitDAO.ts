@@ -5,7 +5,7 @@ import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
 const prisma = new PrismaClient();
 interface CreateUnitInput {
   name: string;
-  description: string;
+  description?: string;
   classroomId: string;
   educationalContents?: { contentType: string; url: string }[];
 }
@@ -17,10 +17,10 @@ const UnitDAO = {
 
       const data: Prisma.UnitCreateInput = {
         name,
-        description,
         classroom: {
           connect: { id: classroomId },
         },
+        ...(description !== undefined ? { description: description as string } : {}),
         ...(educationalContents.length > 0 && {
           educationalContents: {
             create: educationalContents.map((ec) => ({

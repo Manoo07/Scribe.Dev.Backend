@@ -145,7 +145,7 @@ Table VirtualClassroomStudent {
 Table Unit {
   id String [pk]
   name String [not null]
-  description String [not null]
+  description String
   classroom VirtualClassroom [not null]
   classroomId String [not null]
   educationalContents EducationalContent [not null]
