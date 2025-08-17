@@ -175,7 +175,7 @@ model VirtualClassroomStudent {
 model Unit {
   id                  String               @id @default(uuid()) @db.Uuid
   name                String
-  description         String
+  description         String?
   classroom           VirtualClassroom     @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId         String               @db.Uuid
   educationalContents EducationalContent[]
