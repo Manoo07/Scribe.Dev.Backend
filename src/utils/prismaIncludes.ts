@@ -38,7 +38,7 @@ export const defaultInclude: Prisma.VirtualClassroomInclude = {
   // units: true,
   // assignments: true,
   classAttendances: true,
-  threads: true,
+  // threads: true,
   virtualClassroomStudents: {
     include: {
       student: true,

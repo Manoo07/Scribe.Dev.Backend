@@ -154,7 +154,6 @@ model VirtualClassroom {
   virtualClassroomStudents VirtualClassroomStudent[]
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @default(now())
-  threads                  Thread[]
 
   @@index([facultyId])
 }
@@ -255,31 +254,27 @@ model Thread {
   content        String
   unit           Unit?            @relation(fields: [unitId], references: [id], onDelete: Cascade)
   unitId         String?          @db.Uuid
-  classroom      VirtualClassroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  classroomId    String           @db.Uuid
   parent         Thread?          @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: Cascade)
   parentId       String?          @db.Uuid
-  threadLikes    ThreadLike[]
   threadComments ThreadComment[]
   messages       Messages[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   replies        Thread[]         @relation("ThreadReplies")
 
-  @@index([classroomId])
   @@index([createdAt])
 }
 
 model ThreadLike {
   id        String   @id @default(uuid()) @db.Uuid
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  threadId  String   @db.Uuid
+  threadComment      ThreadComment @relation(fields: [threadCommentId], references: [id], onDelete: Cascade)
+  threadCommentId    String       @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([threadId, userId])
+  @@unique([threadCommentId, userId])
 }
 
 model ThreadComment {
@@ -291,7 +286,7 @@ model ThreadComment {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  threadLikes ThreadLike[] 
   @@index([threadId])
 }
 
