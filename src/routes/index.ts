@@ -14,7 +14,6 @@ import { virtualClassroomRouter } from './virtualClassroomRoutes';
 import { yearRouter } from './yearRoutes';
 import { threadRouter } from './threadRoutes';
 import {threadCommentRouter} from './threadCommentRoutes';
-import {threadLikeRouter} from './threadLikeRoutes';
 
 export const routers: Route[] = [
   {
@@ -72,9 +71,5 @@ export const routers: Route[] = [
     router: threadCommentRouter,
     middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
   },
-  {
-    basePath: '/thread-like',
-    router: threadLikeRouter,
-    middleware: [authMiddleware, allowRoles(['ADMIN', 'STUDENT', 'FACULTY'])],
-  },
+
 ];
