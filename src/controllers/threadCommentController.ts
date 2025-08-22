@@ -1,4 +1,5 @@
 import ThreadCommentService from '../services/threadCommentService';
+import userDAO from '../dao/userDAO';
 import { Request, Response } from 'express';
 import { logger } from '../services/logService';
 import {
@@ -14,7 +15,7 @@ import {
 export class ThreadCommentController {
   private threadCommentService = new ThreadCommentService();
 
-  public createThreadComment = async (req: Request, res: Response): Promise<void> => {
+  public create= async (req: Request, res: Response): Promise<void> => {
     logger.info('[ThreadCommentController] Creating thread comment', req.body);
     const { userId, threadId } = req.body;
     if (!userId) {
@@ -27,27 +28,35 @@ export class ThreadCommentController {
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'threadId is required' });
       return;
     }
+    // Validate user existence
     try {
-      const result = await this.threadCommentService.createThreadComment(req.body);
-      if (result.error) {
-        logger.warn('[ThreadCommentController] Thread comment creation failed:', result.error);
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      const user = await userDAO.get({ filter: { id: userId } });
+      if (!user) {
+        logger.warn('[ThreadCommentController] Invalid userId: User does not exist');
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid userId: User does not exist' });
         return;
       }
-      logger.info('[ThreadCommentController] Thread comment created:', result.comment);
-      res.status(HTTP_STATUS_CREATED).json(result.comment);
+      const creationResult = await this.threadCommentService.create(req.body);
+      if (creationResult.error) {
+        logger.warn('[ThreadCommentController] Thread comment creation failed:', creationResult.error);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: creationResult.error });
+        return;
+      }
+      logger.info('[ThreadCommentController] Thread comment created:', creationResult.comment);
+      res.status(HTTP_STATUS_CREATED).json(creationResult.comment);
     } catch (error) {
       logger.error('[ThreadCommentController] Error creating thread comment:', error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
-  public getThreadCommentById = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadCommentController] Fetching thread comment by ID: ${req.params.id}`);
+  public get = async (req: Request, res: Response): Promise<void> => {
+    const threadCommentId = req.params.id;
+    logger.info(`[ThreadCommentController] Fetching thread comment by ID: ${threadCommentId}`);
     try {
-      const comment = await this.threadCommentService.getThreadCommentById(req.params.id);
+      const comment = await this.threadCommentService.get(threadCommentId);
       if (!comment) {
-        logger.warn('[ThreadCommentController] Thread comment not found:', req.params.id);
+        logger.warn('[ThreadCommentController] Thread comment not found:', threadCommentId);
         res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Comment not found' });
         return;
       }
@@ -59,10 +68,10 @@ export class ThreadCommentController {
     }
   };
 
-  public getAllThreadComments = async (_req: Request, res: Response): Promise<void> => {
+  public getAll = async (_req: Request, res: Response): Promise<void> => {
     logger.info('[ThreadCommentController] Fetching all thread comments');
     try {
-      const comments = await this.threadCommentService.getAllThreadComments();
+      const comments = await this.threadCommentService.getAll();
       logger.info(`[ThreadCommentController] Fetched ${comments.length} thread comments`);
       res.status(HTTP_STATUS_OK).json(comments);
     } catch (error) {
@@ -71,34 +80,49 @@ export class ThreadCommentController {
     }
   };
 
-  public updateThreadComment = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadCommentController] Updating thread comment ID: ${req.params.id}`, req.body);
+  public update = async (req: Request, res: Response): Promise<void> => {
+    const threadCommentId = req.params.id;
+    logger.info(`[ThreadCommentController] Updating thread comment ID: ${threadCommentId}`, req.body);
+    const { userId } = req.body;
+    if (!userId) {
+      logger.warn('[ThreadCommentController] userId is required');
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'userId is required' });
+      return;
+    }
+    // Validate comment existence and ownership
     try {
-      const result = await this.threadCommentService.updateThreadComment(req.params.id, req.body);
-      if (result.forbidden) {
-        logger.warn('[ThreadCommentController] Forbidden update attempt by user:', req.body.userId);
-        res.status(HTTP_STATUS_FORBIDDEN).json({ error: result.error });
+      const existingComment = await this.threadCommentService.get(threadCommentId);
+      if (!existingComment) {
+        logger.warn('[ThreadCommentController] Thread comment not found:', threadCommentId);
+        res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Thread comment not found' });
         return;
       }
-      if (result.error) {
-        logger.warn('[ThreadCommentController] Thread comment update failed:', result.error);
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      if (existingComment.userId !== userId) {
+        logger.warn('[ThreadCommentController] Forbidden update attempt by user:', userId);
+        res.status(HTTP_STATUS_FORBIDDEN).json({ error: 'You are not allowed to update this comment' });
         return;
       }
-      logger.info('[ThreadCommentController] Thread comment updated:', result.comment);
-      res.status(HTTP_STATUS_OK).json(result.comment);
+      const updateResult = await this.threadCommentService.update(threadCommentId, req.body);
+      if (updateResult.error) {
+        logger.warn('[ThreadCommentController] Thread comment update failed:', updateResult.error);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: updateResult.error });
+        return;
+      }
+      logger.info('[ThreadCommentController] Thread comment updated:', updateResult.comment);
+      res.status(HTTP_STATUS_OK).json(updateResult.comment);
     } catch (error) {
       logger.error('[ThreadCommentController] Error updating thread comment:', error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
-  public deleteThreadComment = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadCommentController] Deleting thread comment ID: ${req.params.id}`);
+  public delete = async (req: Request, res: Response): Promise<void> => {
+    const threadCommentId = req.params.id;
+    logger.info(`[ThreadCommentController] Deleting thread comment ID: ${threadCommentId}`);
     try {
-      const result = await this.threadCommentService.deleteThreadComment(req.params.id);
-      logger.info('[ThreadCommentController] Thread comment deleted:', req.params.id);
-      res.status(HTTP_STATUS_NO_CONTENT).send();
+  const deletionResult = await this.threadCommentService.delete(threadCommentId);
+  logger.info('[ThreadCommentController] Thread comment deleted:', threadCommentId);
+  res.status(HTTP_STATUS_NO_CONTENT).send();
     } catch (error) {
       logger.error('[ThreadCommentController] Error deleting thread comment:', error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });

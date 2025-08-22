@@ -11,29 +11,44 @@ import { logger } from '../services/logService';
 import { Request, Response } from 'express';
 
 export class ThreadController {
-  public createThread = async (req: Request, res: Response): Promise<void> => {
+  public create = async (req: Request, res: Response): Promise<void> => {
     logger.info('[ThreadController] Creating thread', req.body);
+    const { unitId } = req.body;
+    if (!unitId) {
+      logger.warn('[ThreadController] unitId is required');
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'unitId is required' });
+      return;
+    }
+    // Validate unit existence
     try {
-      const result = await threadService.createThread(req.body);
-      if (result.error) {
-        logger.warn('[ThreadController] Thread creation failed:', result.error);
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      const unitDAO = (await import('../dao/unitDAO')).default;
+      const unit = await unitDAO.get(unitId);
+      if (!unit) {
+        logger.warn('[ThreadController] Invalid unitId: Unit does not exist');
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: 'Invalid unitId: Unit does not exist' });
         return;
       }
-      logger.info('[ThreadController] Thread created:', result.thread);
-      res.status(HTTP_STATUS_CREATED).json(result.thread);
+      const creationResult = await threadService.create(req.body);
+      if (creationResult.error) {
+        logger.warn('[ThreadController] Thread creation failed:', creationResult.error);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: creationResult.error });
+        return;
+      }
+      logger.info('[ThreadController] Thread created:', creationResult.thread);
+      res.status(HTTP_STATUS_CREATED).json(creationResult.thread);
     } catch (error) {
       logger.error('[ThreadController] Error creating thread:', error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
-  public getThreadById = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadController] Fetching thread by ID: ${req.params.id}`);
+  public get = async (req: Request, res: Response): Promise<void> => {
+    const threadId = req.params.id;
+    logger.info(`[ThreadController] Fetching thread by ID: ${threadId}`);
     try {
-      const thread = await threadService.getThreadById(req.params.id);
+      const thread = await threadService.get(threadId);
       if (!thread) {
-        logger.warn('[ThreadController] Thread not found:', req.params.id);
+        logger.warn('[ThreadController] Thread not found:', threadId);
         res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Thread not found' });
         return;
       }
@@ -45,16 +60,16 @@ export class ThreadController {
     }
   };
 
-  public getAllThreads = async (_req: Request, res: Response): Promise<void> => {
+  public getAll = async (_req: Request, res: Response): Promise<void> => {
     logger.info('[ThreadController] Fetching all threads');
     try {
-      const result = await threadService.getAllThreads();
-      if (result.error) {
-        logger.error('[ThreadController] Error fetching threads:', result.error);
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: result.error });
+      const allThreads = await threadService.getAll();
+      if (allThreads.error) {
+        logger.error('[ThreadController] Error fetching threads:', allThreads.error);
+        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: allThreads.error });
         return;
       }
-      const threads = result.threads ?? [];
+      const threads = allThreads.threads ?? [];
       logger.info(`[ThreadController] Fetched ${threads.length} threads`);
       res.status(HTTP_STATUS_OK).json(threads);
     } catch (error) {
@@ -63,33 +78,35 @@ export class ThreadController {
     }
   };
 
-  public updateThread = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadController] Updating thread ID: ${req.params.id}`, req.body);
+  public update = async (req: Request, res: Response): Promise<void> => {
+    const threadId = req.params.id;
+    logger.info(`[ThreadController] Updating thread ID: ${threadId}`, req.body);
     try {
-      const result = await threadService.updateThread(req.params.id, req.body);
-      if (result.error) {
-        logger.error('[ThreadController] Error updating thread:', result.error);
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      const updateResult = await threadService.update(threadId, req.body);
+      if (updateResult.error) {
+        logger.error('[ThreadController] Error updating thread:', updateResult.error);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: updateResult.error });
         return;
       }
-      logger.info('[ThreadController] Thread updated:', result.thread);
-      res.status(HTTP_STATUS_OK).json(result.thread);
+      logger.info('[ThreadController] Thread updated:', updateResult.thread);
+      res.status(HTTP_STATUS_OK).json(updateResult.thread);
     } catch (error) {
       logger.error('[ThreadController] Error updating thread:', error);
       res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   };
 
-  public deleteThread = async (req: Request, res: Response): Promise<void> => {
-    logger.info(`[ThreadController] Deleting thread ID: ${req.params.id}`);
+  public delete = async (req: Request, res: Response): Promise<void> => {
+    const threadId = req.params.id;
+    logger.info(`[ThreadController] Deleting thread ID: ${threadId}`);
     try {
-      const result = await threadService.deleteThread(req.params.id);
-      if (result.error) {
-        logger.error('[ThreadController] Error deleting thread:', result.error);
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: result.error });
+      const deletionResult = await threadService.delete(threadId);
+      if (deletionResult.error) {
+        logger.error('[ThreadController] Error deleting thread:', deletionResult.error);
+        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: deletionResult.error });
         return;
       }
-      logger.info('[ThreadController] Thread deleted:', req.params.id);
+      logger.info('[ThreadController] Thread deleted:', threadId);
       res.status(HTTP_STATUS_NO_CONTENT).send();
     } catch (error) {
       logger.error('[ThreadController] Error deleting thread:', error);

@@ -4,7 +4,7 @@ import { logger } from '../services/logService';
 const prisma = new PrismaClient();
 
 const ThreadCommentDAO = {
-	createThreadComment: async (data: Omit<ThreadComment, 'id' | 'createdAt' | 'updatedAt'>): Promise<ThreadComment> => {
+	create: async (data: Omit<ThreadComment, 'id' | 'createdAt' | 'updatedAt'>): Promise<ThreadComment> => {
 		try {
 			logger.info('[ThreadCommentDAO] Creating thread comment:', data);
 			const comment = await prisma.threadComment.create({ data });
@@ -16,10 +16,10 @@ const ThreadCommentDAO = {
 		}
 	},
 
-	getThreadCommentById: async (id: string): Promise<ThreadComment | null> => {
+	get: async (threadCommentId: string): Promise<ThreadComment | null> => {
 		try {
-			logger.info(`[ThreadCommentDAO] Fetching thread comment by ID: ${id}`);
-			const comment = await prisma.threadComment.findUnique({ where: { id } });
+			logger.info(`[ThreadCommentDAO] Fetching thread comment by ID: ${threadCommentId}`);
+			const comment = await prisma.threadComment.findUnique({ where: { id: threadCommentId } });
 			logger.info('[ThreadCommentDAO] Thread comment fetched:', comment);
 			return comment;
 		} catch (error) {
@@ -28,7 +28,7 @@ const ThreadCommentDAO = {
 		}
 	},
 
-	getAllThreadComments: async (): Promise<ThreadComment[]> => {
+	getAll: async (): Promise<ThreadComment[]> => {
 		try {
 			logger.info('[ThreadCommentDAO] Fetching all thread comments');
 			const comments = await prisma.threadComment.findMany();
@@ -40,10 +40,10 @@ const ThreadCommentDAO = {
 		}
 	},
 
-	updateThreadComment: async (id: string, data: Partial<ThreadComment>): Promise<ThreadComment> => {
+	update: async (threadCommentId: string, data: Partial<ThreadComment>): Promise<ThreadComment> => {
 		try {
-			logger.info(`[ThreadCommentDAO] Updating thread comment ID: ${id}`);
-			const comment = await prisma.threadComment.update({ where: { id }, data });
+			logger.info(`[ThreadCommentDAO] Updating thread comment ID: ${threadCommentId}`);
+			const comment = await prisma.threadComment.update({ where: { id: threadCommentId }, data });
 			logger.info('[ThreadCommentDAO] Thread comment updated:', comment);
 			return comment;
 		} catch (error) {
@@ -52,10 +52,10 @@ const ThreadCommentDAO = {
 		}
 	},
 
-	deleteThreadComment: async (id: string): Promise<ThreadComment> => {
+	delete: async (threadCommentId: string): Promise<ThreadComment> => {
 		try {
-			logger.info(`[ThreadCommentDAO] Deleting thread comment ID: ${id}`);
-			const comment = await prisma.threadComment.delete({ where: { id } });
+			logger.info(`[ThreadCommentDAO] Deleting thread comment ID: ${threadCommentId}`);
+			const comment = await prisma.threadComment.delete({ where: { id: threadCommentId } });
 			logger.info('[ThreadCommentDAO] Thread comment deleted:', comment);
 			return comment;
 		} catch (error) {
