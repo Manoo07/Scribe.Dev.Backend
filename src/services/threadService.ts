@@ -25,10 +25,10 @@ export class ThreadService {
 	       }
        }
 
-       public async getAll(): Promise<{ threads?: Thread[]; error?: string }> {
+       public async getAll(pagination?: { pageSize?: number; pageNumber?: number }): Promise<{ threads?: Thread[]; error?: string }> {
 	       try {
 		       logger.info('[ThreadService] Getting all threads');
-		       const threads = await ThreadDAO.getAll();
+		       const threads = await ThreadDAO.getAll(pagination);
 		       return { threads };
 	       } catch (error) {
 		       logger.error('[ThreadService] Error getting all threads:', error);

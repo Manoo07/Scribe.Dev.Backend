@@ -60,10 +60,13 @@ export class ThreadController {
     }
   };
 
-  public getAll = async (_req: Request, res: Response): Promise<void> => {
+  public getAll = async (req: Request, res: Response): Promise<void> => {
     logger.info('[ThreadController] Fetching all threads');
+    // Pagination
+    const pageSize = parseInt(req.query.pageSize as string) || 10;
+    const pageNumber = parseInt(req.query.pageNumber as string) || 1;
     try {
-      const allThreads = await threadService.getAll();
+      const allThreads = await threadService.getAll({ pageSize, pageNumber });
       if (allThreads.error) {
         logger.error('[ThreadController] Error fetching threads:', allThreads.error);
         res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: allThreads.error });

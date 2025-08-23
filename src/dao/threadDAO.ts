@@ -27,10 +27,12 @@ const ThreadDAO = {
 	       }
        },
 
-	getAll: async (): Promise<Thread[]> => {
+	getAll: async (pagination?: { pageSize?: number; pageNumber?: number }): Promise<Thread[]> => {
 		try {
 			logger.info('[ThreadDAO] Fetching all threads');
-			const allThreads = await prisma.thread.findMany();
+			const { pageSize = 10, pageNumber = 1 } = pagination || {};
+			const recordsToSkip = (pageNumber - 1) * pageSize;
+			const allThreads = await prisma.thread.findMany({ skip: recordsToSkip, take: pageSize });
 			logger.info(`[ThreadDAO] Fetched ${allThreads.length} threads`);
 			return allThreads;
 		} catch (error) {
