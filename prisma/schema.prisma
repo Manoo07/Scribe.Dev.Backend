@@ -27,9 +27,8 @@ model User {
   students         Student?
   faculty          Faculty?
   threadLikes      ThreadLike[]
-  threadComments   ThreadComment[]
-  messages         Messages[]
   userRole         UserRole?       @relation("UserToUserRole")
+  threads          Thread[]        // 1 user can make many threads
   resetToken       String?
   resetTokenExpiry BigInt?
   activeToken      String?
@@ -249,57 +248,45 @@ model AssignmentSubmission {
 }
 
 model Thread {
-  id             String           @id @default(uuid()) @db.Uuid
-  title          String
-  content        String
-  unit           Unit?            @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  unitId         String?          @db.Uuid
-  parent         Thread?          @relation("ThreadReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  parentId       String?          @db.Uuid
-  threadComments ThreadComment[]
-  messages       Messages[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  replies        Thread[]         @relation("ThreadReplies")
+  id        String    @id @default(uuid()) @db.Uuid
+  title     String?
+  content   String
+  unit      Unit?     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId    String?   @db.Uuid
+
+  parent    Thread?   @relation("ThreadComments", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId  String?   @db.Uuid
+  replies   Thread[]  @relation("ThreadComments")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @db.Uuid
+
+  likes     ThreadLike[]
+
+  threadStatus     ThreadStatus @default(UNANSWERED)
+  acceptedAnswerId String?      @db.Uuid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([createdAt])
 }
 
 model ThreadLike {
   id        String   @id @default(uuid()) @db.Uuid
-  threadComment      ThreadComment @relation(fields: [threadCommentId], references: [id], onDelete: Cascade)
-  threadCommentId    String       @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([threadCommentId, userId])
-}
-
-model ThreadComment {
-  id        String   @id @default(uuid()) @db.Uuid
   thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   threadId  String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
-  content   String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  threadLikes ThreadLike[] 
-  @@index([threadId])
+
+  @@unique([threadId, userId])
 }
 
-model Messages {
-  id        String   @id @default(uuid()) @db.Uuid
-  content   String
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  threadId  String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([threadId])
-  @@index([userId])
+enum ThreadStatus {
+  RESOLVED
+  UNANSWERED
+  CLOSED
 }
