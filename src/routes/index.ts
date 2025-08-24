@@ -12,6 +12,7 @@ import { educationalContentRouter } from './educationalContentRoutes';
 import { unitRouter } from './unitRoutes';
 import { virtualClassroomRouter } from './virtualClassroomRoutes';
 import { yearRouter } from './yearRoutes';
+
 export const routers: Route[] = [
   {
     basePath: '/auth',
@@ -57,5 +58,5 @@ export const routers: Route[] = [
     basePath: '/class-attendance',
     router: classAttendanceRouter,
     middleware: [authMiddleware, allowRoles(['FACULTY'])],
-  },
+  }
 ];

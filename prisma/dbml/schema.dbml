@@ -18,9 +18,8 @@ Table User {
   students Student
   faculty Faculty
   threadLikes ThreadLike [not null]
-  threadComments ThreadComment [not null]
-  messages Messages [not null]
   userRole UserRole
+  threads Thread [not null]
   resetToken String
   resetTokenExpiry BigInt
   activeToken String
@@ -124,7 +123,6 @@ Table VirtualClassroom {
   virtualClassroomStudents VirtualClassroomStudent [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
-  threads Thread [not null]
 }
 
 Table VirtualClassroomStudent {
@@ -207,20 +205,20 @@ Table AssignmentSubmission {
 
 Table Thread {
   id String [pk]
-  title String [not null]
+  title String
   content String [not null]
   unit Unit
   unitId String
-  classroom VirtualClassroom [not null]
-  classroomId String [not null]
   parent Thread
   parentId String
-  threadLikes ThreadLike [not null]
-  threadComments ThreadComment [not null]
-  messages Messages [not null]
+  replies Thread [not null]
+  user User [not null]
+  userId String [not null]
+  likes ThreadLike [not null]
+  threadStatus ThreadStatus [not null, default: 'UNANSWERED']
+  acceptedAnswerId String
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  replies Thread [not null]
 }
 
 Table ThreadLike {
@@ -237,28 +235,6 @@ Table ThreadLike {
   }
 }
 
-Table ThreadComment {
-  id String [pk]
-  thread Thread [not null]
-  threadId String [not null]
-  user User [not null]
-  userId String [not null]
-  content String [not null]
-  createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
-}
-
-Table Messages {
-  id String [pk]
-  content String [not null]
-  thread Thread [not null]
-  threadId String [not null]
-  user User [not null]
-  userId String [not null]
-  createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
-}
-
 Enum Role {
   PRINCIPAL
   HOD
@@ -273,6 +249,12 @@ Enum ContentType {
   LINK
   VIDEO
   DOCUMENT
+}
+
+Enum ThreadStatus {
+  RESOLVED
+  UNANSWERED
+  CLOSED
 }
 
 Ref: User.collegeId > College.id [delete: Cascade]
@@ -321,18 +303,10 @@ Ref: AssignmentSubmission.studentId > Student.id [delete: Cascade]
 
 Ref: Thread.unitId > Unit.id [delete: Cascade]
 
-Ref: Thread.classroomId > VirtualClassroom.id [delete: Cascade]
-
 Ref: Thread.parentId - Thread.id [delete: Cascade]
+
+Ref: Thread.userId > User.id [delete: Cascade]
 
 Ref: ThreadLike.threadId > Thread.id [delete: Cascade]
 
 Ref: ThreadLike.userId > User.id [delete: Cascade]
-
-Ref: ThreadComment.threadId > Thread.id [delete: Cascade]
-
-Ref: ThreadComment.userId > User.id [delete: Cascade]
-
-Ref: Messages.threadId > Thread.id [delete: Cascade]
-
-Ref: Messages.userId > User.id [delete: Cascade]
