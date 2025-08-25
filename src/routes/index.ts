@@ -63,6 +63,6 @@ export const routers: Route[] = [
   {
     basePath: '/threads',
     router: threadRouter,
-    middleware: [authMiddleware],
+    middleware: [authMiddleware, allowRoles(['ADMIN', 'FACULTY', 'STUDENT'])],
   },
 ];

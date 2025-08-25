@@ -35,11 +35,30 @@ export const likeDAO = {
     }
   },
 
+
   async findLike({ threadId, userId }: { threadId: string; userId: string }) {
-    return prisma.threadLike.findUnique({ where: { threadId_userId: { threadId, userId } } });
+    try {
+      return await prisma.threadLike.findUnique({ where: { threadId_userId: { threadId, userId } } });
+    } catch (error) {
+      logger.error('[likeDAO] findLike error', {
+        error: error instanceof Error ? error.message : error,
+        threadId,
+        userId,
+      });
+      throw error;
+    }
   },
 
   async deleteLike({ threadId, userId }: { threadId: string; userId: string }) {
-    return prisma.threadLike.delete({ where: { threadId_userId: { threadId, userId } } });
+    try {
+      return await prisma.threadLike.delete({ where: { threadId_userId: { threadId, userId } } });
+    } catch (error) {
+      logger.error('[likeDAO] deleteLike error', {
+        error: error instanceof Error ? error.message : error,
+        threadId,
+        userId,
+      });
+      throw error;
+    }
   },
 };

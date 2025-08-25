@@ -9,9 +9,9 @@ export const threadService = {
       const id = threadId || replyId;
       if (!id) throw new Error('threadId or replyId required');
       // Toggle like: if exists, delete (unlike), else create (like)
-      const result = await likeDAO.toggleLike({ threadId, replyId, userId });
-      logger.info('[threadService] likeThreadOrReply toggled', { threadId: id, userId, liked: result.liked });
-      return result;
+  const likeToggleResult = await likeDAO.toggleLike({ threadId, replyId, userId });
+  logger.info('[threadService] likeThreadOrReply toggled', { threadId: id, userId, liked: likeToggleResult.liked });
+  return likeToggleResult;
     } catch (error) {
       logger.error('[threadService] likeThreadOrReply error', {
         error: error instanceof Error ? error.message : error,
@@ -29,9 +29,9 @@ export const threadService = {
   async createThread(data: any, userId: string) {
     try {
       logger.info('[threadService] createThread started', { userId });
-      const result = await threadDAO.createThread({ ...data, userId });
-      logger.info('[threadService] createThread success', { threadId: result.id });
-      return result;
+  const createdThread = await threadDAO.createThread({ ...data, userId });
+  logger.info('[threadService] createThread success', { threadId: createdThread.id });
+  return createdThread;
     } catch (error) {
       logger.error('[threadService] createThread error', {
         error: error instanceof Error ? error.message : error,
@@ -62,13 +62,13 @@ export const threadService = {
           filters.threadStatus = filters.threadStatus as ThreadStatus;
         }
       }
-      const result = await threadDAO.getThreads(page, limit, {
+      const threadsData = await threadDAO.getThreads(page, limit, {
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
         filters,
       });
-      logger.info('[threadService] getThreads success', { count: result.threads.length });
-      return result;
+      logger.info('[threadService] getThreads success', { count: threadsData.threads.length });
+      return threadsData;
     } catch (error) {
       logger.error('[threadService] getThreads error', {
         error: error instanceof Error ? error.message : error,
@@ -82,9 +82,9 @@ export const threadService = {
   async getThreadWithReplies(threadId: string, page: number, limit: number) {
     try {
       logger.info('[threadService] getThreadWithReplies started', { threadId, page, limit });
-      const result = await threadDAO.getThreadWithReplies(threadId, page, limit);
-      logger.info('[threadService] getThreadWithReplies success', { found: !!result });
-      return result;
+  const threadWithReplies = await threadDAO.getThreadWithReplies(threadId, page, limit);
+  logger.info('[threadService] getThreadWithReplies success', { found: !!threadWithReplies });
+  return threadWithReplies;
     } catch (error) {
       logger.error('[threadService] getThreadWithReplies error', {
         error: error instanceof Error ? error.message : error,
@@ -98,9 +98,9 @@ export const threadService = {
   async createReply(parentId: string, content: string, userId: string) {
     try {
       logger.info('[threadService] createReply started', { parentId, userId });
-      const result = await threadDAO.createReply(parentId, content, userId);
-      logger.info('[threadService] createReply success', { replyId: result.id });
-      return result;
+  const createdReply = await threadDAO.createReply(parentId, content, userId);
+  logger.info('[threadService] createReply success', { replyId: createdReply.id });
+  return createdReply;
     } catch (error) {
       logger.error('[threadService] createReply error', {
         error: error instanceof Error ? error.message : error,
@@ -114,9 +114,9 @@ export const threadService = {
   async acceptAnswer(threadId: string, replyId: string) {
     try {
       logger.info('[threadService] acceptAnswer started', { threadId, replyId });
-      const result = await threadDAO.acceptAnswer(threadId, replyId);
-      logger.info('[threadService] acceptAnswer success', { threadId, replyId, updated: !!result });
-      return result;
+  const acceptAnswerResult = await threadDAO.acceptAnswer(threadId, replyId);
+  logger.info('[threadService] acceptAnswer success', { threadId, replyId, updated: !!acceptAnswerResult });
+  return acceptAnswerResult;
     } catch (error) {
       logger.error('[threadService] acceptAnswer error', {
         error: error instanceof Error ? error.message : error,
