@@ -9,6 +9,7 @@ import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
 import classAttendanceRouter from './classAttendanceRoutes';
 import { educationalContentRouter } from './educationalContentRoutes';
+import { threadRouter } from './threadRoutes';
 import { unitRouter } from './unitRoutes';
 import { virtualClassroomRouter } from './virtualClassroomRoutes';
 import { yearRouter } from './yearRoutes';
@@ -58,5 +59,10 @@ export const routers: Route[] = [
     basePath: '/class-attendance',
     router: classAttendanceRouter,
     middleware: [authMiddleware, allowRoles(['FACULTY'])],
-  }
+  },
+  {
+    basePath: '/threads',
+    router: threadRouter,
+    middleware: [authMiddleware],
+  },
 ];
