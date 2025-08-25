@@ -253,19 +253,14 @@ model Thread {
   content   String
   unit      Unit?     @relation(fields: [unitId], references: [id], onDelete: Cascade)
   unitId    String?   @db.Uuid
-
   parent    Thread?   @relation("ThreadComments", fields: [parentId], references: [id], onDelete: Cascade)
   parentId  String?   @db.Uuid
   replies   Thread[]  @relation("ThreadComments")
-
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String    @db.Uuid
-
   likes     ThreadLike[]
-
   threadStatus     ThreadStatus @default(UNANSWERED)
   acceptedAnswerId String?      @db.Uuid
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -278,6 +273,7 @@ model ThreadLike {
   threadId  String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
+  isLiked   Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
