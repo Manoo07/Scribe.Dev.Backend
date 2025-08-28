@@ -1,12 +1,21 @@
+// ...existing code...
+// ...imports and threadRouter declaration...
+// ...existing code...
 // Get threads for a unit (with classroom membership restriction)
 
 // Get threads for a unit (with classroom membership restriction)
 
 import { threadController } from '@controllers/threadController';
+import { authMiddleware } from '@middleware/authMiddleware';
 import { logger } from '@services/logService';
 import { Router } from 'express';
 
 const threadRouter = Router();
+// Delete a thread or comment
+threadRouter.delete('/:threadId', authMiddleware, async (req, res) => {
+  logger.info('[threadRoutes] DELETE /:threadId - deleteThreadOrComment route hit', { threadId: req.params.threadId });
+  await threadController.deleteThreadOrComment(req, res);
+});
 
 // Create a thread
 threadRouter.post('/', async (req, res) => {
@@ -45,6 +54,21 @@ threadRouter.patch('/:threadId/accept-answer/:replyId', async (req, res) => {
     replyId: req.params.replyId,
   });
   await threadController.acceptAnswer(req, res);
+});
+
+// Update a thread or comment (title/content)
+threadRouter.patch('/:threadId', async (req, res) => {
+  logger.info('[threadRoutes] PATCH /:threadId - updateThreadOrComment route hit', { threadId: req.params.threadId });
+  await threadController.updateThreadOrComment(req, res);
+});
+
+// Like/unlike a thread
+threadRouter.post('/like/:threadId', authMiddleware, async (req, res) => {
+  const { threadId } = req.params;
+  req.body.threadId = threadId;
+  req.body.replyId = undefined; // Ensure only thread like
+  logger.info('[threadRoutes] POST /like/:threadId - likeThreadOrReply route hit', { threadId, userId: req.user?.id });
+  await threadController.likeThreadOrReply(req, res);
 });
 
 export { threadRouter };

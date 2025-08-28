@@ -2,6 +2,12 @@ import { threadDAO } from '@dao/threadDAO';
 import { ThreadStatus } from '@prisma/client';
 import { logger } from '@services/logService';
 export const threadService = {
+  async updateThreadOrComment(threadId: string, userId: string, data: { title?: string; content?: string }) {
+    return await threadDAO.updateThreadOrComment(threadId, userId, data);
+  },
+  async deleteThreadOrComment(threadId: string, userId: string) {
+    return await threadDAO.deleteThreadOrComment(threadId, userId);
+  },
   async likeThreadOrReply({ threadId, replyId, userId }: { threadId?: string; replyId?: string; userId: string }) {
     try {
       logger.info('[threadService] likeThreadOrReply started', { threadId, replyId, userId });
@@ -49,6 +55,7 @@ export const threadService = {
       unitId?: string | null;
       threadStatus?: string;
       filters?: Record<string, any>;
+      userId?: string;
     } = {},
   ) {
     try {
@@ -66,6 +73,7 @@ export const threadService = {
         sortBy: options.sortBy,
         sortOrder: options.sortOrder,
         filters,
+        userId: options.userId,
       });
       logger.info('[threadService] getThreads success', { count: result.threads.length });
       return result;
@@ -79,10 +87,10 @@ export const threadService = {
       throw error;
     }
   },
-  async getThreadWithReplies(threadId: string, page: number, limit: number) {
+  async getThreadWithReplies(threadId: string, page: number, limit: number, userId?: string) {
     try {
-      logger.info('[threadService] getThreadWithReplies started', { threadId, page, limit });
-      const result = await threadDAO.getThreadWithReplies(threadId, page, limit);
+      logger.info('[threadService] getThreadWithReplies started', { threadId, page, limit, userId });
+      const result = await threadDAO.getThreadWithReplies(threadId, page, limit, userId);
       logger.info('[threadService] getThreadWithReplies success', { found: !!result });
       return result;
     } catch (error) {
@@ -91,6 +99,7 @@ export const threadService = {
         threadId,
         page,
         limit,
+        userId,
       });
       throw error;
     }

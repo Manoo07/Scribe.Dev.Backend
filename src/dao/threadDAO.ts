@@ -4,18 +4,42 @@ import { logger } from '@services/logService';
 const prisma = new PrismaClient();
 
 export const threadDAO = {
+  async deleteThreadOrComment(threadId: string, userId: string) {
+    // Only allow delete if user is the owner
+    const thread = await prisma.thread.findUnique({ where: { id: threadId } });
+    if (!thread) throw new Error('Thread or comment not found');
+    if (thread.userId !== userId) throw new Error('Forbidden: Not the owner');
+    // Cascade delete handled by Prisma schema
+    await prisma.thread.delete({ where: { id: threadId } });
+    return { deleted: true };
+  },
+
+  async updateThreadOrComment(threadId: string, userId: string, data: { title?: string; content?: string }) {
+    // Only allow update if user is the owner
+    const thread = await prisma.thread.findUnique({ where: { id: threadId } });
+    if (!thread) throw new Error('Thread or comment not found');
+    if (thread.userId !== userId) throw new Error('Forbidden: Not the owner');
+    // Only update allowed fields
+    const updateData: any = {};
+    if (typeof data.title === 'string') updateData.title = data.title;
+    if (typeof data.content === 'string') updateData.content = data.content;
+    if (Object.keys(updateData).length === 0) throw new Error('No valid fields to update');
+    const updated = await prisma.thread.update({ where: { id: threadId }, data: updateData });
+    return updated;
+  },
   async getThreadById(threadId: string) {
     // Used for ownership validation in acceptAnswer
     return await prisma.thread.findUnique({ where: { id: threadId } });
   },
   async createThread(data: any) {
-    const { title, content, unitId, userId } = data;
+    const { title, content, classroomId, unitId, userId } = data;
     try {
-      logger.info('[threadDAO] createThread started', { userId, unitId });
+      logger.info('[threadDAO] createThread started', { userId, classroomId, unitId });
       const thread = await prisma.thread.create({
         data: {
           title,
           content,
+          classroomId,
           unitId: unitId || undefined,
           userId,
           threadStatus: ThreadStatus.UNANSWERED,
@@ -42,6 +66,7 @@ export const threadDAO = {
       logger.error('[threadDAO] createThread error', {
         error: error instanceof Error ? error.message : error,
         userId,
+        classroomId,
         unitId,
       });
       throw error;
@@ -54,16 +79,25 @@ export const threadDAO = {
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
       filters?: Record<string, any>;
+      userId?: string;
     } = {},
   ) {
     try {
       logger.info('[threadDAO] getThreads started', { page, limit, ...options });
       const skip = (page - 1) * limit;
       // Always filter for main threads
-      const where: any = { parentId: null, ...(options.filters || {}) };
-      // Special handling for unitId=none
-      if (options.filters && options.filters.unitId === 'none') {
-        where.unitId = null;
+      const where: any = { parentId: null };
+      // Classroom filter
+      if (options.filters && options.filters.classroomId) {
+        where.classroomId = options.filters.classroomId;
+      }
+      // Unit filter
+      if (options.filters && options.filters.unitId) {
+        if (options.filters.unitId === 'none') {
+          where.unitId = null;
+        } else {
+          where.unitId = options.filters.unitId;
+        }
       }
 
       // Default sort
@@ -97,12 +131,14 @@ export const threadDAO = {
         threads: threads.map((thread) => ({
           id: thread.id,
           title: thread.title,
+          content: thread.content,
           user: thread.user ? { id: thread.user.id, name: thread.user.firstName + ' ' + thread.user.lastName } : null,
           threadStatus: thread.threadStatus,
           createdAt: thread.createdAt,
           updatedAt: thread.updatedAt,
           repliesCount: thread.replies.length,
           likesCount: thread.likes.length,
+          isLikedByMe: options.userId ? thread.likes.some((like) => like.userId === options.userId) : false,
         })),
         pagination: {
           total,
@@ -121,7 +157,7 @@ export const threadDAO = {
       throw error;
     }
   },
-  async getThreadWithReplies(threadId: string, page: number, limit: number) {
+  async getThreadWithReplies(threadId: string, page: number, limit: number, userId?: string) {
     try {
       logger.info('[threadDAO] getThreadWithReplies started', { threadId, page, limit });
       // Fetch main thread
@@ -150,6 +186,11 @@ export const threadDAO = {
         prisma.thread.count({ where: { parentId: threadId } }),
       ]);
 
+      // Get userId from arguments if passed (threadDAO.getThreadWithReplies(threadId, page, limit, userId))
+      // This is a hack since the method signature doesn't have userId, but we can add it if needed
+      // For now, try to get from arguments[3]
+      const userId = arguments[3];
+
       logger.info('[threadDAO] getThreadWithReplies success', { threadId, repliesCount: replies.length });
       return {
         id: thread.id,
@@ -160,6 +201,7 @@ export const threadDAO = {
         createdAt: thread.createdAt,
         acceptedAnswerId: thread.acceptedAnswerId,
         likesCount: thread.likes.length,
+        isLikedByMe: userId ? thread.likes.some((like) => like.userId === userId) : false,
         replies: {
           data: replies.map((reply) => ({
             id: reply.id,
@@ -168,6 +210,7 @@ export const threadDAO = {
             createdAt: reply.createdAt,
             likesCount: reply.likes.length,
             isAccepted: thread.acceptedAnswerId === reply.id,
+            isLikedByMe: userId ? reply.likes.some((like) => like.userId === userId) : false,
           })),
           pagination: {
             total,

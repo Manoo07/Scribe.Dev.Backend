@@ -12,23 +12,23 @@ generator dbml {
 }
 
 model User {
-  id               String          @id @default(uuid()) @db.Uuid
+  id               String       @id @default(uuid()) @db.Uuid
   firstName        String
   lastName         String
-  username         String          @unique
-  email            String          @unique
+  username         String       @unique
+  email            String       @unique
   password         String
-  college          College?        @relation(fields: [collegeId], references: [id], onDelete: Cascade)
-  collegeId        String?         @db.Uuid
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  college          College?     @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  collegeId        String?      @db.Uuid
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
   mfaSecret        String?
   lastLogin        DateTime?
   students         Student?
   faculty          Faculty?
   threadLikes      ThreadLike[]
-  userRole         UserRole?       @relation("UserToUserRole")
-  threads          Thread[]        // 1 user can make many threads
+  userRole         UserRole?    @relation("UserToUserRole")
+  threads          Thread[]
   resetToken       String?
   resetTokenExpiry BigInt?
   activeToken      String?
@@ -36,8 +36,6 @@ model User {
   @@index([email])
   @@index([collegeId])
 }
-
-
 
 model Student {
   id                       String                    @id @default(uuid()) @db.Uuid
@@ -151,6 +149,7 @@ model VirtualClassroom {
   syllabusUrl              String?
   classAttendances         ClassAttendance[]
   virtualClassroomStudents VirtualClassroomStudent[]
+  threads                  Thread[]
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @default(now())
 
@@ -248,32 +247,35 @@ model AssignmentSubmission {
 }
 
 model Thread {
-  id        String    @id @default(uuid()) @db.Uuid
-  title     String?
-  content   String
-  unit      Unit?     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  unitId    String?   @db.Uuid
-  parent    Thread?   @relation("ThreadComments", fields: [parentId], references: [id], onDelete: Cascade)
-  parentId  String?   @db.Uuid
-  replies   Thread[]  @relation("ThreadComments")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String    @db.Uuid
-  likes     ThreadLike[]
+  id          String            @id @default(uuid()) @db.Uuid
+  title       String?
+  content     String
+  classroom   VirtualClassroom? @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId String?           @db.Uuid
+
+  unit             Unit?        @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId           String?      @db.Uuid
+  parent           Thread?      @relation("ThreadComments", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId         String?      @db.Uuid
+  replies          Thread[]     @relation("ThreadComments")
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String       @db.Uuid
+  likes            ThreadLike[]
   threadStatus     ThreadStatus @default(UNANSWERED)
   acceptedAnswerId String?      @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([createdAt])
 }
 
 model ThreadLike {
-  id        String   @id @default(uuid()) @db.Uuid
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  threadId  String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.Uuid
-  isLiked   Boolean  @default(true)
+  id       String  @id @default(uuid()) @db.Uuid
+  thread   Thread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId String  @db.Uuid
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String  @db.Uuid
+  isLiked  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

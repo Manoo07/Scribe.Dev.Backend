@@ -3,6 +3,48 @@ import { threadService } from '@services/threadService';
 import { Request, Response } from 'express';
 
 export const threadController = {
+  async updateThreadOrComment(req: Request, res: Response) {
+    const userId = req.user?.id;
+    const { threadId } = req.params;
+    const { title, content } = req.body;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+      const updated = await threadService.updateThreadOrComment(threadId, userId, { title, content });
+      res.status(200).json({ message: 'Updated successfully', thread: updated });
+    } catch (error: any) {
+      if (error.message === 'Thread or comment not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === 'Forbidden: Not the owner') {
+        return res.status(403).json({ error: error.message });
+      }
+      if (error.message === 'No valid fields to update') {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update', details: error.message });
+    }
+  },
+  async deleteThreadOrComment(req: Request, res: Response) {
+    const userId = req.user?.id;
+    const { threadId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+      await threadService.deleteThreadOrComment(threadId, userId);
+      res.status(200).json({ message: 'Deleted successfully' });
+    } catch (error: any) {
+      if (error.message === 'Thread or comment not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === 'Forbidden: Not the owner') {
+        return res.status(403).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to delete', details: error.message });
+    }
+  },
   async likeThreadOrReply(req: Request, res: Response) {
     const userId = req.user?.id;
     const { threadId, replyId } = req.body;
@@ -32,12 +74,10 @@ export const threadController = {
         threadId,
         replyId,
       });
-      res
-        .status(500)
-        .json({
-          error: 'Failed to like/unlike thread or reply',
-          details: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        error: 'Failed to like/unlike thread or reply',
+        details: error instanceof Error ? error.message : error,
+      });
     }
   },
   async getThreadsByUnitWithAccess(req: Request, res: Response) {
@@ -98,8 +138,8 @@ export const threadController = {
           filters[key] = req.query[key];
         }
       }
-      const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters });
-      return res.status(200).json(result);
+  const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
+  return res.status(200).json(result);
     } catch (error) {
       logger.error('[threadController] getThreadsByUnitWithAccess error', {
         error: error instanceof Error ? error.message : error,
@@ -169,12 +209,10 @@ export const threadController = {
           userId,
           unitId,
         });
-        return res
-          .status(500)
-          .json({
-            error: 'Failed to validate classroom membership',
-            details: error instanceof Error ? error.message : error,
-          });
+        return res.status(500).json({
+          error: 'Failed to validate classroom membership',
+          details: error instanceof Error ? error.message : error,
+        });
       }
     }
     try {
@@ -204,6 +242,14 @@ export const threadController = {
         filters[key] = req.query[key];
       }
     }
+    // If unitId is not present in query, fetch threads with null unitId
+    if (!('unitId' in req.query)) {
+      filters.unitId = 'none';
+    }
+    // If classroomId is present in query, filter by classroomId
+    if ('classroomId' in req.query) {
+      filters.classroomId = req.query.classroomId;
+    }
     try {
       logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
       const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters });
@@ -224,38 +270,40 @@ export const threadController = {
     }
   },
   async getThreadWithReplies(req: Request, res: Response) {
-    const threadId = req.params.id;
-    const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const userId = req.user?.id;
+    if (!userId) {
+      logger.error('[threadController] createThread error', { error: 'User ID not found in request context' });
+      return res.status(400).json({ error: 'User ID not found in request context' });
+    }
+    const { classroomId, unitId } = req.body;
+    // Validate classroomId
+    if (!classroomId) {
+      return res.status(400).json({ error: 'classroomId is required' });
+    }
+    // Optionally validate unitId if present
+    const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (unitId && !uuidV4Regex.test(unitId)) {
+      return res.status(400).json({ error: 'Invalid unitId format. Must be a valid UUID.' });
+    }
+    if (classroomId && !uuidV4Regex.test(classroomId)) {
+      return res.status(400).json({ error: 'Invalid classroomId format. Must be a valid UUID.' });
+    }
+    // Membership validation can be added here if needed
     try {
-      logger.info('[threadController] getThreadWithReplies started', { threadId, page, limit });
-      const result = await threadService.getThreadWithReplies(threadId, page, limit);
-      if (!result) {
-        logger.warn('[threadController] getThreadWithReplies not found', { threadId });
-        return res.status(404).json({ error: 'Thread not found' });
-      }
-      logger.info('[threadController] getThreadWithReplies success', { threadId });
-      res.status(200).json(result);
+      logger.info('[threadController] createThread started', { userId, classroomId, unitId });
+      const thread = await threadService.createThread({ ...req.body, classroomId, unitId }, userId);
+      logger.info('[threadController] createThread success', { threadId: thread.id });
+      res.status(201).json(thread);
     } catch (error) {
-      logger.error('[threadController] getThreadWithReplies error', {
+      logger.error('[threadController] createThread error', {
         error: error instanceof Error ? error.message : error,
-        threadId,
-        page,
-        limit,
+        userId,
       });
       res
         .status(500)
-        .json({ error: 'Failed to fetch thread replies', details: error instanceof Error ? error.message : error });
+        .json({ error: 'Failed to create thread', details: error instanceof Error ? error.message : error });
     }
   },
-  async createReply(req: Request, res: Response) {
-    const userId = req.user?.id;
-    const parentId = req.params.id;
-    const { content } = req.body;
-    if (!userId) {
-      logger.error('[threadController] createReply error', { error: 'User ID not found in request context' });
-      return res.status(400).json({ error: 'User ID not found in request context' });
-    }
     if (!content) {
       logger.error('[threadController] createReply error', { error: 'Content is required' });
       return res.status(400).json({ error: 'Content is required' });
@@ -316,7 +364,4 @@ export const threadController = {
         .json({ error: 'Failed to accept answer', details: error instanceof Error ? error.message : error });
     }
   },
-
-  // Removed duplicate getThreadsByUnitWithAccess
-  // Removed duplicate getThreadsByUnitWithAccess
 };

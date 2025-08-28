@@ -121,6 +121,7 @@ Table VirtualClassroom {
   syllabusUrl String
   classAttendances ClassAttendance [not null]
   virtualClassroomStudents VirtualClassroomStudent [not null]
+  threads Thread [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
 }
@@ -207,6 +208,8 @@ Table Thread {
   id String [pk]
   title String
   content String [not null]
+  classroom VirtualClassroom
+  classroomId String
   unit Unit
   unitId String
   parent Thread
@@ -301,6 +304,8 @@ Ref: Assignment.classroomId > VirtualClassroom.id [delete: Cascade]
 Ref: AssignmentSubmission.assignmentId > Assignment.id [delete: Cascade]
 
 Ref: AssignmentSubmission.studentId > Student.id [delete: Cascade]
+
+Ref: Thread.classroomId > VirtualClassroom.id [delete: Cascade]
 
 Ref: Thread.unitId > Unit.id [delete: Cascade]
 
