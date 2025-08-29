@@ -55,8 +55,8 @@ export const threadService = {
       unitId?: string | null;
       threadStatus?: string;
       filters?: Record<string, any>;
-      userId?: string;
-    } = {},
+      userId: string;
+    },
   ) {
     try {
       logger.info('[threadService] getThreads started', { page, limit, ...options });

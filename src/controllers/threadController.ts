@@ -138,8 +138,8 @@ export const threadController = {
           filters[key] = req.query[key];
         }
       }
-  const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
-  return res.status(200).json(result);
+      const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
+      return res.status(200).json(result);
     } catch (error) {
       logger.error('[threadController] getThreadsByUnitWithAccess error', {
         error: error instanceof Error ? error.message : error,
@@ -231,6 +231,11 @@ export const threadController = {
     }
   },
   async getThreads(req: Request, res: Response) {
+    const userId = req.user?.id;
+    if (!userId) {
+      logger.error('[threadController] getThreads error', { error: 'User ID not found in request context' });
+      return res.status(400).json({ error: 'User ID not found in request context' });
+    }
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 10;
     const sortBy = req.query.sortBy as string | undefined;
@@ -252,7 +257,7 @@ export const threadController = {
     }
     try {
       logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
-      const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters });
+      const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
       logger.info('[threadController] getThreads success', { count: result.threads.length });
       res.status(200).json(result);
     } catch (error) {
@@ -270,44 +275,60 @@ export const threadController = {
     }
   },
   async getThreadWithReplies(req: Request, res: Response) {
+    const { id: threadId } = req.params;
     const userId = req.user?.id;
-    if (!userId) {
-      logger.error('[threadController] createThread error', { error: 'User ID not found in request context' });
-      return res.status(400).json({ error: 'User ID not found in request context' });
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+
+    if (!threadId) {
+      return res.status(400).json({ error: 'Thread ID is required' });
     }
-    const { classroomId, unitId } = req.body;
-    // Validate classroomId
-    if (!classroomId) {
-      return res.status(400).json({ error: 'classroomId is required' });
-    }
-    // Optionally validate unitId if present
-    const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (unitId && !uuidV4Regex.test(unitId)) {
-      return res.status(400).json({ error: 'Invalid unitId format. Must be a valid UUID.' });
-    }
-    if (classroomId && !uuidV4Regex.test(classroomId)) {
-      return res.status(400).json({ error: 'Invalid classroomId format. Must be a valid UUID.' });
-    }
-    // Membership validation can be added here if needed
+
     try {
-      logger.info('[threadController] createThread started', { userId, classroomId, unitId });
-      const thread = await threadService.createThread({ ...req.body, classroomId, unitId }, userId);
-      logger.info('[threadController] createThread success', { threadId: thread.id });
-      res.status(201).json(thread);
+      logger.info('[threadController] getThreadWithReplies started', { threadId, userId, page, limit });
+      const thread = await threadService.getThreadWithReplies(threadId, page, limit, userId);
+
+      if (!thread) {
+        return res.status(404).json({ error: 'Thread not found' });
+      }
+
+      logger.info('[threadController] getThreadWithReplies success', { threadId });
+      res.status(200).json(thread);
     } catch (error) {
-      logger.error('[threadController] createThread error', {
+      logger.error('[threadController] getThreadWithReplies error', {
         error: error instanceof Error ? error.message : error,
+        threadId,
         userId,
+        page,
+        limit,
       });
-      res
-        .status(500)
-        .json({ error: 'Failed to create thread', details: error instanceof Error ? error.message : error });
+      res.status(500).json({
+        error: 'Failed to fetch thread with replies',
+        details: error instanceof Error ? error.message : error,
+      });
     }
   },
+
+  async createReply(req: Request, res: Response) {
+    const userId = req.user?.id;
+    const { id: parentId } = req.params;
+    const { content } = req.body;
+
+    if (!userId) {
+      logger.error('[threadController] createReply error', { error: 'User ID not found in request context' });
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!parentId) {
+      logger.error('[threadController] createReply error', { error: 'Parent ID is required' });
+      return res.status(400).json({ error: 'Parent ID is required' });
+    }
+
     if (!content) {
       logger.error('[threadController] createReply error', { error: 'Content is required' });
       return res.status(400).json({ error: 'Content is required' });
     }
+
     try {
       logger.info('[threadController] createReply started', { parentId, userId });
       const reply = await threadService.createReply(parentId, content, userId);

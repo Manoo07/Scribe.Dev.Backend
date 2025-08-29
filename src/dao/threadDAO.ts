@@ -60,7 +60,7 @@ export const threadDAO = {
         createdAt: thread.createdAt,
         acceptedAnswerId: thread.acceptedAnswerId,
         repliesCount: thread.replies.length,
-        likesCount: thread.likes.length,
+        likesCount: thread.likes.filter((like) => like.isLiked).length,
       };
     } catch (error) {
       logger.error('[threadDAO] createThread error', {
@@ -79,8 +79,8 @@ export const threadDAO = {
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
       filters?: Record<string, any>;
-      userId?: string;
-    } = {},
+      userId: string;
+    },
   ) {
     try {
       logger.info('[threadDAO] getThreads started', { page, limit, ...options });
@@ -137,8 +137,8 @@ export const threadDAO = {
           createdAt: thread.createdAt,
           updatedAt: thread.updatedAt,
           repliesCount: thread.replies.length,
-          likesCount: thread.likes.length,
-          isLikedByMe: options.userId ? thread.likes.some((like) => like.userId === options.userId) : false,
+          likesCount: thread.likes.filter((like) => like.isLiked).length,
+          isLikedByMe: thread.likes.some((like) => like.userId === options.userId && like.isLiked),
         })),
         pagination: {
           total,
@@ -200,17 +200,17 @@ export const threadDAO = {
         threadStatus: thread.threadStatus,
         createdAt: thread.createdAt,
         acceptedAnswerId: thread.acceptedAnswerId,
-        likesCount: thread.likes.length,
-        isLikedByMe: userId ? thread.likes.some((like) => like.userId === userId) : false,
+        likesCount: thread.likes.filter((like) => like.isLiked).length,
+        isLikedByMe: userId ? thread.likes.some((like) => like.userId === userId && like.isLiked) : false,
         replies: {
           data: replies.map((reply) => ({
             id: reply.id,
             content: reply.content,
             user: reply.user ? { id: reply.user.id, name: reply.user.firstName + ' ' + reply.user.lastName } : null,
             createdAt: reply.createdAt,
-            likesCount: reply.likes.length,
+            likesCount: reply.likes.filter((like) => like.isLiked).length,
             isAccepted: thread.acceptedAnswerId === reply.id,
-            isLikedByMe: userId ? reply.likes.some((like) => like.userId === userId) : false,
+            isLikedByMe: userId ? reply.likes.some((like) => like.userId === userId && like.isLiked) : false,
           })),
           pagination: {
             total,
@@ -251,7 +251,7 @@ export const threadDAO = {
         content: reply.content,
         user: reply.user ? { id: reply.user.id, name: reply.user.firstName + ' ' + reply.user.lastName } : null,
         createdAt: reply.createdAt,
-        likesCount: reply.likes.length,
+        likesCount: reply.likes.filter((like) => like.isLiked).length,
         isAccepted: false,
       };
     } catch (error) {
@@ -267,6 +267,16 @@ export const threadDAO = {
   async acceptAnswer(threadId: string, replyId: string) {
     try {
       logger.info('[threadDAO] acceptAnswer started', { threadId, replyId });
+
+      // Validate UUID format for both threadId and replyId
+      const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidV4Regex.test(threadId)) {
+        throw new Error('Invalid threadId format. Must be a valid UUID.');
+      }
+      if (!uuidV4Regex.test(replyId)) {
+        throw new Error('Invalid replyId format. Must be a valid UUID.');
+      }
+
       // Only allow for main threads (parentId must be null)
       const mainThread = await prisma.thread.findUnique({ where: { id: threadId } });
       if (!mainThread || mainThread.parentId !== null) {

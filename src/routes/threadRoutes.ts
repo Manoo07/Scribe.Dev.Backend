@@ -63,7 +63,7 @@ threadRouter.patch('/:threadId', async (req, res) => {
 });
 
 // Like/unlike a thread
-threadRouter.post('/like/:threadId', authMiddleware, async (req, res) => {
+threadRouter.post('/like/:threadId', async (req, res) => {
   const { threadId } = req.params;
   req.body.threadId = threadId;
   req.body.replyId = undefined; // Ensure only thread like
