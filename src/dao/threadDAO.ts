@@ -117,6 +117,48 @@ export const threadDAO = {
         }
       }
 
+      // Status filter (resolved, unanswered, closed)
+      if (options.filters && options.filters.status) {
+        where.threadStatus = options.filters.status;
+      }
+
+      // Author filter
+      if (options.filters && options.filters.authorId) {
+        where.userId = options.filters.authorId;
+      }
+
+      // Date range filters
+      if (options.filters && options.filters.dateFrom) {
+        where.createdAt = {
+          ...where.createdAt,
+          gte: new Date(options.filters.dateFrom as string),
+        };
+      }
+      if (options.filters && options.filters.dateTo) {
+        where.createdAt = {
+          ...where.createdAt,
+          lte: new Date(options.filters.dateTo as string),
+        };
+      }
+
+      // Has replies filter
+      if (options.filters && options.filters.hasReplies !== undefined) {
+        if (options.filters.hasReplies === true) {
+          where.replies = { some: {} };
+        } else if (options.filters.hasReplies === false) {
+          where.replies = { none: {} };
+        }
+      }
+
+      // Has likes filter
+      if (options.filters && options.filters.hasLikes !== undefined) {
+        if (options.filters.hasLikes === true) {
+          where.likes = { some: { isLiked: true } };
+        } else if (options.filters.hasLikes === false) {
+          where.likes = { none: { isLiked: true } };
+        }
+      }
+
       // Default sort
       let orderBy: any = { createdAt: 'desc' };
       if (options.sortBy) {
@@ -126,7 +168,22 @@ export const threadDAO = {
           orderBy = [{ replies: { _count: options.sortOrder || 'desc' } }];
         } else if (options.sortBy === 'likesCount') {
           orderBy = [{ likes: { _count: options.sortOrder || 'desc' } }];
+        } else if (options.sortBy === 'title') {
+          orderBy = { title: options.sortOrder || 'asc' };
         }
+      }
+
+      // Enhanced sorting options based on UI requirements
+      if (options.sortBy === 'mostRecent') {
+        orderBy = { updatedAt: 'desc' };
+      } else if (options.sortBy === 'mostReplied') {
+        orderBy = [{ replies: { _count: 'desc' } }];
+      } else if (options.sortBy === 'newest') {
+        orderBy = { createdAt: 'desc' };
+      } else if (options.sortBy === 'mostLiked') {
+        orderBy = [{ likes: { _count: 'desc' } }];
+      } else if (options.sortBy === 'alphabetical') {
+        orderBy = { title: 'asc' };
       }
 
       logger.info('[threadDAO] getThreads - executing query with where clause', {
@@ -185,9 +242,18 @@ export const threadDAO = {
       throw error;
     }
   },
-  async getThreadWithReplies(threadId: string, page: number, limit: number, userId?: string) {
+  async getThreadWithReplies(
+    threadId: string,
+    page: number,
+    limit: number,
+    userId?: string,
+    options?: {
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    },
+  ) {
     try {
-      logger.info('[threadDAO] getThreadWithReplies started', { threadId, page, limit });
+      logger.info('[threadDAO] getThreadWithReplies started', { threadId, page, limit, ...options });
       // Fetch main thread
       const thread = await prisma.thread.findUnique({
         where: { id: threadId, parentId: null },
@@ -198,14 +264,37 @@ export const threadDAO = {
       });
       if (!thread) return null;
 
-      // Fetch paginated replies
+      // Determine sorting for replies
+      let orderBy: any = { createdAt: 'asc' }; // Default sorting
+
+      if (options?.sortBy) {
+        if (options.sortBy === 'mostRecent') {
+          orderBy = { updatedAt: options.sortOrder || 'desc' };
+        } else if (options.sortBy === 'mostReplied') {
+          // For replies, this would be most liked since replies can't have replies
+          orderBy = { likes: { _count: options.sortOrder || 'desc' } };
+        } else if (options.sortBy === 'newest') {
+          orderBy = { createdAt: options.sortOrder || 'desc' };
+        } else if (options.sortBy === 'mostLiked') {
+          orderBy = { likes: { _count: options.sortOrder || 'desc' } };
+        } else if (options.sortBy === 'alphabetical') {
+          // For replies, sort by content since they don't have titles
+          orderBy = { content: options.sortOrder || 'asc' };
+        } else if (options.sortBy === 'createdAt') {
+          orderBy = { createdAt: options.sortOrder || 'desc' };
+        } else if (options.sortBy === 'updatedAt') {
+          orderBy = { updatedAt: options.sortOrder || 'desc' };
+        }
+      }
+
+      // Fetch paginated replies with sorting
       const skip = (page - 1) * limit;
       const [replies, total] = await Promise.all([
         prisma.thread.findMany({
           where: { parentId: threadId },
           skip,
           take: limit,
-          orderBy: { createdAt: 'asc' },
+          orderBy,
           include: {
             user: true,
             likes: true,
@@ -213,11 +302,6 @@ export const threadDAO = {
         }),
         prisma.thread.count({ where: { parentId: threadId } }),
       ]);
-
-      // Get userId from arguments if passed (threadDAO.getThreadWithReplies(threadId, page, limit, userId))
-      // This is a hack since the method signature doesn't have userId, but we can add it if needed
-      // For now, try to get from arguments[3]
-      const userId = arguments[3];
 
       logger.info('[threadDAO] getThreadWithReplies success', { threadId, repliesCount: replies.length });
       return {

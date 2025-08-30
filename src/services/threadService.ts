@@ -87,10 +87,25 @@ export const threadService = {
       throw error;
     }
   },
-  async getThreadWithReplies(threadId: string, page: number, limit: number, userId?: string) {
+  async getThreadWithReplies(
+    threadId: string,
+    page: number,
+    limit: number,
+    userId?: string,
+    options?: {
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    },
+  ) {
     try {
-      logger.info('[threadService] getThreadWithReplies started', { threadId, page, limit, userId });
-      const result = await threadDAO.getThreadWithReplies(threadId, page, limit, userId);
+      logger.info('[threadService] getThreadWithReplies started', {
+        threadId,
+        page,
+        limit,
+        userId,
+        ...options,
+      });
+      const result = await threadDAO.getThreadWithReplies(threadId, page, limit, userId, options);
       logger.info('[threadService] getThreadWithReplies success', { found: !!result });
       return result;
     } catch (error) {
@@ -100,6 +115,7 @@ export const threadService = {
         page,
         limit,
         userId,
+        ...options,
       });
       throw error;
     }

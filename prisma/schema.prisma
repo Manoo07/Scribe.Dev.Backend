@@ -238,7 +238,6 @@ model AssignmentSubmission {
   assignmentId String     @db.Uuid
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String     @db.Uuid
-  content      String
   submittedAt  DateTime   @default(now())
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
