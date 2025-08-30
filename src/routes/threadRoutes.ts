@@ -6,13 +6,12 @@
 // Get threads for a unit (with classroom membership restriction)
 
 import { threadController } from '@controllers/threadController';
-import { authMiddleware } from '@middleware/authMiddleware';
 import { logger } from '@services/logService';
 import { Router } from 'express';
 
 const threadRouter = Router();
 // Delete a thread or comment
-threadRouter.delete('/:threadId', authMiddleware, async (req, res) => {
+threadRouter.delete('/:threadId', async (req, res) => {
   logger.info('[threadRoutes] DELETE /:threadId - deleteThreadOrComment route hit', { threadId: req.params.threadId });
   await threadController.deleteThreadOrComment(req, res);
 });
