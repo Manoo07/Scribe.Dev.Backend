@@ -247,18 +247,42 @@ export const threadController = {
         filters[key] = req.query[key];
       }
     }
-    // If unitId is not present in query, fetch threads with null unitId
-    if (!('unitId' in req.query)) {
-      filters.unitId = 'none';
-    }
-    // If classroomId is present in query, filter by classroomId
+    // Clear separation of concerns:
+    // 1. If classroomId is specified: fetch only threads for that specific classroom
+    // 2. If no classroomId: fetch only global threads (classroomId = null, parentId = null)
     if ('classroomId' in req.query) {
       filters.classroomId = req.query.classroomId;
+      // When filtering by classroom, we want all threads in that classroom (both with and without unitId)
+      logger.info('[threadController] getThreads - classroomId filter applied', {
+        classroomId: req.query.classroomId,
+        filters,
+      });
+    } else {
+      // Global threads: only threads with null classroomId and null parentId
+      filters.classroomId = 'global';
+      logger.info('[threadController] getThreads - global threads filter applied', { filters });
+    }
+
+    // Unit filter only applies when not filtering by classroom
+    if (!('classroomId' in req.query) && !('unitId' in req.query)) {
+      filters.unitId = 'none';
     }
     try {
-      logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
+      const filterType = filters.classroomId === 'global' ? 'Global Threads' : 'Classroom-Specific Threads';
+      logger.info('[threadController] getThreads started', {
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+        filters,
+        filterType,
+      });
       const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
-      logger.info('[threadController] getThreads success', { count: result.threads.length });
+      logger.info('[threadController] getThreads success', {
+        count: result.threads.length,
+        total: result.pagination.total,
+        filterType,
+      });
       res.status(200).json(result);
     } catch (error) {
       logger.error('[threadController] getThreads error', {

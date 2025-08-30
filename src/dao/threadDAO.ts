@@ -87,11 +87,28 @@ export const threadDAO = {
       const skip = (page - 1) * limit;
       // Always filter for main threads
       const where: any = { parentId: null };
-      // Classroom filter
+      // Clear separation of concerns implementation:
+      // 1. Global threads: classroomId = null AND parentId = null
+      // 2. Classroom-specific threads: specific classroomId
       if (options.filters && options.filters.classroomId) {
-        where.classroomId = options.filters.classroomId;
+        if (options.filters.classroomId === 'global') {
+          // Global threads: only threads with null classroomId and null parentId
+          where.classroomId = null;
+          where.parentId = null;
+          logger.info('[threadDAO] getThreads - applying global threads filter', {
+            whereCondition: where,
+          });
+        } else {
+          // Classroom-specific threads: specific classroomId
+          where.classroomId = options.filters.classroomId;
+          logger.info('[threadDAO] getThreads - applying classroom filter', {
+            classroomId: options.filters.classroomId,
+            whereCondition: where,
+          });
+        }
       }
-      // Unit filter
+
+      // Unit filter only applies to global threads or when explicitly requested
       if (options.filters && options.filters.unitId) {
         if (options.filters.unitId === 'none') {
           where.unitId = null;
@@ -112,6 +129,13 @@ export const threadDAO = {
         }
       }
 
+      logger.info('[threadDAO] getThreads - executing query with where clause', {
+        where,
+        skip,
+        limit,
+        filterType: options.filters?.classroomId === 'global' ? 'Global Threads' : 'Classroom-Specific Threads',
+      });
+
       const [threads, total] = await Promise.all([
         prisma.thread.findMany({
           where,
@@ -126,7 +150,11 @@ export const threadDAO = {
         }),
         prisma.thread.count({ where }),
       ]);
-      logger.info('[threadDAO] getThreads success', { count: threads.length });
+      logger.info('[threadDAO] getThreads success', {
+        count: threads.length,
+        total,
+        filterType: options.filters?.classroomId === 'global' ? 'Global Threads' : 'Classroom-Specific Threads',
+      });
       return {
         threads: threads.map((thread) => ({
           id: thread.id,
