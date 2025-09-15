@@ -18,6 +18,40 @@ import { Request, Response } from 'express';
 const prisma = new PrismaClient();
 
 class AuthController {
+  me = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(HTTP_STATUS_UNAUTHORIZED).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Fetch user basic info
+      const user = await (
+        await import('@dao/userDAO')
+      ).default.get({
+        filter: { id: userId },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      if (!user) {
+        res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'User not found' });
+        return;
+      }
+
+      // Fetch user role
+      const userRole = await (await import('@dao/userRole')).userRoleDAO.getUserRole(userId);
+      const role = userRole?.role || 'UNKNOWN';
+
+      res.status(HTTP_STATUS_OK).json({
+        id: user.id,
+        role,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+      });
+    } catch (err: any) {
+      logger.error('[AuthController] Error in /me:', err);
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch user info' });
+    }
+  };
   private authService: AuthService;
 
   constructor() {
