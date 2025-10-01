@@ -251,7 +251,7 @@ model Assignment {
   updatedAt             DateTime               @updatedAt
   faculty               User                   @relation("FacultyAssignments", fields: [facultyId], references: [id])
   facultyId             String                 @db.Uuid
-  resourceUrl           String?                // For faculty-uploaded resources (e.g., question files)
+  questionFileUrl           String?                // For faculty-uploaded resources (e.g., question files)
 
   @@index([classroomId])
 }
@@ -263,7 +263,7 @@ model AssignmentSubmission {
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String     @db.Uuid
   content      String
-  fileUrl      String?    // For student-uploaded assignment file
+  SubmissionFileUrl      String?    // For student-uploaded assignment file
   status       SubmissionStatus @default(PENDING)
   facultyComment String?  
   submittedAt  DateTime   @default(now())
