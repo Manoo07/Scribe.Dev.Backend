@@ -1,7 +1,6 @@
-import { PrismaClient, ThreadStatus } from '@prisma/client';
+import { ThreadStatus } from '@prisma/client';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 export const threadDAO = {
   async deleteThreadOrComment(threadId: string, userId: string) {

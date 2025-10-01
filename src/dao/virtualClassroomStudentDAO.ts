@@ -1,8 +1,7 @@
-import { Prisma, PrismaClient, VirtualClassroomStudent } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { logger } from '@services/logService';
 import { GetVirtualClassroomStudentsParams, VirtualClassroomStudentParams } from 'types/express';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const VirtualClassroomStudentDAO = {
   create: async (data: VirtualClassroomStudentParams, prismaInstance?: Prisma.TransactionClient) => {

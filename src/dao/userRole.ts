@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 export const userRoleDAO = {
   async getUserRole(userId: string) {

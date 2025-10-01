@@ -236,98 +236,29 @@ export const threadController = {
       logger.error('[threadController] getThreads error', { error: 'User ID not found in request context' });
       return res.status(400).json({ error: 'User ID not found in request context' });
     }
-
-    // Pagination parameters
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 10;
-
-    // Sorting parameters
     const sortBy = req.query.sortBy as string | undefined;
     const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || undefined;
-
-    // Enhanced filter parameters
-    const filters: Record<string, any> = {};
-
     // Build filters object from all query params except pagination/sort
+    const filters: Record<string, any> = {};
     for (const key in req.query) {
       if (!['page', 'limit', 'sortBy', 'sortOrder'].includes(key)) {
         filters[key] = req.query[key];
       }
     }
-
-    // Status filters (resolved, unanswered, open)
-    if (req.query.status) {
-      filters.status = req.query.status;
-    }
-
-    // Has replies filter
-    if (req.query.hasReplies === 'true') {
-      filters.hasReplies = true;
-    } else if (req.query.hasReplies === 'false') {
-      filters.hasReplies = false;
-    }
-
-    // Has likes filter
-    if (req.query.hasLikes === 'true') {
-      filters.hasLikes = true;
-    } else if (req.query.hasLikes === 'false') {
-      filters.hasLikes = false;
-    }
-
-    // Author filter
-    if (req.query.authorId) {
-      filters.authorId = req.query.authorId;
-    }
-
-    // Date range filters
-    if (req.query.dateFrom) {
-      filters.dateFrom = req.query.dateFrom;
-    }
-    if (req.query.dateTo) {
-      filters.dateTo = req.query.dateTo;
-    }
-
-    // Clear separation of concerns:
-    // 1. If classroomId is specified: fetch only threads for that specific classroom
-    // 2. If no classroomId: fetch only global threads (classroomId = null, parentId = null)
-    if ('classroomId' in req.query) {
-      filters.classroomId = req.query.classroomId;
-      // When filtering by classroom, we want all threads in that classroom (both with and without unitId)
-      logger.info('[threadController] getThreads - classroomId filter applied', {
-        classroomId: req.query.classroomId,
-        filters,
-      });
-    } else {
-      // Global threads: only threads with null classroomId and null parentId
-      filters.classroomId = 'global';
-      logger.info('[threadController] getThreads - global threads filter applied', { filters });
-    }
-
-    // Unit filter only applies when not filtering by classroom
-    if (!('classroomId' in req.query) && !('unitId' in req.query)) {
+    // If unitId is not present in query, fetch threads with null unitId
+    if (!('unitId' in req.query)) {
       filters.unitId = 'none';
     }
-
+    // If classroomId is present in query, filter by classroomId
+    if ('classroomId' in req.query) {
+      filters.classroomId = req.query.classroomId;
+    }
     try {
-      const filterType = filters.classroomId === 'global' ? 'Global Threads' : 'Classroom-Specific Threads';
-
-      logger.info('[threadController] getThreads started', {
-        page,
-        limit,
-        sortBy,
-        sortOrder,
-        filters,
-        filterType,
-      });
-
+      logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
       const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
-
-      logger.info('[threadController] getThreads success', {
-        count: result.threads.length,
-        total: result.pagination.total,
-        filterType,
-      });
-
+      logger.info('[threadController] getThreads success', { count: result.threads.length });
       res.status(200).json(result);
     } catch (error) {
       logger.error('[threadController] getThreads error', {
@@ -349,28 +280,13 @@ export const threadController = {
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 10;
 
-    // Sorting parameters for replies
-    const sortBy = req.query.sortBy as string | undefined;
-    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || undefined;
-
     if (!threadId) {
       return res.status(400).json({ error: 'Thread ID is required' });
     }
 
     try {
-      logger.info('[threadController] getThreadWithReplies started', {
-        threadId,
-        userId,
-        page,
-        limit,
-        sortBy,
-        sortOrder,
-      });
-
-      const thread = await threadService.getThreadWithReplies(threadId, page, limit, userId, {
-        sortBy,
-        sortOrder,
-      });
+      logger.info('[threadController] getThreadWithReplies started', { threadId, userId, page, limit });
+      const thread = await threadService.getThreadWithReplies(threadId, page, limit, userId);
 
       if (!thread) {
         return res.status(404).json({ error: 'Thread not found' });
@@ -385,8 +301,6 @@ export const threadController = {
         userId,
         page,
         limit,
-        sortBy,
-        sortOrder,
       });
       res.status(500).json({
         error: 'Failed to fetch thread with replies',

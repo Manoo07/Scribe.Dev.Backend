@@ -1,10 +1,9 @@
-import { Prisma, PrismaClient, VirtualClassroom } from '@prisma/client';
+import { Prisma, VirtualClassroom } from '@prisma/client';
 import { logger } from '@services/logService';
 import { CreateVirtualClassroomParams } from '@services/virtualClassroomService';
 import { defaultInclude } from '@utils/prismaIncludes';
+import prisma from '../prisma/prismaClient';
 import VirtualClassroomStudentDAO from './virtualClassroomStudentDAO';
-
-const prisma = new PrismaClient();
 
 export const VirtualClassroomDAO = {
   create: async (data: CreateVirtualClassroomParams) => {
