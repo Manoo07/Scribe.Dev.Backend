@@ -263,7 +263,7 @@ model AssignmentSubmission {
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String     @db.Uuid
   content      String
-  SubmissionFileUrl      String?    // For student-uploaded assignment file
+  submissionFileUrl      String?    // For student-uploaded assignment file
   status       SubmissionStatus @default(PENDING)
   facultyComment String?  
   submittedAt  DateTime   @default(now())
