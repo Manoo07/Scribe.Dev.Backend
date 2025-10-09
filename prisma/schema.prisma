@@ -32,10 +32,30 @@ model User {
   resetToken       String?
   resetTokenExpiry BigInt?
   activeToken      String?
+  createdAssignments Assignment[]  @relation("FacultyAssignments") // assignments created by this user (if faculty)
 
   @@index([email])
   @@index([collegeId])
 }
+
+
+
+enum AssignmentStatus {
+OPEN
+PENDING
+COMPLETED
+}
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  OVERDUE
+ 
+  ACCEPTED
+  REJECTED
+  
+}
+
 
 model Student {
   id                       String                    @id @default(uuid()) @db.Uuid
@@ -223,11 +243,15 @@ model Assignment {
   title                 String
   content               String
   deadline              DateTime
+  status                AssignmentStatus       @default(OPEN)
   classroom             VirtualClassroom       @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   classroomId           String                 @db.Uuid
   assignmentSubmissions AssignmentSubmission[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  faculty               User                   @relation("FacultyAssignments", fields: [facultyId], references: [id])
+  facultyId             String                 @db.Uuid
+  questionFileUrl           String?                // For faculty-uploaded resources (e.g., question files)
 
   @@index([classroomId])
 }
@@ -238,6 +262,10 @@ model AssignmentSubmission {
   assignmentId String     @db.Uuid
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId    String     @db.Uuid
+  content      String
+  submissionFileUrl      String?    // For student-uploaded assignment file
+  status       SubmissionStatus @default(PENDING)
+  facultyComment String?  
   submittedAt  DateTime   @default(now())
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
