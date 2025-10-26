@@ -41,16 +41,16 @@ model User {
 
 
 enum AssignmentStatus {
-OPEN
-PENDING
-COMPLETED
+  OPEN
+  PENDING
+  COMPLETED
 }
 
 enum SubmissionStatus {
   PENDING
   SUBMITTED
   OVERDUE
- 
+
   ACCEPTED
   REJECTED
   
@@ -241,7 +241,10 @@ model ClassAttendance {
 model Assignment {
   id                    String                 @id @default(uuid()) @db.Uuid
   title                 String
-  content               String
+  description           String?
+  content               AssignmentContent
+  noteContent           String? // markdown content when `content` is NOTE
+  questionFileUrl       String? // file URL when `content` is QUESTION_FILE
   deadline              DateTime
   status                AssignmentStatus       @default(OPEN)
   classroom             VirtualClassroom       @relation(fields: [classroomId], references: [id], onDelete: Cascade)
@@ -251,9 +254,13 @@ model Assignment {
   updatedAt             DateTime               @updatedAt
   faculty               User                   @relation("FacultyAssignments", fields: [facultyId], references: [id])
   facultyId             String                 @db.Uuid
-  questionFileUrl           String?                // For faculty-uploaded resources (e.g., question files)
 
   @@index([classroomId])
+}
+
+enum AssignmentContent {
+  NOTE
+  QUESTION_FILE
 }
 
 model AssignmentSubmission {

@@ -184,7 +184,10 @@ Table ClassAttendance {
 Table Assignment {
   id String [pk]
   title String [not null]
-  content String [not null]
+  description String
+  content AssignmentContent [not null]
+  noteContent String
+  questionFileUrl String
   deadline DateTime [not null]
   status AssignmentStatus [not null, default: 'OPEN']
   classroom VirtualClassroom [not null]
@@ -194,7 +197,6 @@ Table Assignment {
   updatedAt DateTime [not null]
   faculty User [not null]
   facultyId String [not null]
-  questionFileUrl String
 }
 
 Table AssignmentSubmission {
@@ -275,6 +277,11 @@ Enum ContentType {
   LINK
   VIDEO
   DOCUMENT
+}
+
+Enum AssignmentContent {
+  NOTE
+  QUESTION_FILE
 }
 
 Enum ThreadStatus {
