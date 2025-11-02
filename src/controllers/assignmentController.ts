@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import AssignmentService from '../services/assignmentService';
 import { logger } from '../services/logService';
-import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from '@constants/constants';
+import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_CREATED, HTTP_STATUS_FORBIDDEN, HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from '@constants/constants';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 
@@ -356,7 +356,10 @@ export const updateSubmissionHandler = async (req: Request, res: Response): Prom
     }
     const result = await assignmentService.updateSubmission(submissionId, studentUserId, fileUrl);
     if (result.error) {
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: result.error });
+      const statusCode = result.error.includes('Cannot edit a reviewed submission') || result.error.includes('Forbidden') 
+        ? HTTP_STATUS_FORBIDDEN 
+        : HTTP_STATUS_INTERNAL_SERVER_ERROR;
+      res.status(statusCode).json({ error: result.error });
       return;
     }
     res.json(result.updated);
@@ -401,7 +404,10 @@ export const deleteSubmissionHandler = async (req: Request, res: Response): Prom
     const { submissionId } = req.params;
     const result = await assignmentService.deleteSubmission(submissionId, studentUserId);
     if (result.error) {
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: result.error });
+      const statusCode = result.error.includes('Cannot delete a reviewed submission') || result.error.includes('Forbidden')
+        ? HTTP_STATUS_FORBIDDEN 
+        : HTTP_STATUS_INTERNAL_SERVER_ERROR;
+      res.status(statusCode).json({ error: result.error });
       return;
     }
     res.status(HTTP_STATUS_OK).json({ success: true });

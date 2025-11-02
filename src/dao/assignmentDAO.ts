@@ -173,6 +173,10 @@ const AssignmentDAO = {
       const student = await prisma.student.findUnique({ where: { userId: studentId } });
       if (!student) throw new Error('Student not found');
       if (existing.studentId !== student.id) throw new Error('Forbidden');
+      
+      if (existing.status === 'ACCEPTED' || existing.status === 'REJECTED') {
+        throw new Error('Cannot edit a reviewed submission');
+      }
       const assignment = await prisma.assignment.findUnique({ where: { id: existing.assignmentId } });
       const submittedAt = new Date();
       const status = assignment && assignment.deadline && submittedAt <= assignment.deadline ? 'SUBMITTED' : 'OVERDUE';
