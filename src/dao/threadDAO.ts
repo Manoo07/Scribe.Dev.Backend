@@ -27,10 +27,12 @@ export const threadDAO = {
     const updated = await prisma.thread.update({ where: { id: threadId }, data: updateData });
     return updated;
   },
+
   async getThreadById(threadId: string) {
     // Used for ownership validation in acceptAnswer
     return await prisma.thread.findUnique({ where: { id: threadId } });
   },
+
   async createThread(data: any) {
     const { title, content, classroomId, unitId, userId } = data;
     try {
@@ -64,7 +66,7 @@ export const threadDAO = {
       };
     } catch (error) {
       logger.error('[threadDAO] createThread error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         userId,
         classroomId,
         unitId,
@@ -161,33 +163,31 @@ export const threadDAO = {
 
       // Sorting logic with all options consolidated
       let orderBy: any = { createdAt: 'desc' }; // Default
-      if (options.sortBy) {
-        switch (options.sortBy) {
-          case 'createdAt':
-          case 'updatedAt':
-            orderBy = { [options.sortBy]: options.sortOrder || 'desc' };
-            break;
-          case 'repliesCount':
-          case 'mostReplied':
-            orderBy = [{ replies: { _count: options.sortOrder || 'desc' } }];
-            break;
-          case 'likesCount':
-          case 'mostLiked':
-            orderBy = [{ likes: { _count: options.sortOrder || 'desc' } }];
-            break;
-          case 'title':
-          case 'alphabetical':
-            orderBy = { title: options.sortOrder || 'asc' };
-            break;
-          case 'mostRecent':
-            orderBy = { updatedAt: 'desc' };
-            break;
-          case 'newest':
-            orderBy = { createdAt: 'desc' };
-            break;
-          default:
-            orderBy = { createdAt: 'desc' };
-        }
+      switch (options.sortBy) {
+        case 'createdAt':
+        case 'updatedAt':
+          orderBy = { [options.sortBy]: options.sortOrder || 'desc' };
+          break;
+        case 'repliesCount':
+        case 'mostReplied':
+          orderBy = [{ replies: { _count: options.sortOrder || 'desc' } }];
+          break;
+        case 'likesCount':
+        case 'mostLiked':
+          orderBy = [{ likes: { _count: options.sortOrder || 'desc' } }];
+          break;
+        case 'title':
+        case 'alphabetical':
+          orderBy = { title: options.sortOrder || 'asc' };
+          break;
+        case 'mostRecent':
+          orderBy = { updatedAt: 'desc' };
+          break;
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+        default:
+          orderBy = { createdAt: 'desc' };
       }
 
       logger.info('[threadDAO] getThreads - executing query with where clause', {
@@ -238,7 +238,7 @@ export const threadDAO = {
       };
     } catch (error) {
       logger.error('[threadDAO] getThreads error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         page,
         limit,
         ...options,
@@ -246,6 +246,7 @@ export const threadDAO = {
       throw error;
     }
   },
+
   async getThreadWithReplies(
     threadId: string,
     page: number,
@@ -258,6 +259,7 @@ export const threadDAO = {
   ) {
     try {
       logger.info('[threadDAO] getThreadWithReplies started', { threadId, page, limit, ...options });
+
       // Fetch main thread
       const thread = await prisma.thread.findUnique({
         where: { id: threadId, parentId: null },
@@ -322,7 +324,7 @@ export const threadDAO = {
           data: replies.map((reply) => ({
             id: reply.id,
             content: reply.content,
-            user: reply.user ? { id: reply.user.id, name: reply.user.firstName + ' ' + reply.user.lastName } : null,
+            user: reply.user ? { id: reply.user.id, name: reply.user.firstName + ' ' + thread.user.lastName } : null,
             createdAt: reply.createdAt,
             likesCount: reply.likes.filter((like) => like.isLiked).length,
             isAccepted: thread.acceptedAnswerId === reply.id,
@@ -338,7 +340,7 @@ export const threadDAO = {
       };
     } catch (error) {
       logger.error('[threadDAO] getThreadWithReplies error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         threadId,
         page,
         limit,
@@ -372,7 +374,7 @@ export const threadDAO = {
       };
     } catch (error) {
       logger.error('[threadDAO] createReply error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         parentId,
         userId,
       });
@@ -422,7 +424,7 @@ export const threadDAO = {
       return updated;
     } catch (error) {
       logger.error('[threadDAO] acceptAnswer error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         threadId,
         replyId,
       });

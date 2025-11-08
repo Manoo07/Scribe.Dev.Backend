@@ -223,13 +223,13 @@ export const threadController = {
         }
       } catch (error) {
         logger.error('[threadController] createThread - Classroom membership validation error', {
-          error: error instanceof Error ? error.message : error,
+          error: error instanceof Error ? error.message : String(error),
           userId,
           unitId,
         });
         return res.status(500).json({
           error: 'Failed to validate classroom membership',
-          details: error instanceof Error ? error.message : error,
+          details: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -241,12 +241,12 @@ export const threadController = {
       res.status(201).json(thread);
     } catch (error) {
       logger.error('[threadController] createThread error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         userId,
       });
       res.status(500).json({ 
         error: 'Failed to create thread', 
-        details: error instanceof Error ? error.message : error 
+        details: error instanceof Error ? error.message : String(error) 
       });
     }
   },
@@ -264,6 +264,8 @@ export const threadController = {
     
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 10;
+
+    // Sorting parameters
     const sortBy = req.query.sortBy as string | undefined;
     const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || undefined;
     
@@ -333,7 +335,7 @@ export const threadController = {
       res.status(200).json(thread);
     } catch (error) {
       logger.error('[threadController] getThreadWithReplies error', {
-        error: error instanceof Error ? error.message : error,
+        error: error instanceof Error ? error.message : String(error),
         threadId,
         userId,
         page,
@@ -341,7 +343,7 @@ export const threadController = {
       });
       res.status(500).json({
         error: 'Failed to fetch thread with replies',
-        details: error instanceof Error ? error.message : error,
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   },
@@ -368,6 +370,7 @@ export const threadController = {
       logger.error('[threadController] createReply - Content missing');
       return res.status(400).json({ error: 'Content is required' });
     }
+
 
     try {
       logger.info('[threadController] createReply started', { parentId, userId });
