@@ -9,13 +9,11 @@ import { SignupParams } from '@customTypes/user';
 import CollegeDAO from '@dao/collegeDAO';
 import DepartmentDAO from '@dao/departmentDAO';
 import SectionDAO from '@dao/sectionDAO';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { logger } from '@services/logService';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { ErrorResponse } from 'types/express';
-
-const prisma = new PrismaClient();
 
 export function generateResetToken() {
   logger.info('[AuthUtils] Generating reset token');

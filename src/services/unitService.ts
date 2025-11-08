@@ -1,9 +1,6 @@
-import { PrismaClient, Unit } from '@prisma/client';
 import UnitDAO from '@dao/unitDAO';
+import { Unit } from '@prisma/client';
 import { logger } from '../services/logService';
-import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
-
-const prisma = new PrismaClient();
 
 class UnitService {
   public async create(params: {

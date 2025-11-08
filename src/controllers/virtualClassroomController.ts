@@ -12,7 +12,6 @@ import SectionDAO from '@dao/sectionDAO';
 import studentDAO from '@dao/studentDAO';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '@services/logService';
 import { VirtualClassroomService } from '@services/virtualClassroomService';
 import { validateFilter } from '@utils/prismaFilters';
@@ -25,16 +24,14 @@ import { studentSelectFields, virtualClassroomStudentSelectFields } from '@utils
 import { validateFields } from '@utils/validations/virtualClassroom.schema';
 import { Request, Response } from 'express';
 import { EnrolledStudents, Student, StudentWithUser, VirtualClassroomParams } from 'types/express';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 export class VirtualClassroomController {
   virtualClassroomService: VirtualClassroomService;
-  prisma: PrismaClient;
+  prisma = prisma;
 
   constructor() {
     this.virtualClassroomService = new VirtualClassroomService();
-    this.prisma = new PrismaClient();
   }
 
   createClassroom = async (req: Request, res: Response) => {
@@ -389,7 +386,7 @@ export class VirtualClassroomController {
     }
   };
 
-  update=async (req: Request, res: Response) => {
+  update = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] Update classroom started');
     try {
       const { id } = req.params;
@@ -423,7 +420,8 @@ export class VirtualClassroomController {
         message: 'Failed to update virtual classroom',
         error: (error as Error).message,
       });
-    }}
+    }
+  };
 
   deleteClassroom = async (req: Request, res: Response) => {
     logger.info('[VirtualClassroomController] Delete classroom');

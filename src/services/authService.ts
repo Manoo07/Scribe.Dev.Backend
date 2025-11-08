@@ -13,7 +13,6 @@ import {
 import { SignupParams } from '@customTypes/user';
 import UserDAO from '@dao/userDAO';
 import { userRoleDAO } from '@dao/userRole';
-import { PrismaClient } from '@prisma/client';
 import { sendResetEmail } from '@services/emailService';
 import { logger } from '@services/logService';
 import { generateResetToken, validateSignupParams } from '@utils/authUtil';
@@ -22,13 +21,10 @@ import { generateToken } from '@utils/jwtUtil';
 import { generateUsername } from '@utils/userUtils';
 import crypto from 'crypto';
 import { ErrorResponse, SignupResult } from 'types/express';
+import prisma from '../prisma/prismaClient';
 
 class AuthService {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
+  private prisma = prisma;
 
   public async signup(params: SignupParams): Promise<SignupResult> {
     const { firstName, lastName, username, email, password, collegeId, role, departmentId, sectionId, specialization } =

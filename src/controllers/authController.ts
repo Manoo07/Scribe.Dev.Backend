@@ -9,13 +9,10 @@ import {
   PRISMA_UNIQUE_CONSTRAINT_VIOLATION,
   USER_NOT_FOUND_ERROR,
 } from '@constants/constants';
-import { PrismaClient } from '@prisma/client';
 import AuthService from '@services/authService';
 import { logger } from '@services/logService';
 import { checkMissingFields } from '@utils/authUtil';
 import { Request, Response } from 'express';
-
-const prisma = new PrismaClient();
 
 class AuthController {
   me = async (req: Request, res: Response) => {
