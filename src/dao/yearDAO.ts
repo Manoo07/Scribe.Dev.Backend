@@ -1,7 +1,6 @@
-import { PrismaClient, Year } from '@prisma/client';
+import { Year } from '@prisma/client';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const YearDAO = {
   async createYear(data: { name: string; departmentId: string }): Promise<Year> {

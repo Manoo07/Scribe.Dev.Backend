@@ -1,7 +1,6 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const FacultyDAO = {
   getAllFaculties: async () => {

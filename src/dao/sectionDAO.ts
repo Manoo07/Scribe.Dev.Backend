@@ -1,7 +1,6 @@
-import { PrismaClient, Section } from '@prisma/client';
+import { Section } from '@prisma/client';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const SectionDAO = {
   createSection: async (data: { name: string; yearId: string }): Promise<Section> => {
