@@ -1,5 +1,6 @@
 import { ThreadStatus } from '@prisma/client';
 import { logger } from '@services/logService';
+import { isValidUUID } from '@utils/validators';
 import prisma from '../prisma/prismaClient';
 
 export const threadDAO = {
@@ -158,31 +159,35 @@ export const threadDAO = {
         }
       }
 
-      // Default sort
-      let orderBy: any = { createdAt: 'desc' };
+      // Sorting logic with all options consolidated
+      let orderBy: any = { createdAt: 'desc' }; // Default
       if (options.sortBy) {
-        if (['createdAt', 'updatedAt'].includes(options.sortBy)) {
-          orderBy = { [options.sortBy]: options.sortOrder || 'desc' };
-        } else if (options.sortBy === 'repliesCount') {
-          orderBy = [{ replies: { _count: options.sortOrder || 'desc' } }];
-        } else if (options.sortBy === 'likesCount') {
-          orderBy = [{ likes: { _count: options.sortOrder || 'desc' } }];
-        } else if (options.sortBy === 'title') {
-          orderBy = { title: options.sortOrder || 'asc' };
+        switch (options.sortBy) {
+          case 'createdAt':
+          case 'updatedAt':
+            orderBy = { [options.sortBy]: options.sortOrder || 'desc' };
+            break;
+          case 'repliesCount':
+          case 'mostReplied':
+            orderBy = [{ replies: { _count: options.sortOrder || 'desc' } }];
+            break;
+          case 'likesCount':
+          case 'mostLiked':
+            orderBy = [{ likes: { _count: options.sortOrder || 'desc' } }];
+            break;
+          case 'title':
+          case 'alphabetical':
+            orderBy = { title: options.sortOrder || 'asc' };
+            break;
+          case 'mostRecent':
+            orderBy = { updatedAt: 'desc' };
+            break;
+          case 'newest':
+            orderBy = { createdAt: 'desc' };
+            break;
+          default:
+            orderBy = { createdAt: 'desc' };
         }
-      }
-
-      // Enhanced sorting options based on UI requirements
-      if (options.sortBy === 'mostRecent') {
-        orderBy = { updatedAt: 'desc' };
-      } else if (options.sortBy === 'mostReplied') {
-        orderBy = [{ replies: { _count: 'desc' } }];
-      } else if (options.sortBy === 'newest') {
-        orderBy = { createdAt: 'desc' };
-      } else if (options.sortBy === 'mostLiked') {
-        orderBy = [{ likes: { _count: 'desc' } }];
-      } else if (options.sortBy === 'alphabetical') {
-        orderBy = { title: 'asc' };
       }
 
       logger.info('[threadDAO] getThreads - executing query with where clause', {
@@ -380,11 +385,10 @@ export const threadDAO = {
       logger.info('[threadDAO] acceptAnswer started', { threadId, replyId });
 
       // Validate UUID format for both threadId and replyId
-      const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidV4Regex.test(threadId)) {
+      if (!isValidUUID(threadId)) {
         throw new Error('Invalid threadId format. Must be a valid UUID.');
       }
-      if (!uuidV4Regex.test(replyId)) {
+      if (!isValidUUID(replyId)) {
         throw new Error('Invalid replyId format. Must be a valid UUID.');
       }
 
@@ -394,20 +398,27 @@ export const threadDAO = {
         logger.warn('[threadDAO] acceptAnswer failed: not a main thread', { threadId });
         return null;
       }
+
       let newAcceptedAnswerId: string | null = replyId;
       let newStatus: ThreadStatus = ThreadStatus.RESOLVED;
-      // If already accepted, toggle to null
+
+      // If already accepted, toggle to null (unmark)
       if (mainThread.acceptedAnswerId === replyId) {
         newAcceptedAnswerId = null;
         newStatus = ThreadStatus.UNANSWERED;
       }
+
       const updated = await prisma.thread.update({
         where: { id: threadId },
         data: { acceptedAnswerId: newAcceptedAnswerId, threadStatus: newStatus },
       });
-      logger.info(
-        `[threadDAO] acceptAnswer success, threadId=${threadId}, replyId=${replyId}, toggled=${mainThread.acceptedAnswerId === replyId}`,
-      );
+
+      logger.info('[threadDAO] acceptAnswer success', {
+        threadId,
+        replyId,
+        action: mainThread.acceptedAnswerId === replyId ? 'unmarked' : 'accepted',
+      });
+
       return updated;
     } catch (error) {
       logger.error('[threadDAO] acceptAnswer error', {
