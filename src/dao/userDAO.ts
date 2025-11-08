@@ -1,9 +1,8 @@
-import { PrismaClient, Prisma, User, Role } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { logger } from '@services/logService';
 import cleanObject from '@utils/cleanObject';
 import { createUserRole, getOrFallbackSectionId } from '@utils/user';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const UserDAO = {
   async getAll({

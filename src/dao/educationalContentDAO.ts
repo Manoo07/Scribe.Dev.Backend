@@ -1,8 +1,7 @@
+import { ContentType, EducationalContent } from '@prisma/client';
 import { logger } from '@services/logService';
-import { ContentType, EducationalContent, PrismaClient } from '@prisma/client';
 import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const EducationalContentDAO = {
   create: async (unitId: string, data: { content: string; type: string }) => {

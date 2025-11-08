@@ -1,6 +1,5 @@
 // DAO for class attendance
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 const createAttendance = async (data: any) => {
   // Insert attendance record

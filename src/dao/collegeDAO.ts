@@ -1,7 +1,6 @@
-import { PrismaClient, College } from '@prisma/client';
+import { College } from '@prisma/client';
+import prisma from '../prisma/prismaClient';
 import { logger } from '../services/logService';
-
-const prisma = new PrismaClient();
 
 const CollegeDAO = {
   createCollege: async (name: string): Promise<College> => {

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 
 export const likeDAO = {
   async toggleLike({ threadId, replyId, userId }: { threadId?: string; replyId?: string; userId: string }) {

@@ -1,8 +1,7 @@
-import { ContentType, Prisma, PrismaClient, Unit } from '@prisma/client';
+import { ContentType, Prisma, Unit } from '@prisma/client';
 import { logger } from '@services/logService';
 import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient';
 interface CreateUnitInput {
   name: string;
   description?: string;
