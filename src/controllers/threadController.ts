@@ -3,6 +3,8 @@ import { threadService } from '@services/threadService';
 import { checkClassroomMembership } from '@utils/classroomAccess';
 import { isValidUUID, normalizeQueryParam } from '@utils/validators';
 import { Request, Response } from 'express';
+import { isValidUUID, normalizeQueryParam } from '@utils/validators';
+import { checkClassroomMembership } from '@utils/classroomAccess';
 
 export const threadController = {
   /**
@@ -290,7 +292,7 @@ export const threadController = {
         filters.unitId = 'none';
       }
     }
-
+    
     try {
       logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
       const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
@@ -376,6 +378,7 @@ export const threadController = {
       logger.error('[threadController] createReply - Content missing');
       return res.status(400).json({ error: 'Content is required' });
     }
+
 
     try {
       logger.info('[threadController] createReply started', { parentId, userId });
