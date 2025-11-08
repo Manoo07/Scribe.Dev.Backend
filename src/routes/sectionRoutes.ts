@@ -1,5 +1,3 @@
-import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_CREATED,
@@ -8,8 +6,8 @@ import {
   HTTP_STATUS_OK,
 } from '@constants/constants';
 import { logger } from '@services/logService';
-
-const prisma = new PrismaClient();
+import { Request, Response, Router } from 'express';
+import prisma from '../prisma/prismaClient';
 export const sectionRouter = Router();
 
 sectionRouter.post('/', async (req: Request, res: Response): Promise<any> => {

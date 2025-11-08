@@ -1,15 +1,16 @@
-import { PrismaClient, User, Role, Prisma } from '@prisma/client';
-import UserDAO from '@dao/userDAO';
-import { logger } from '@services/logService';
 import {
   ALPHABETIC_ONLY_REGEX,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
 } from '@constants/constants';
+import UserDAO from '@dao/userDAO';
+import { Prisma, User } from '@prisma/client';
+import { logger } from '@services/logService';
+import prisma from '../prisma/prismaClient';
 
 class UserService {
-  private prisma = new PrismaClient();
+  private prisma = prisma;
 
   async getUserById(id: string) {
     const user = await UserDAO.get({ filter: { id } });

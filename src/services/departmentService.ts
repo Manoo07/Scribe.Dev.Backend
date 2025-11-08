@@ -1,12 +1,8 @@
+import CollegeDAO from '@dao/collegeDAO';
 import DepartmentDAO from '@dao/departmentDAO';
 import { Department } from '@prisma/client';
-import { ZodError } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { logger } from './logService';
 import { departmentSchema } from '@utils/validations/department.schema';
-import CollegeDAO from '@dao/collegeDAO';
-
-const prisma = new PrismaClient();
+import { logger } from './logService';
 
 class DepartmentService {
   public async createDepartment(params: {

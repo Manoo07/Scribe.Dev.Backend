@@ -1,9 +1,7 @@
-import { logger } from '@services/logService';
-import { PrismaClient, VirtualClassroomStudent } from '@prisma/client';
 import { VirtualClassroomDAO } from '@dao/virtualClassroomDAO';
-import { VirtualClassroom } from '@prisma/client';
 import VirtualClassroomStudentDAO from '@dao/virtualClassroomStudentDAO';
-import { VirtualClassroomParams } from 'types/express';
+import { VirtualClassroom } from '@prisma/client';
+import { logger } from '@services/logService';
 
 export interface CreateVirtualClassroomParams {
   name: string;

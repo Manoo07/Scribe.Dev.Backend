@@ -1,8 +1,7 @@
-import { Department, PrismaClient } from '@prisma/client';
+import { Department } from '@prisma/client';
 import { buildWhereClause } from '@utils/DBPipelines/filterObjectBuilder';
+import prisma from '../prisma/prismaClient';
 import { logger } from '../services/logService';
-
-const prisma = new PrismaClient();
 
 const DepartmentDAO = {
   createDepartment: async (data: { name: string; collegeId: string }): Promise<Department> => {
