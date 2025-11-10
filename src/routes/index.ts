@@ -5,6 +5,7 @@ import { allowRoles } from './../middleware/roleMiddleware';
 import { authRouter } from '@routes/authRoutes';
 import { collegeRouter } from '@routes/collegeRoutes';
 import { departmentRouter } from '@routes/departmentRoutes';
+import assignmentRouter from '@routes/assignmentRoutes';
 import { sectionRouter } from '@routes/sectionRoutes';
 import { userRouter } from '@routes/userRoutes';
 import classAttendanceRouter from './classAttendanceRoutes';
@@ -59,6 +60,11 @@ export const routers: Route[] = [
     basePath: '/class-attendance',
     router: classAttendanceRouter,
     middleware: [authMiddleware, allowRoles(['FACULTY'])],
+  },
+  {
+    basePath: '/assignments',
+    router: assignmentRouter,
+    middleware: [authMiddleware],
   },
   {
     basePath: '/threads',
