@@ -3,7 +3,7 @@ import { authMiddleware } from '@middleware/authMiddleware';
 import { Router } from 'express';
 
 export const authRouter = Router();
-const authController = new AuthController();
+const authController = AuthController.getInstance();
 
 authRouter.post('/signup', authController.signup);
 authRouter.post('/signin', authController.signin);

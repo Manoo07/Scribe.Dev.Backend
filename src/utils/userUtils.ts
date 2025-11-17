@@ -1,9 +1,9 @@
 import UserDAO from '@dao/userDAO';
 
 export async function generateUsername(
-  username: string | undefined,
   firstName: string,
   lastName: string,
+  username?: string | undefined,
 ): Promise<string> {
   if (username?.trim()) {
     return username.trim();

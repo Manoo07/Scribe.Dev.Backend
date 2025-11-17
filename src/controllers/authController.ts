@@ -15,6 +15,7 @@ import { checkMissingFields } from '@utils/authUtil';
 import { Request, Response } from 'express';
 
 class AuthController {
+  private static instance: AuthController;
   me = async (req: Request, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -53,6 +54,13 @@ class AuthController {
 
   constructor() {
     this.authService = new AuthService();
+  }
+
+  static getInstance() {
+    if (!AuthController.instance) {
+      AuthController.instance = new AuthController();
+    }
+    return AuthController.instance;
   }
 
   signup = async (req: Request, res: Response) => {

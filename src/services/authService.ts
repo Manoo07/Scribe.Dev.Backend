@@ -42,7 +42,7 @@ class AuthService {
       let finalUsername: string;
       if (!username || username.trim() === '') {
         // Auto-generate a unique username if nothing is provided
-        finalUsername = await generateUsername(undefined, firstName, lastName);
+        finalUsername = await generateUsername(firstName, lastName);
       } else {
         const usernameRegex = new RegExp(USER_NAME_REGEX_PATTERN);
         if (!usernameRegex.test(username)) {
@@ -93,43 +93,61 @@ class AuthService {
   }
 
   public async signin(email: string, password: string): Promise<{ token: string; role: string } | null> {
-    const user = await UserDAO.get({ filter: { email } });
+    try {
+      logger.info(`[AuthService] Signin attempt - email=${email}`);
 
-    if (user && (await comparePasswords(password, user.password))) {
-      logger.info(`User ${email} successfully signed in.`);
+      const user = await UserDAO.get({ filter: { email } });
+      if (!user) {
+        logger.warn(`[AuthService] Signin failed - user not found - email=${email}`);
+        return null;
+      }
+
+      const isMatch = await comparePasswords(password, user.password);
+      if (!isMatch) {
+        logger.warn(`[AuthService] Signin failed - incorrect password - userId=${user.id}, email=${email}`);
+        return null;
+      }
 
       const userRole = await userRoleDAO.getUserRole(user.id);
-
       if (!userRole) {
-        logger.warn(`[AuthService] Role not found for user ${email}`);
+        logger.warn(`[AuthService] Signin failed - role not found - userId=${user.id}, email=${email}`);
         throw new Error('Invalid email or password');
       }
 
       const role = userRole.role;
       const token = generateToken(user.id, role);
-      await UserDAO.update(
-        { id: user.id },
-        {
-          activeToken: token,
-        },
+
+      try {
+        await UserDAO.update({ id: user.id }, { activeToken: token });
+      } catch (updateErr: any) {
+        logger.error(
+          `[AuthService] Failed to persist active token - userId=${user.id}, email=${email} - ${updateErr.message}`,
+        );
+      }
+
+      logger.info(
+        `[AuthService] Signin successful - userId=${user.id}, email=${email}, username=${user.username ?? 'N/A'}, role=${role}`,
       );
-
       return { token, role };
+    } catch (err: any) {
+      logger.error(`[AuthService] Error during signin - email=${email} - ${err.message}`);
+      throw err;
     }
-
-    logger.warn(`Signin failed for user ${email}. Incorrect credentials.`);
-    return null;
   }
 
   public async logout(userId: string): Promise<void> {
-    await UserDAO.update(
-      { id: userId },
-      {
-        activeToken: null,
-      },
-    );
+    if (!userId) {
+      logger.warn('[AuthService] logout called without userId');
+      return;
+    }
 
-    logger.info(`[AuthService] User ${userId} logged out.`);
+    try {
+      await UserDAO.update({ id: userId }, { activeToken: null });
+      logger.info(`[AuthService] User ${userId} logged out.`);
+    } catch (err: any) {
+      logger.error(`[AuthService] Failed to logout user ${userId}: ${err?.message ?? err}`);
+      throw err;
+    }
   }
 
   public async forgotPassword(email: string): Promise<void> {
