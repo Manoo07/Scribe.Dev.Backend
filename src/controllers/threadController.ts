@@ -3,8 +3,6 @@ import { threadService } from '@services/threadService';
 import { checkClassroomMembership } from '@utils/classroomAccess';
 import { isValidUUID, normalizeQueryParam } from '@utils/validators';
 import { Request, Response } from 'express';
-import { isValidUUID, normalizeQueryParam } from '@utils/validators';
-import { checkClassroomMembership } from '@utils/classroomAccess';
 
 export const threadController = {
   /**
