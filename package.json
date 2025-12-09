@@ -12,7 +12,7 @@
     "express": "^4.21.2",
     "format": "^0.2.2",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^7.0.11",
     "prettier": "^3.6.2",
     "prisma": "^6.6.0",
     "winston": "^3.17.0",
@@ -27,7 +27,6 @@
     "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.9",
     "prisma": "^6.6.0",
-    "prisma-dbml-generator": "^0.12.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.2"
