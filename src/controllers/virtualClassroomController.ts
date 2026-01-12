@@ -199,7 +199,7 @@ export class VirtualClassroomController {
       }
 
       const sectionId = classroom.sectionId;
-      const enrolledStudents = await VirtualClassrgoomStudentDAO.getAll({
+      const enrolledStudents = await VirtualClassroomStudentDAO.getAll({
         filter: { classroomId },
         select: virtualClassroomStudentSelectFields,
       });
