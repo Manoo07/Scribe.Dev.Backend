@@ -98,19 +98,19 @@ export const threadController = {
     try {
       // Determine which ID to use for the like
       const likeTargetId = replyId || threadId;
-      
-      logger.info('[threadController] likeThreadOrReply started', { 
-        threadId, 
-        replyId, 
+
+      logger.info('[threadController] likeThreadOrReply started', {
+        threadId,
+        replyId,
         likeTargetId,
-        userId 
+        userId,
       });
-      
-      const result = await threadService.likeThreadOrReply({ 
+
+      const result = await threadService.likeThreadOrReply({
         threadId: likeTargetId,
-        userId 
+        userId,
       });
-      
+
       logger.info('[threadController] likeThreadOrReply success', {
         likeTargetId,
         liked: result.liked,
@@ -305,7 +305,7 @@ export const threadController = {
         filters.unitId = 'none';
       }
     }
-    
+
     try {
       logger.info('[threadController] getThreads started', { page, limit, sortBy, sortOrder, filters });
       const result = await threadService.getThreads(page, limit, { sortBy, sortOrder, filters, userId });
@@ -391,7 +391,6 @@ export const threadController = {
       logger.error('[threadController] createReply - Content missing');
       return res.status(400).json({ error: 'Content is required' });
     }
-
 
     try {
       logger.info('[threadController] createReply started', { parentId, userId });
