@@ -65,13 +65,13 @@ threadRouter.patch('/:threadId', async (req, res) => {
 threadRouter.post('/like/:threadId', async (req, res) => {
   const { threadId } = req.params;
   const { replyId } = req.body;
-  
+
   req.body.threadId = threadId;
-  
-  logger.info('[threadRoutes] POST /like/:threadId - likeThreadOrReply route hit', { 
-    threadId, 
-    replyId: replyId ,
-    userId: req.user?.id 
+
+  logger.info('[threadRoutes] POST /like/:threadId - likeThreadOrReply route hit', {
+    threadId,
+    replyId: replyId,
+    userId: req.user?.id,
   });
   await threadController.likeThreadOrReply(req, res);
 });
