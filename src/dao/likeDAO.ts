@@ -8,11 +8,23 @@ export const likeDAO = {
       const id = threadId || replyId;
       if (!id) throw new Error('threadId or replyId required');
       let like = await prisma.threadLike.findUnique({ where: { threadId_userId: { threadId: id, userId } } });
+      
       if (!like) {
         // Create new like
         like = await prisma.threadLike.create({ data: { threadId: id, userId, isLiked: true } });
         logger.info('[likeDAO] toggleLike created', { id: like.id });
-        return { ...like, liked: true };
+        
+        const totalLikes = await prisma.threadLike.count({
+          where: { threadId: id, isLiked: true }
+        });
+        
+        return { 
+          id: like.id,
+          threadId: like.threadId,
+          userId: like.userId,
+          liked: true,
+          likesCount: totalLikes
+        };
       } else {
         // Toggle isLiked
         const updated = await prisma.threadLike.update({
@@ -20,7 +32,19 @@ export const likeDAO = {
           data: { isLiked: !like.isLiked },
         });
         logger.info('[likeDAO] toggleLike updated', { id: updated.id, isLiked: updated.isLiked });
-        return { ...updated, liked: updated.isLiked };
+        
+        // Get total likes count for this thread/reply
+        const totalLikes = await prisma.threadLike.count({
+          where: { threadId: id, isLiked: true }
+        });
+        
+        return { 
+          id: updated.id,
+          threadId: updated.threadId,
+          userId: updated.userId,
+          liked: updated.isLiked,
+          likesCount: totalLikes
+        };
       }
     } catch (error) {
       logger.error('[likeDAO] toggleLike error', {

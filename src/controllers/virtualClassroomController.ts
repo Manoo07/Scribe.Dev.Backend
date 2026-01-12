@@ -226,6 +226,7 @@ export class VirtualClassroomController {
         lastName: student.user.lastName,
         email: student.user.email,
         userId: student.user.id,
+        enrollmentId: student.enrollmentNo,
       }));
 
       logger.info('[VirtualClassroomController] getEligibleStudents completed successfully');

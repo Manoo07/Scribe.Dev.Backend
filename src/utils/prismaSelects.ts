@@ -1,4 +1,5 @@
 export const studentSelectFields = {
+  enrollmentNo: true,
   user: {
     select: {
       id: true,

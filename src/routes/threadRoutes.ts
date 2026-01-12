@@ -61,12 +61,18 @@ threadRouter.patch('/:threadId', async (req, res) => {
   await threadController.updateThreadOrComment(req, res);
 });
 
-// Like/unlike a thread
+// Like/unlike a thread or reply
 threadRouter.post('/like/:threadId', async (req, res) => {
   const { threadId } = req.params;
+  const { replyId } = req.body;
+  
   req.body.threadId = threadId;
-  req.body.replyId = undefined; // Ensure only thread like
-  logger.info('[threadRoutes] POST /like/:threadId - likeThreadOrReply route hit', { threadId, userId: req.user?.id });
+  
+  logger.info('[threadRoutes] POST /like/:threadId - likeThreadOrReply route hit', { 
+    threadId, 
+    replyId: replyId ,
+    userId: req.user?.id 
+  });
   await threadController.likeThreadOrReply(req, res);
 });
 

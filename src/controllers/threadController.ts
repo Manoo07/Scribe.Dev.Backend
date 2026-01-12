@@ -82,23 +82,37 @@ export const threadController = {
    */
   async likeThreadOrReply(req: Request, res: Response) {
     const userId = req.user?.id;
-    const { id: threadId } = req.params;
+    const { threadId } = req.params;
+    const { replyId } = req.body;
 
     if (!userId) {
       logger.error('[threadController] likeThreadOrReply - Unauthorized: no userId');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!threadId) {
-      logger.error('[threadController] likeThreadOrReply - Thread ID missing');
-      return res.status(400).json({ error: 'Thread ID is required' });
+    if (!threadId && !replyId) {
+      logger.error('[threadController] likeThreadOrReply - Thread/Reply ID missing');
+      return res.status(400).json({ error: 'Thread ID or Reply ID is required' });
     }
 
     try {
-      logger.info('[threadController] likeThreadOrReply started', { threadId, userId });
-      const result = await threadService.likeThreadOrReply({ threadId, userId });
+      // Determine which ID to use for the like
+      const likeTargetId = replyId || threadId;
+      
+      logger.info('[threadController] likeThreadOrReply started', { 
+        threadId, 
+        replyId, 
+        likeTargetId,
+        userId 
+      });
+      
+      const result = await threadService.likeThreadOrReply({ 
+        threadId: likeTargetId,
+        userId 
+      });
+      
       logger.info('[threadController] likeThreadOrReply success', {
-        threadId,
+        likeTargetId,
         liked: result.liked,
       });
       res.status(200).json(result);
@@ -106,10 +120,11 @@ export const threadController = {
       logger.error('[threadController] likeThreadOrReply error', {
         error: error instanceof Error ? error.message : error,
         threadId,
+        replyId,
         userId,
       });
       res.status(500).json({
-        error: 'Failed to like/unlike thread',
+        error: 'Failed to like/unlike',
         details: error instanceof Error ? error.message : error,
       });
     }
